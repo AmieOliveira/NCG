@@ -5,24 +5,15 @@
 #ifndef TESE_CÓDIGO_RBM_H
 #define TESE_CÓDIGO_RBM_H
 
-// Colors
-#define RESET   "\033[0m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[33m"
-#define BOLDRED     "\033[1m\033[31m"
-#define BOLDGREEN   "\033[1m\033[32m"
-#define BOLDYELLOW  "\033[1m\033[33m"
-
 // Libraries
-#include <iostream>
 #include <random>
 #include <vector>
 #include "Eigen/Dense"
+#include "basics.h"
 #include "Data.h"
 
 using namespace Eigen;
-using namespace std;
+
 
 enum SampleType {
     CD,
@@ -94,14 +85,21 @@ public:
     VectorXd getHiddenBiases();
     //int setHiddenBiases(/* TODO */);
 
+    void startBiases();     // Starting randomly. Do not think this will be used for actual training
+
     MatrixXd getWeights();
     int setWeights(MatrixXd mat);
+    void startWeigths();    // Starting randomly, but maybe will want to add choices
 
     MatrixXd getConnectivity();
     int setConnectivity(MatrixXd mat);
 
     // Random generator functions
     void setRandomSeed(unsigned seed);
+
+    // RBM probabilities
+    VectorXd getProbabilities_x();
+    VectorXd getProbabilities_h();
 
     // Training methods
     void fit();
@@ -112,11 +110,8 @@ public:
     void printVariables();
     //double getRandomNumber();
     void sampleXH();
+    void generatorTest();
+    void validateSample(unsigned seed, int rep);
 };
-
-// Auxiliares
-void printError(string msg);
-void printWarning(string msg);
-void printInfo(string msg);
 
 #endif //TESE_CÓDIGO_RBM_H

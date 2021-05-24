@@ -18,3 +18,7 @@ and the connectivity between hidden and visible units
 simultaneously.
 
 > TODO: How to run the code...
+
+
+Note: Code developed in MacOS, with compiler Clang 
+(version 12.0.5), using C++ 14.

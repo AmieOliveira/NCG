@@ -4,17 +4,6 @@
 
 #include "RBM.h"
 
-// Auxiliares
-void printError(string msg){
-    cout << BOLDRED << "ERROR:\t" << RED << msg << RESET << endl;
-}
-void printWarning(string msg){
-    cout << BOLDYELLOW << "WARNING:\t" << YELLOW << msg << RESET << endl;
-}
-void printInfo(string msg){
-    cout << BOLDGREEN << "INFO:\t" << GREEN << msg << RESET << endl;
-}
-
 // Constructors
 RBM::RBM() {
     initialized = false;
@@ -123,6 +112,37 @@ VectorXd RBM::getHiddenBiases() {
     return b;
 }
 
+void RBM::startBiases() {
+    // Implementado para teste. Atribui valores aleatórios entre -1 e
+    // +1 para cada viés
+
+    if (!initialized){
+        string errorMessage = "Tried to set a matrix that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        return;
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Tried to sample vector without random seed!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    double rdn, bias;
+    for (int i = 0; i < hSize; i++){
+        rdn = (*p_dis)(generator);
+        bias = 2*rdn - 1;
+        b(i) = bias;
+    }
+    for (int j = 0; j < xSize; ++j) {
+        rdn = (*p_dis)(generator);
+        bias = 2*rdn - 1;
+        d(j) = bias;
+    }
+}
+
 MatrixXd RBM::getWeights() {
     return W;
 }
@@ -146,6 +166,33 @@ int RBM::setWeights(MatrixXd mat) {
                               "Cancelled operation.";
         printError(errorMessage);
         return 2;
+    }
+}
+void RBM::startWeigths() {
+    // Implementação inicial: estou inicializando com pesos aleatórios
+    // distribuídos uniformemente entre -1 e +1
+
+    if (!initialized){
+        string errorMessage = "Tried to set a matrix that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        return;
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Tried to sample vector without random seed!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    double rdn, weight;
+    for (int i = 0; i < hSize; i++){
+        for (int j = 0; j < xSize; ++j) {
+            rdn = (*p_dis)(generator);
+            weight = 2*rdn - 1;
+            W(i,j) = weight;
+        }
     }
 }
 
@@ -180,6 +227,61 @@ int RBM::setConnectivity(MatrixXd mat) {
 }
 
 
+// RBM probabilities
+VectorXd RBM::getProbabilities_x() {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Tried to sample vector that has no dimension!\n\t"
+                       "You need to set the RBM dimensions before "
+                       "sampling values!";
+        printError(errorMessage);
+        throw runtime_error("Tried to sample vector that has no dimension!");
+    }
+
+    MatrixXd* p_W;
+    if (patterns) {
+        p_W = &C;
+    } else {
+        p_W = &W;
+    }
+
+    VectorXd output(xSize);
+    RowVectorXd vAux = h.transpose()*(*p_W);
+
+    for (int j=0; j<xSize; j++){
+        output(j) = 1.0/( 1 + exp( - d(j) -  vAux(j) ) );
+    }
+
+    return output;
+}
+VectorXd RBM::getProbabilities_h() {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Tried to sample vector that has no dimension!\n\t"
+                       "You need to set the RBM dimensions before "
+                       "sampling values!";
+        printError(errorMessage);
+        throw runtime_error("Tried to sample vector that has no dimension!");
+    }
+
+    MatrixXd* p_W;
+    if (patterns) {
+        p_W = &C;
+    } else {
+        p_W = &W;
+    }
+
+    VectorXd output(hSize);
+    VectorXd vAux = (*p_W)*x;
+
+    for (int i=0; i<hSize; i++){
+        output(i) = 1.0/( 1 + exp( - b(i) -  vAux(i) ) );
+    }
+
+    return output;
+}
+
+
 // Random generator functions
 void RBM::setRandomSeed(unsigned int seed) {
     hasSeed = true;
@@ -189,7 +291,12 @@ void RBM::setRandomSeed(unsigned int seed) {
 
 // Sampling methods
 VectorXd RBM::sampleXfromH() {
-    if (!initialized){
+    // NOTE: Will not check if has been initialized and/or has seed,
+    //   because this method should be called only by the RBM itself
+    //   and other functions should have performed the necessary
+    //   checks
+
+    /*if (!initialized){
         string errorMessage;
         errorMessage = "Tried to sample vector that has no dimension!\n\t"
                        "You need to set the RBM dimensions before "
@@ -202,7 +309,7 @@ VectorXd RBM::sampleXfromH() {
         errorMessage = "Tried to sample vector without random seed!";
         printError(errorMessage);
         throw runtime_error(errorMessage);
-    }
+    }*/
     //cout << "Sampling x!" << endl;
 
     MatrixXd* p_W;
@@ -221,17 +328,21 @@ VectorXd RBM::sampleXfromH() {
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
-        if (moeda > prob)
+        if (moeda < prob)
             output(j) = 1;
         else
             output(j) = 0;
     }
-
+    //cout << output.transpose() << endl;
     return output;
 }
-
 VectorXd RBM::sampleHfromX() {
-    if (!initialized){
+    // NOTE: Will not check if has been initialized and/or has seed,
+    //   because this method should be called only by the RBM itself
+    //   and other functions should have performed the necessary
+    //   checks
+
+    /*if (!initialized){
         string errorMessage;
         errorMessage = "Tried to sample vector that has no dimension!\n\t"
                        "You need to set the RBM dimensions before "
@@ -244,7 +355,7 @@ VectorXd RBM::sampleHfromX() {
         errorMessage = "Tried to sample vector without random seed!";
         printError(errorMessage);
         throw runtime_error(errorMessage);
-    }
+    }*/
     //cout << "Sampling h!" << endl;
 
     MatrixXd* p_W;
@@ -255,7 +366,7 @@ VectorXd RBM::sampleHfromX() {
     }
 
     VectorXd output(hSize);
-    RowVectorXd vAux = (*p_W)*x;
+    VectorXd vAux = (*p_W)*x;
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
@@ -263,7 +374,7 @@ VectorXd RBM::sampleHfromX() {
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
-        if (moeda > prob)
+        if (moeda < prob)
             output(i) = 1;
         else
             output(i) = 0;
@@ -276,7 +387,7 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
                                    int k, //int b_size,
                                    vector<VectorXd> vecs) {
     // NOTE: Will not check if has been initialized and/or has seed,
-    //   because this mathod should be called only as part of the
+    //   because this method should be called only as part of the
     //   RBM training, and that one should already have performed
     //   the necessary checks
 
@@ -361,6 +472,7 @@ void RBM::fit(){
 // Test Functions
 void RBM::printVariables() {
     cout << "RBM variables:\t(" << xSize << " visible units and " << hSize << " hidden units)" << endl;
+    cout << "----------------------------------------------------------------" << endl;
     cout << "\t\tVisible Units: " << x.transpose() << endl;
     cout << "\t\tHidden Units: " << h.transpose() << endl;
     cout << "\t\tVisible Biases: " << d.transpose() << endl;
@@ -368,8 +480,10 @@ void RBM::printVariables() {
     cout << "\t\tWeights: " << endl << W << endl;
     cout << "\t\tConnectivity (" << patterns << "): " << endl << A << endl;
     cout << "\t\tMatrix C: " << endl << C << endl;
+    cout << "----------------------------------------------------------------" << endl;
     cout << endl;
 }
+
 /* double RBM::getRandomNumber() {
     if (!hasSeed){
         string errorMessage = "Tried to get random number with no random seed set!";
@@ -380,9 +494,100 @@ void RBM::printVariables() {
 } */
 
 void RBM::sampleXH() {
-    // Função para a validação do gerador aleatório, e
     VectorXd vec = sampleXfromH();
     cout << "x sampled: " << vec.transpose() << endl;
     vec = sampleHfromX();
     cout << "h sampled: " << vec.transpose() << endl;
+}
+
+void RBM::generatorTest() {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Tried to sample vector that has no dimension!\n\t"
+                       "You need to set the RBM dimensions before "
+                       "sampling values!";
+        printError(errorMessage);
+        throw runtime_error("Tried to sample vector that has no dimension!");
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Tried to sample vector without random seed!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    int repeat = 1000;
+
+    double sumOfValues = 0;
+    double value;
+    double pseudoHist[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int idx;
+
+    for (int n = 0; n < repeat; ++n) {
+        // Use dis to transform the random unsigned int generated by gen into a
+        // double in [1, 2). Each call to dis(gen) generates a new random double
+        value = (*p_dis)(generator);
+        //std::cout << value << ' ';
+        sumOfValues = sumOfValues + value;
+
+        idx = int(value*10);
+        pseudoHist[idx] += 1;
+    }
+    std::cout << '\n';
+    std::cout << "Mean = " << sumOfValues/repeat << std::endl;
+    std::cout << "Distribution: | ";
+    for (int i = 0; i < 10; ++i) {
+        std::cout << pseudoHist[i] << " | ";
+    }
+    std::cout << std::endl;
+}
+
+void RBM::validateSample(unsigned seed, int rep) {
+    // Função para a validação do gerador aleatório
+
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Tried to sample vector that has no dimension!\n\t"
+                       "You need to set the RBM dimensions before "
+                       "sampling values!";
+        printError(errorMessage);
+        throw runtime_error("Tried to sample vector that has no dimension!");
+    }
+
+    // Setup RBM
+    setRandomSeed(seed);
+    startWeigths();
+    startBiases();
+    for (int k = 0; k < 5; ++k) {
+        // Mix a bit x and h, to have non trivial probabilities
+        h << sampleHfromX();
+        x << sampleXfromH();
+    }
+    printVariables();
+
+    // Auxiliary variables
+    VectorXd probX = getProbabilities_x();
+    VectorXd probH = getProbabilities_h();
+
+    VectorXd freqX = VectorXd::Zero(xSize);
+    VectorXd freqH = VectorXd::Zero(hSize);
+
+    for (int k = 0; k < rep; ++k) {
+        freqX = freqX + sampleXfromH();
+        freqH = freqH + sampleHfromX();
+    }
+    freqX = freqX/rep;
+    freqH = freqH/rep;
+
+    cout << endl << "Random Generator Analysis: " << endl;
+    cout << "----------------------------------------------------" << endl;
+    cout << "\tProbabilities of x: " << probX.transpose() << endl;
+    cout << "\tFrequency of x:     " << freqX.transpose() << endl;
+    cout << "\tError (p - f):      " << (probX - freqX).transpose() << endl;
+    cout << "----------------------------------------------------" << endl;
+    cout << "\tProbabilities of h: " << probH.transpose() << endl;
+    cout << "\tFrequency of h:     " << freqH.transpose() << endl;
+    cout << "\tError (p - f):      " << (probH - freqH).transpose() << endl;
+    cout << "----------------------------------------------------" << endl << endl;
+
 }

@@ -148,11 +148,7 @@ void testRandomGenOnRBM(){
 }
 */
 
-int main(int argc, char **argv) {
-    //testVariables(argc,argv);
-    //testRandomGenerator();
-    //testRandomGenOnRBM()
-
+void testSampling(int argc, char **argv){
     stringstream msg;
 
     if (argc < 2) {
@@ -203,6 +199,101 @@ int main(int argc, char **argv) {
     rbm.fit();
 
     rbm.printVariables();
+}
+
+void testRandomGenerator(){
+    RBM rbm1(2, 2);
+
+    unsigned seed = 61309258;
+
+    cout << "Testing Mersenne Twister" << endl;
+    rbm1.setRandomSeed(seed);
+    rbm1.generatorTest();
+
+    cout << "Testing generator sampling in 2x2 RBM: " << endl;
+    rbm1.validateSample(seed, 1000);
+
+    cout << "Testing generator sampling in 2x3 RBM: " << endl;
+    RBM rbm2(2, 3);
+    rbm2.validateSample(seed, 1000);
+
+    cout << "Testing generator sampling in 4x3 RBM: " << endl;
+    RBM rbm3(4, 3);
+    rbm3.validateSample(seed, 1000);
+}
+
+void testaDataCreation(int n){
+    Data bas(DataDistribution::BAS, 4, n);
+
+    for (int i = 0; i < n; i++) {
+        cout << "------------" << endl;
+        RowVectorXd vec = bas.get_sample(i);
+        for (int l = 0; l < 4; ++l) {
+            cout << vec.segment<4>(l*4) << endl;
+        }
+    }
+    cout << "------------" << endl;
+}
+
+
+int main(int argc, char **argv) {
+    //testVariables(argc,argv);
+    //testRandomGenerator();
+    //testRandomGenOnRBM();
+    //testSampling();
+    //testRandomGenerator();
+    testaDataCreation(5);
+
+    /*
+    stringstream msg;
+
+    if (argc < 3) {
+        msg.str("");
+        msg << "You have entered too few arguments: only " << argc-1
+            << " found.\n\tShould give X and H values as argument "
+               "(redo if done wrong)";
+        printError(msg.str());
+        exit(1);
+    }
+
+    int X = atoi(argv[1]);
+    int H = atoi(argv[2]);    // Numbers in ASCII characters begin at 48
+
+    if (X == 0) {
+        msg.str("");
+        msg << "Cannot have no visible units!\n\t\tExpecting a positive "
+               "number, but received " << argv[1];
+        printError(msg.str());
+        exit(1);
+    }
+    if (H == 0) {
+        msg.str("");
+        msg << "Cannot have no hidden units!\n\t\tExpecting a positive "
+               "number, but received " << argv[2];
+        printError(msg.str());
+        exit(1);
+    }
+
+    msg.str("");
+    msg << "You have set the RBM to have " << X << " visible units and "
+        << H << " hidden ones.";
+    printInfo(msg.str());
+
+    RBM rbm(X, H);
+
+    unsigned seed = 98;
+    if (argc >= 4) {
+        seed = atoi(argv[3]);
+        msg.str("");
+        msg << "Setting seed as: " << seed;
+        printInfo(msg.str());
+    }
+
+    rbm.validateSample(seed, 100000);
+
+    //rbm.setRandomSeed(seed);
+    //rbm.generatorTest();
+    */
 
     return 0;
 }
