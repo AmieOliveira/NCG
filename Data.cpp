@@ -59,6 +59,12 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
     }
 }
 
+void Data::setRandomSeed(unsigned int seed) {
+    hasSeed = true;
+    generator.seed(seed);
+    p_dis = new uniform_real_distribution<double>(0.0, 1.0);
+}
+
 int Data::get_number_of_samples() {
     return _n;
 }
