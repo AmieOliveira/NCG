@@ -22,10 +22,12 @@ enum DataDistribution {
 };
 
 class Data {
+    // Data variables
     int _size;          // Size of a data sample
     int _n;             // Number of samples
     MatrixXd _data;     // Data
 
+    // Random number variables
     bool hasSeed;
     mt19937 generator;
     uniform_real_distribution<double>* p_dis;
@@ -35,20 +37,22 @@ class Data {
 public:
     // Constructors
     //Data(char* data_path);
-    //Data(MatrixXd mat);
+    Data(MatrixXd mat);
     Data(DataDistribution distr, int size, int nSamples);
     Data(unsigned seed,
          DataDistribution distr, int size, int nSamples);
 
-    // Random seed
+    // Random auxiliars
     void setRandomSeed(unsigned seed);
 
     // Data statistics
+    double marginal_relativeFrequence(int jdx);
     int get_number_of_samples();
+
+    // Sampling
     VectorXd get_sample(int idx);
-    // Função de obter conjunto de amostras (slice)
-    // Separação em pacotes direto? treino e teste...
-    // Frequência relativa de cada marginal (e de todas)
+    Data* separateTrainTestSets(double trainPercentage);
+    // Ideia inicial. Depois posso adicionar k-fold...
 };
 
 

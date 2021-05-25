@@ -233,6 +233,14 @@ void testaDataCreation(int n){
         }
     }
     cout << "------------" << endl;
+
+    cout << "Relative frequency of first variable: "
+         << bas.marginal_relativeFrequence(0) << endl;
+
+    Data* sets = bas.separateTrainTestSets(0.6);
+    cout << "Train set with " << sets[0].get_number_of_samples()
+         << " samples and test set with" << sets[1].get_number_of_samples()
+         << endl;
 }
 
 
