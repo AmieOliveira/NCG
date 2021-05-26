@@ -8,6 +8,7 @@
 // Libraries
 #include <random>
 #include <vector>
+#include <cmath>
 #include "Eigen/Dense"
 #include "basics.h"
 #include "Data.h"
@@ -26,8 +27,8 @@ class RBM {
     // Flags
     bool initialized;   // True if RBM has dimensions
     bool patterns;      // True if connectivity patterns are active
-    bool hasSeed;       // True if a seed for the random
-                        //      generator has been set
+    bool hasSeed;       // True if a seed for the random generator has been set
+    bool trainReady;    // True if RBM has been setup for training
 
     // Dimensions
     int xSize, hSize;
@@ -51,8 +52,8 @@ class RBM {
     mt19937 generator;
     uniform_real_distribution<double>* p_dis;
 
-    VectorXd sampleXfromH();
-    VectorXd sampleHfromX();
+    VectorXd sample_x();
+    VectorXd sample_h();
 
     vector<VectorXd> sampleXtilde(SampleType sType, int k, //int b_size,
                                   vector<VectorXd> vecs);
@@ -102,8 +103,8 @@ public:
     VectorXd getProbabilities_h();
 
     // Training methods
-    void fit();
-    // TODO: Argumentos do treinamento: Devo setar antes e só dar os dados? Ou dar tudo aqui?
+    void trainSetup(/* TODO: Arguments */);
+    void fit(Data trainData);
     // TODO: Retornar alguma coisa na função?
 
     // Test Functions

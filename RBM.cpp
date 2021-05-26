@@ -12,6 +12,7 @@ RBM::RBM(int X, int H) {
     initialized = true;
     patterns = false;
     hasSeed = false;
+    trainReady = false;
 
     xSize = X;
     hSize = H;
@@ -290,7 +291,7 @@ void RBM::setRandomSeed(unsigned int seed) {
 }
 
 // Sampling methods
-VectorXd RBM::sampleXfromH() {
+VectorXd RBM::sample_x() {
     // NOTE: Will not check if has been initialized and/or has seed,
     //   because this method should be called only by the RBM itself
     //   and other functions should have performed the necessary
@@ -336,7 +337,7 @@ VectorXd RBM::sampleXfromH() {
     //cout << output.transpose() << endl;
     return output;
 }
-VectorXd RBM::sampleHfromX() {
+VectorXd RBM::sample_h() {
     // NOTE: Will not check if has been initialized and/or has seed,
     //   because this method should be called only by the RBM itself
     //   and other functions should have performed the necessary
@@ -409,8 +410,8 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
                 //cout << "x0 = " << x.transpose() << endl;
 
                 for (int t=0; t<k; t++){
-                    h = sampleHfromX();
-                    x = sampleXfromH();
+                    h = sample_h();
+                    x = sample_x();
 
                     //cout << "x^" << t+1 << " = " << x.transpose() << endl;
                 }
@@ -431,42 +432,124 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
 
 
 // Training methods
-void RBM::fit(){
-    // Verificar se teve setup, ou, no caso de eu nao implementar setup,
-    // se foi inicializado, etc.
-    // FIXME: Implementado somente o teste da sampleXtilde!
-    SampleType stype = CD;
-    VectorXd x1, x2;
+void RBM::trainSetup() {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot train without RBM dimensions!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Cannot train machine without random seed!\n\t"
+                       "Use 'setRandomSeed' before proceeding";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+    trainReady = true;
 
-    x1 = VectorXd::Zero(xSize);
-    x1(0) = 1;
-    x2 = VectorXd::Constant(xSize, 1);
-    x2(xSize-1) = 0;
+    // TODO: Adicionar variáveis
+    // TODO: Dar o start dos pesos (talvez de acordo com argumento...)
+    // startWeigths();
+    // TODO: Adicionar seed como parâmetro opcional??
+}
 
-    vector<VectorXd> vecIn, vecOut;
-    vecIn.push_back(x1);
+void RBM::fit(Data trainData){
+    // TODO: Treinar padrões de conectividade
 
-    cout << "Input: ";
-    for (auto i: vecIn)
-        cout << "[" << i.transpose() << "] ";
-    cout << endl;
+    if (!trainReady){
+        string errorMessage;
+        errorMessage = "Cannot train machine without setting up "
+                       "training features!\n\tUse 'trainSetup' "
+                       "before proceeding";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    SampleType stype = CD;  // training method
+    int k_steps = 1;        // gibbs sampling steps
+    int n_iter = 2;         // number of iterations over data
+    int b_size = 1;         // batch size
+    double l_rate = 1;      // learning rate
+    // FIXME: Retirar variaveis temporarias (devem ir no setup)
+
+    printInfo("------- TRAINING DATA -------");
+
+    int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
+    vector<VectorXd> batch, sampled;
+    MatrixXd W_gradient(hSize, xSize);
+    VectorXd b_gradient(hSize), d_gradient(xSize);
+    VectorXd h_hat(hSize);
+    int actualSize;
+
+    for (int it = 0; it < n_iter; ++it) {
+        cout << "Iteration " << it+1 << endl;
+
+        // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
+        //if (it != 0) trainData.shuffleOrder();
+        actualSize = b_size;
+
+        for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
+            cout << "Batch " << bIdx+1 << endl;
+
+            batch = trainData.get_batch(bIdx, b_size);
+            sampled = sampleXtilde(stype, k_steps, batch);
+
+            W_gradient = MatrixXd::Zero(hSize, xSize);
+            b_gradient = VectorXd::Zero(hSize);
+            d_gradient = VectorXd::Zero(xSize);
+
+            for (int s = 0; s < batch.size(); ++s) {
+                cout << "x0 = " << batch.at(s).transpose() << endl;
+                cout << "xk = " << sampled.at(s).transpose() << endl;
+
+                x = batch.at(s);
+                h_hat = getProbabilities_h(); // Note that x must be set before!
+                cout << "h^ de xt: " << h_hat.transpose() << endl;
+                W_gradient += h_hat*x.transpose();
+                b_gradient += h_hat;
+                d_gradient += x;
+
+                x = sampled.at(s);
+                h_hat = getProbabilities_h(); // Note that x must be set before!
+                cout << "h^ de x~: " << h_hat.transpose() << endl;
+                W_gradient -= h_hat*x.transpose();
+                b_gradient -= h_hat;
+                d_gradient -= x;
+            }
+
+            if (bIdx == n_batches-1) actualSize = batch.size();
+
+            W_gradient = W_gradient/actualSize;
+            if (patterns) W_gradient = W_gradient.cwiseProduct(A);
+            W = W + l_rate*W_gradient;
+            cout << "New W:" << endl << W << endl;
+
+            b_gradient = b_gradient/actualSize;
+            b = b + l_rate*b_gradient;
+            cout << "New b:" << b.transpose() << endl;
+
+            d_gradient = d_gradient/actualSize;
+            d = d + l_rate*d_gradient;
+            cout << "New d:" << d.transpose() << endl;
+
+            // TODO: Test further
+
+            //for (auto x0: batch) {
+            //    cout << "x0 = " << x0.transpose() << endl;
+            //    xk = sampleXtilde(stype, k_steps, x0);
+            //    cout << "xk = " << xk.transpose() << endl;
+            //}
+        }
+    }
+
+    /*
     vecOut = sampleXtilde(stype, 4, vecIn);
     cout << "Output: ";
     for (auto i: vecOut)
         cout << "[" << i.transpose() << "] ";
     cout << endl;
-
-    vecIn.push_back(x2);
-
-    cout << "Input: ";
-    for (auto i: vecIn)
-        cout << "[" << i.transpose() << "] ";
-    cout << endl;
-    vecOut = sampleXtilde(stype, 4, vecIn);
-    cout << "Output: ";
-    for (auto i: vecOut)
-        cout << "[" << i.transpose() << "] ";
-    cout << endl;
+     */
 }
 
 // Test Functions
@@ -494,9 +577,9 @@ void RBM::printVariables() {
 } */
 
 void RBM::sampleXH() {
-    VectorXd vec = sampleXfromH();
+    VectorXd vec = sample_x();
     cout << "x sampled: " << vec.transpose() << endl;
-    vec = sampleHfromX();
+    vec = sample_h();
     cout << "h sampled: " << vec.transpose() << endl;
 }
 
@@ -560,8 +643,8 @@ void RBM::validateSample(unsigned seed, int rep) {
     startBiases();
     for (int k = 0; k < 5; ++k) {
         // Mix a bit x and h, to have non trivial probabilities
-        h << sampleHfromX();
-        x << sampleXfromH();
+        h << sample_h();
+        x << sample_x();
     }
     printVariables();
 
@@ -573,8 +656,8 @@ void RBM::validateSample(unsigned seed, int rep) {
     VectorXd freqH = VectorXd::Zero(hSize);
 
     for (int k = 0; k < rep; ++k) {
-        freqX = freqX + sampleXfromH();
-        freqH = freqH + sampleHfromX();
+        freqX = freqX + sample_x();
+        freqH = freqH + sample_h();
     }
     freqX = freqX/rep;
     freqH = freqH/rep;

@@ -6,6 +6,7 @@
 #define TESE_CÓDIGO_DATA_H
 
 #include <random>
+#include <vector>
 #include "basics.h"
 #include "Eigen/Dense"
 
@@ -48,9 +49,11 @@ public:
     // Data statistics
     double marginal_relativeFrequence(int jdx);
     int get_number_of_samples();
+    int get_sample_size();
 
     // Sampling
     VectorXd get_sample(int idx);
+    vector<VectorXd> get_batch(int idx, int size);
     Data* separateTrainTestSets(double trainPercentage);
     // Ideia inicial. Depois posso adicionar k-fold...
 };

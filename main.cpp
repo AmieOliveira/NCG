@@ -147,7 +147,7 @@ void testRandomGenOnRBM(){
          << rbm.getRandomNumber() << " - " << rbm.getRandomNumber() << endl;
 }
 */
-
+/*
 void testSampling(int argc, char **argv){
     stringstream msg;
 
@@ -196,10 +196,11 @@ void testSampling(int argc, char **argv){
 
     rbm.printVariables();
 
-    rbm.fit();
+    //rbm.fit();
 
     rbm.printVariables();
 }
+*/
 
 void testRandomGenerator(){
     RBM rbm1(2, 2);
@@ -222,14 +223,14 @@ void testRandomGenerator(){
     rbm3.validateSample(seed, 1000);
 }
 
-void testaDataCreation(int n){
-    Data bas(DataDistribution::BAS, 4, n);
+void testaDataCreation(int size, int n){
+    Data bas(DataDistribution::BAS, size, n);
 
     for (int i = 0; i < n; i++) {
         cout << "------------" << endl;
         RowVectorXd vec = bas.get_sample(i);
-        for (int l = 0; l < 4; ++l) {
-            cout << vec.segment<4>(l*4) << endl;
+        for (int l = 0; l < size; ++l) {
+            cout << vec.segment(l*size, size) << endl;
         }
     }
     cout << "------------" << endl;
@@ -239,8 +240,15 @@ void testaDataCreation(int n){
 
     Data* sets = bas.separateTrainTestSets(0.6);
     cout << "Train set with " << sets[0].get_number_of_samples()
-         << " samples and test set with" << sets[1].get_number_of_samples()
+         << " samples and test set with " << sets[1].get_number_of_samples()
          << endl;
+
+    RBM model(bas.get_sample_size(), bas.get_sample_size());
+    model.setRandomSeed(18763258);
+    model.trainSetup();
+    model.fit(bas);
+
+    model.printVariables();
 }
 
 
@@ -250,7 +258,8 @@ int main(int argc, char **argv) {
     //testRandomGenOnRBM();
     //testSampling();
     //testRandomGenerator();
-    testaDataCreation(5);
+
+    testaDataCreation(2,5);
 
     /*
     stringstream msg;
