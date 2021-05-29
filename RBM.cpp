@@ -28,11 +28,13 @@ RBM::RBM(int X, int H) {
     W = MatrixXd::Zero(H,X); // TODO: Criar função inicializadora
     A = MatrixXd::Constant(H,X,1);
 
+    p_W = &W;
     //C = W; // TODO: Inicializar como zeros aqui
 }
 RBM::RBM(int X, int H, bool use_pattern) {
     RBM(X,H);
     patterns = use_pattern;
+    p_W = &C;
 }
 
 
@@ -44,6 +46,9 @@ void RBM::connectivity(bool activate) {
     patterns = activate;
     if (patterns){
         C = W.cwiseProduct(A);
+        p_W = &C;
+    } else {
+        p_W = &W;
     }
 }
 
@@ -239,13 +244,6 @@ VectorXd RBM::getProbabilities_x() {
         throw runtime_error("Tried to sample vector that has no dimension!");
     }
 
-    MatrixXd* p_W;
-    if (patterns) {
-        p_W = &C;
-    } else {
-        p_W = &W;
-    }
-
     VectorXd output(xSize);
     RowVectorXd vAux = h.transpose()*(*p_W);
 
@@ -263,13 +261,6 @@ VectorXd RBM::getProbabilities_h() {
                        "sampling values!";
         printError(errorMessage);
         throw runtime_error("Tried to sample vector that has no dimension!");
-    }
-
-    MatrixXd* p_W;
-    if (patterns) {
-        p_W = &C;
-    } else {
-        p_W = &W;
     }
 
     VectorXd output(hSize);
@@ -313,15 +304,9 @@ VectorXd RBM::sample_x() {
     }*/
     //cout << "Sampling x!" << endl;
 
-    MatrixXd* p_W;
-    if (patterns) {
-        p_W = &C;
-    } else {
-        p_W = &W;
-    }
-
     VectorXd output(xSize);
     RowVectorXd vAux = h.transpose()*(*p_W);
+    // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int j=0; j<xSize; j++){
@@ -359,15 +344,9 @@ VectorXd RBM::sample_h() {
     }*/
     //cout << "Sampling h!" << endl;
 
-    MatrixXd* p_W;
-    if (patterns) {
-        p_W = &C;
-    } else {
-        p_W = &W;
-    }
-
     VectorXd output(hSize);
     VectorXd vAux = (*p_W)*x;
+    // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
@@ -450,7 +429,7 @@ void RBM::trainSetup() {
 
     // TODO: Adicionar variáveis
     // TODO: Dar o start dos pesos (talvez de acordo com argumento...)
-    // startWeigths();
+    startWeigths();
     // TODO: Adicionar seed como parâmetro opcional??
 }
 
@@ -468,9 +447,10 @@ void RBM::fit(Data trainData){
 
     SampleType stype = CD;  // training method
     int k_steps = 1;        // gibbs sampling steps
-    int n_iter = 2;         // number of iterations over data
+    int n_iter = 50;         // number of iterations over data
     int b_size = 1;         // batch size
     double l_rate = 1;      // learning rate
+    bool calcNLL = false;   // flag to calculate NLL over iterations (or not)
     // FIXME: Retirar variaveis temporarias (devem ir no setup)
 
     printInfo("------- TRAINING DATA -------");
@@ -483,14 +463,14 @@ void RBM::fit(Data trainData){
     int actualSize;
 
     for (int it = 0; it < n_iter; ++it) {
-        cout << "Iteration " << it+1 << endl;
+        cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
         //if (it != 0) trainData.shuffleOrder();
         actualSize = b_size;
 
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
-            cout << "Batch " << bIdx+1 << endl;
+            //cout << "Batch " << bIdx+1 << endl;
 
             batch = trainData.get_batch(bIdx, b_size);
             sampled = sampleXtilde(stype, k_steps, batch);
@@ -500,19 +480,19 @@ void RBM::fit(Data trainData){
             d_gradient = VectorXd::Zero(xSize);
 
             for (int s = 0; s < batch.size(); ++s) {
-                cout << "x0 = " << batch.at(s).transpose() << endl;
-                cout << "xk = " << sampled.at(s).transpose() << endl;
+                //cout << "x0 = " << batch.at(s).transpose() << endl;
+                //cout << "xk = " << sampled.at(s).transpose() << endl;
 
                 x = batch.at(s);
                 h_hat = getProbabilities_h(); // Note that x must be set before!
-                cout << "h^ de xt: " << h_hat.transpose() << endl;
+                //cout << "h^ de xt: " << h_hat.transpose() << endl;
                 W_gradient += h_hat*x.transpose();
                 b_gradient += h_hat;
                 d_gradient += x;
 
                 x = sampled.at(s);
                 h_hat = getProbabilities_h(); // Note that x must be set before!
-                cout << "h^ de x~: " << h_hat.transpose() << endl;
+                //cout << "h^ de x~: " << h_hat.transpose() << endl;
                 W_gradient -= h_hat*x.transpose();
                 b_gradient -= h_hat;
                 d_gradient -= x;
@@ -523,17 +503,19 @@ void RBM::fit(Data trainData){
             W_gradient = W_gradient/actualSize;
             if (patterns) W_gradient = W_gradient.cwiseProduct(A);
             W = W + l_rate*W_gradient;
-            cout << "New W:" << endl << W << endl;
 
             b_gradient = b_gradient/actualSize;
             b = b + l_rate*b_gradient;
-            cout << "New b:" << b.transpose() << endl;
 
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
-            cout << "New d:" << d.transpose() << endl;
+
+            //cout << "New W:" << endl << W << endl;
+            //cout << "New b:" << b.transpose() << endl;
+            //cout << "New d:" << d.transpose() << endl;
 
             // TODO: Test further
+            //   Add possibility of printing NLL throughout training
 
             //for (auto x0: batch) {
             //    cout << "x0 = " << x0.transpose() << endl;
@@ -551,6 +533,76 @@ void RBM::fit(Data trainData){
     cout << endl;
      */
 }
+
+// Evaluation methods
+double RBM::negativeLogLikelihood(Data data) {
+    // TODO: Raise warning if dimensions are too big
+    //   This is often intractable, I might want to not
+    //   allow the calculation
+
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot calculate NLL without initializing RBM!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    double total = 0;
+    int N = data.get_number_of_samples();
+
+    for (int idx = 0; idx < N; ++idx) {
+        x = data.get_sample(idx);
+        total = total + freeEnergy();
+    }
+    total = total/N;
+
+    total += log( normalizationConstant() );
+    return total;
+}
+
+// Energy methods
+double RBM::energy() {
+    double ret = - x.transpose()*d;
+    ret -= h.transpose()*b;
+    ret -= (h.transpose()*(*p_W))*x;
+    //cout << "Energy: " << ret << endl;
+
+    return ret;
+}
+
+double RBM::freeEnergy() {
+    double ret = - x.transpose()*d;
+    VectorXd vAux = (*p_W)*x;
+    for (int i = 0; i < hSize; ++i) {
+        ret -= log( 1 + exp( vAux(i) + b(i) ) );
+    }
+    //cout << "Free energy: " << ret << endl;
+
+    return ret;
+}
+
+double RBM::normalizationConstant() {
+    // TODO: Warning for intractable calculation?
+    // I am already putting in the NLL. Can this be used solo?
+    return partialZ(xSize+hSize);
+}
+double RBM::partialZ(int n) {
+    if (n == 0) {
+        //cout << "current x: " << x.transpose() << "; and h: " << h.transpose() << endl;
+        return energy();
+    }
+    double ret = partialZ(n-1);
+    if (n > hSize) {
+        x(n-hSize-1) = abs(1 - x(n-hSize-1));
+    } else {
+        h(n - 1) = abs(1 - h(n - 1));
+    }
+    ret += partialZ(n-1);
+
+    return ret;
+}
+
+
 
 // Test Functions
 void RBM::printVariables() {

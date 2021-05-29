@@ -44,8 +44,7 @@ class RBM {
     MatrixXd A;     // Connection pattern (must be binary!)
 
     MatrixXd C;     // Resulting weight matrix
-
-    //int sampleType;
+    MatrixXd* p_W;
 
     // Sampling attributes and methods
     //unsigned genSeed;
@@ -57,6 +56,13 @@ class RBM {
 
     vector<VectorXd> sampleXtilde(SampleType sType, int k, //int b_size,
                                   vector<VectorXd> vecs);
+
+    // Energy methods
+    double energy(); // TODO
+    double freeEnergy(); // FIXME: Should give parameters?
+
+    double normalizationConstant();
+    double partialZ(int n);
 
 public:
     // Constructors
@@ -106,6 +112,9 @@ public:
     void trainSetup(/* TODO: Arguments */);
     void fit(Data trainData);
     // TODO: Retornar alguma coisa na função?
+
+    // Evaluation methods
+    double negativeLogLikelihood(Data data);
 
     // Test Functions
     void printVariables();

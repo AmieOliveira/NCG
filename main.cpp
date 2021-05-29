@@ -246,9 +246,16 @@ void testaDataCreation(int size, int n){
     RBM model(bas.get_sample_size(), bas.get_sample_size());
     model.setRandomSeed(18763258);
     model.trainSetup();
+
+    double nll = model.negativeLogLikelihood(bas);
+    cout << "NLL before training: " << nll << endl;
+
     model.fit(bas);
 
     model.printVariables();
+
+    nll = model.negativeLogLikelihood(bas);
+    cout << "NLL after training: " << nll << endl;
 }
 
 
@@ -259,7 +266,7 @@ int main(int argc, char **argv) {
     //testSampling();
     //testRandomGenerator();
 
-    testaDataCreation(2,5);
+    testaDataCreation(2,10);
 
     /*
     stringstream msg;
