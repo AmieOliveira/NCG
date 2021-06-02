@@ -13,6 +13,7 @@ RBM::RBM(int X, int H) {
     patterns = false;
     hasSeed = false;
     trainReady = false;
+    isTrained = false;
 
     xSize = X;
     hSize = H;
@@ -113,9 +114,47 @@ VectorXd RBM::getHiddenUnits() {
 VectorXd RBM::getVisibleBiases() {
     return d;
 }
+int RBM::setVisibleBiases(VectorXd vec) {
+    if (!initialized){
+        string errorMessage = "Tried to set a vector that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        return 1;
+    }
+
+    if (vec.size() == d.size()) {
+        d = vec;
+        return 0;
+    } else {
+        string errorMessage = "Tried to set visible biases with wrong size! "
+                              "Cancelled operation.";
+        printError(errorMessage);
+        return 2;
+    }
+}
 
 VectorXd RBM::getHiddenBiases() {
     return b;
+}
+int RBM::setHiddenBiases(VectorXd vec) {
+    if (!initialized){
+        string errorMessage = "Tried to set a vector that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        return 1;
+    }
+
+    if (vec.size() == b.size()) {
+        b = vec;
+        return 0;
+    } else {
+        string errorMessage = "Tried to set hidden biases with wrong size! "
+                              "Cancelled operation.";
+        printError(errorMessage);
+        return 2;
+    }
 }
 
 void RBM::startBiases() {
@@ -174,7 +213,7 @@ int RBM::setWeights(MatrixXd mat) {
         return 2;
     }
 }
-void RBM::startWeigths() {
+void RBM::startWeights() {
     // Implementação inicial: estou inicializando com pesos aleatórios
     // distribuídos uniformemente entre -1 e +1
 
@@ -412,6 +451,14 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
 
 // Training methods
 void RBM::trainSetup() {
+    trainSetup(CD, 1, 1000, 5, 0.1, false);
+}
+void RBM::trainSetup(bool NLL) {
+    trainSetup(CD, 1, 1000, 5, 0.1, NLL);
+}
+void RBM::trainSetup(SampleType sampleType, int k, int iterations,
+                     int batchSize, double learnRate, bool NLL) {
+
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot train without RBM dimensions!";
@@ -425,12 +472,18 @@ void RBM::trainSetup() {
         printError(errorMessage);
         throw runtime_error(errorMessage);
     }
+
     trainReady = true;
 
-    // TODO: Adicionar variáveis
-    // TODO: Dar o start dos pesos (talvez de acordo com argumento...)
-    startWeigths();
-    // TODO: Adicionar seed como parâmetro opcional??
+    stype = sampleType;     // training method
+    k_steps = k;            // gibbs sampling steps
+    n_iter = iterations;    // number of iterations over data
+    b_size = batchSize;     // batch size
+    l_rate = learnRate;     // learning rate
+    calcNLL = NLL;          // flag to calculate NLL over iterations (or not)
+
+    startWeights();
+    // TODO: Adicionar outras inicializações como parâmetro opcional??
 }
 
 void RBM::fit(Data trainData){
@@ -445,15 +498,8 @@ void RBM::fit(Data trainData){
         throw runtime_error(errorMessage);
     }
 
-    SampleType stype = CD;  // training method
-    int k_steps = 1;        // gibbs sampling steps
-    int n_iter = 50;         // number of iterations over data
-    int b_size = 1;         // batch size
-    double l_rate = 1;      // learning rate
-    bool calcNLL = false;   // flag to calculate NLL over iterations (or not)
-    // FIXME: Retirar variaveis temporarias (devem ir no setup)
-
     printInfo("------- TRAINING DATA -------");
+    // TODO: Print training setup?
 
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
     vector<VectorXd> batch, sampled;
@@ -461,9 +507,14 @@ void RBM::fit(Data trainData){
     VectorXd b_gradient(hSize), d_gradient(xSize);
     VectorXd h_hat(hSize);
     int actualSize;
+    double nll_val;
+
+    if (calcNLL) {
+        history.push_back(negativeLogLikelihood(trainData)); // Before training
+    }
 
     for (int it = 0; it < n_iter; ++it) {
-        cout << "Iteration " << it+1 << " of " << n_iter << endl;
+        //cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
         //if (it != 0) trainData.shuffleOrder();
@@ -523,7 +574,17 @@ void RBM::fit(Data trainData){
             //    cout << "xk = " << xk.transpose() << endl;
             //}
         }
+
+        //cout << "Done iteration " << it+1 << endl;
+
+        if (calcNLL) {
+        nll_val = negativeLogLikelihood(trainData);
+            history.push_back(nll_val);
+            cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
+        }
     }
+
+    isTrained = true;
 
     /*
     vecOut = sampleXtilde(stype, 4, vecIn);
@@ -547,6 +608,8 @@ double RBM::negativeLogLikelihood(Data data) {
         throw runtime_error(errorMessage);
     }
 
+    //cout << "Calculating NLL" << endl;
+
     double total = 0;
     int N = data.get_number_of_samples();
 
@@ -556,8 +619,25 @@ double RBM::negativeLogLikelihood(Data data) {
     }
     total = total/N;
 
-    total += log( normalizationConstant() );
+    //cout << "Partial: " << total << endl;
+
+    //total += log( normalizationConstant() );
+    total += log( normalizationConstant_effX() );
     return total;
+}
+
+vector<double> RBM::getTrainingHistory() {
+    if (!isTrained) {
+        string errorMessage;
+        errorMessage = "RBM has not been trained, and therefore has no training history";
+        printError(errorMessage);
+    }
+    if (!calcNLL) {
+        string errorMessage;
+        errorMessage = "RBM is not set to calculate NLL throughout training, no data available.";
+        printWarning(errorMessage);
+    }
+    return history;
 }
 
 // Energy methods
@@ -589,7 +669,7 @@ double RBM::normalizationConstant() {
 double RBM::partialZ(int n) {
     if (n == 0) {
         //cout << "current x: " << x.transpose() << "; and h: " << h.transpose() << endl;
-        return energy();
+        return exp( -energy() );
     }
     double ret = partialZ(n-1);
     if (n > hSize) {
@@ -602,6 +682,24 @@ double RBM::partialZ(int n) {
     return ret;
 }
 
+double RBM::normalizationConstant_effX() {
+    // TODO: Warning for intractable calculation?
+    // I am already putting in the NLL. Can this be used solo?
+    double ret = partialZ_effX(xSize);
+    //cout << "Normalization constant: " << ret << endl;
+    return ret;
+}
+double RBM::partialZ_effX(int n) {
+    if (n == 0) {
+        //cout << "current x: " << x.transpose() << "(F = " << freeEnergy() << ")" << endl;
+        return exp( -freeEnergy() );
+    }
+    double ret = partialZ_effX(n-1);
+    x(n-1) = abs(1 - x(n-1));
+    ret += partialZ_effX(n-1);
+
+    return ret;
+}
 
 
 // Test Functions
@@ -691,7 +789,7 @@ void RBM::validateSample(unsigned seed, int rep) {
 
     // Setup RBM
     setRandomSeed(seed);
-    startWeigths();
+    startWeights();
     startBiases();
     for (int k = 0; k < 5; ++k) {
         // Mix a bit x and h, to have non trivial probabilities

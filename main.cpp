@@ -5,7 +5,7 @@
 
 #include "RBM.h"
 
-//#include <iostream>
+#include <fstream>
 #include <stdlib.h>
 //#include <chrono>
 
@@ -147,13 +147,15 @@ void testRandomGenOnRBM(){
          << rbm.getRandomNumber() << " - " << rbm.getRandomNumber() << endl;
 }
 */
-/*
+
 void testSampling(int argc, char **argv){
     stringstream msg;
 
-    if (argc < 2) {
-        msg.str("You have entered too few arguments: only ");
-        msg << argc << " found.\n\tFirst argument should be X and second H (redo if done wrong)";
+    if (argc < 3) {
+        msg.str("");
+        msg << "You have entered too few arguments: only " << argc-1
+            << " found.\n\tShould give X and H values as argument "
+               "(redo if done wrong)";
         printError(msg.str());
         exit(1);
     }
@@ -162,26 +164,30 @@ void testSampling(int argc, char **argv){
     int H = atoi(argv[2]);    // Numbers in ASCII characters begin at 48
 
     if (X == 0) {
-        msg.str("Cannot have no visible units!\n\t\tExpecting a positive number, but received ");
-        msg << argv[1];
+        msg.str("");
+        msg << "Cannot have no visible units!\n\t\tExpecting a positive "
+               "number, but received " << argv[1];
         printError(msg.str());
         exit(1);
     }
     if (H == 0) {
-        msg.str("Cannot have no hidden units!\n\t\tExpecting a positive number, but received ");
-        msg << argv[2];
+        msg.str("");
+        msg << "Cannot have no hidden units!\n\t\tExpecting a positive "
+               "number, but received " << argv[2];
         printError(msg.str());
         exit(1);
     }
 
-    msg.str("You have set the RBM to have ");
-    msg << X << " visible units and " << H << " hidden ones.";
+    msg.str("");
+    msg << "You have set the RBM to have " << X << " visible units and "
+        << H << " hidden ones.";
     printInfo(msg.str());
 
     RBM rbm(X, H);
 
-    int check = rbm.setWeights(MatrixXd::Random(H,X));
-    if (check != 0){exit(1);}
+    int check;
+    //check = rbm.setWeights(MatrixXd::Random(H,X));
+    //if (check != 0){exit(1);}
     VectorXd vec = VectorXd::Constant(H,1);
     check = rbm.setHiddenUnits(vec);
     if (check != 0){exit(1);}
@@ -191,16 +197,22 @@ void testSampling(int argc, char **argv){
     //rbm.connectivity(true);
     //rbm.setConnectivity(mat);
 
-    rbm.setRandomSeed(X+H);
+    unsigned seed = 98;
+    if (argc >= 4) {
+        seed = atoi(argv[3]);
+        msg.str("");
+        msg << "Setting seed as: " << seed;
+        printInfo(msg.str());
+    }
+    rbm.setRandomSeed(seed);
+    rbm.startWeights();
     rbm.sampleXH();
 
     rbm.printVariables();
 
-    //rbm.fit();
-
     rbm.printVariables();
 }
-*/
+
 
 void testRandomGenerator(){
     RBM rbm1(2, 2);
@@ -238,24 +250,38 @@ void testaDataCreation(int size, int n){
     cout << "Relative frequency of first variable: "
          << bas.marginal_relativeFrequence(0) << endl;
 
-    Data* sets = bas.separateTrainTestSets(0.6);
+    vector<Data> sets = bas.separateTrainTestSets(0.6);
     cout << "Train set with " << sets[0].get_number_of_samples()
          << " samples and test set with " << sets[1].get_number_of_samples()
          << endl;
 
     RBM model(bas.get_sample_size(), bas.get_sample_size());
     model.setRandomSeed(18763258);
-    model.trainSetup();
 
     double nll = model.negativeLogLikelihood(bas);
     cout << "NLL before training: " << nll << endl;
 
+    model.trainSetup();
     model.fit(bas);
 
     model.printVariables();
 
     nll = model.negativeLogLikelihood(bas);
     cout << "NLL after training: " << nll << endl;
+}
+
+void checkNormalizationConstant(){
+    MatrixXd data = MatrixXd::Zero(2, 1); data(1,0) = 1;
+    Data bas(data);
+    RBM model(2, 2);
+
+    VectorXd b(2); b << 1, 1; model.setHiddenBiases(b);
+    VectorXd d(2); d << 1, 1; model.setVisibleBiases(d);
+    MatrixXd W = MatrixXd::Identity(2, 2); model.setWeights(W);
+
+    double nll = model.negativeLogLikelihood(bas);
+    cout << "NLL: " << nll << endl;
+    model.printVariables();
 }
 
 
@@ -265,59 +291,65 @@ int main(int argc, char **argv) {
     //testRandomGenOnRBM();
     //testSampling();
     //testRandomGenerator();
+    //testaDataCreation(4,32);
+    //checkNormalizationConstant();
 
-    testaDataCreation(2,10);
-
-    /*
     stringstream msg;
 
-    if (argc < 3) {
-        msg.str("");
-        msg << "You have entered too few arguments: only " << argc-1
-            << " found.\n\tShould give X and H values as argument "
-               "(redo if done wrong)";
-        printError(msg.str());
-        exit(1);
-    }
-
-    int X = atoi(argv[1]);
-    int H = atoi(argv[2]);    // Numbers in ASCII characters begin at 48
-
-    if (X == 0) {
-        msg.str("");
-        msg << "Cannot have no visible units!\n\t\tExpecting a positive "
-               "number, but received " << argv[1];
-        printError(msg.str());
-        exit(1);
-    }
-    if (H == 0) {
-        msg.str("");
-        msg << "Cannot have no hidden units!\n\t\tExpecting a positive "
-               "number, but received " << argv[2];
-        printError(msg.str());
-        exit(1);
-    }
-
-    msg.str("");
-    msg << "You have set the RBM to have " << X << " visible units and "
-        << H << " hidden ones.";
-    printInfo(msg.str());
-
-    RBM rbm(X, H);
-
-    unsigned seed = 98;
-    if (argc >= 4) {
-        seed = atoi(argv[3]);
+    unsigned seed = 18763258;
+    if (argc >= 2) {
+        seed = atoi(argv[1]);
         msg.str("");
         msg << "Setting seed as: " << seed;
         printInfo(msg.str());
     }
 
-    rbm.validateSample(seed, 100000);
+    int size = 4;
+    if (argc >= 3) {
+        size = atoi(argv[2]);
+        msg.str("");
+        msg << "Setting BAS size as: " << size;
+        printInfo(msg.str());
+    }
 
-    //rbm.setRandomSeed(seed);
-    //rbm.generatorTest();
-    */
+    int iter = 1000;
+    if (argc >= 4) {
+        iter = atoi(argv[3]);
+        msg.str("");
+        msg << "Setting number of iterations: " << iter;
+        printInfo(msg.str());
+    }
+
+    Data bas(DataDistribution::BAS, size);
+
+    for (int i = 0; i < bas.get_number_of_samples(); i++) {
+        cout << "------------" << endl;
+        RowVectorXd vec = bas.get_sample(i);
+        for (int l = 0; l < size; ++l) {
+            cout << vec.segment(l*size, size) << endl;
+        }
+    }
+    cout << "------------" << endl;
+
+    RBM model(bas.get_sample_size(), bas.get_sample_size());
+    model.setRandomSeed(seed);
+    model.trainSetup(SampleType::CD, 1, iter, 5, 0.1, true);
+    model.fit(bas);
+
+    vector<double> h = model.getTrainingHistory();
+
+    ofstream outdata;
+    outdata.open("nll_progress.csv"); // opens the file
+    if( !outdata ) { // file couldn't be opened
+        cerr << "Error: file could not be opened" << endl;
+        exit(1);
+    }
+
+    outdata << "# NLL through RBM training for BAS" << size << endl;
+    outdata << "NLL" << endl;
+    for (auto i: h)
+        outdata << i << endl;
+    outdata.close();
 
     return 0;
 }

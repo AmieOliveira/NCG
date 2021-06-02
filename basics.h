@@ -18,6 +18,9 @@ namespace colors {
 
 #include <iostream>
 #include <string>
+#include <vector>
+//#include <Python.h>
+
 using namespace std;
 using namespace colors;
 
@@ -25,5 +28,8 @@ using namespace colors;
 void printError(string msg);
 void printWarning(string msg);
 void printInfo(string msg);
+
+//// Plotting functions
+//void plotVectorPython(vector<double>);
 
 #endif //TESE_CÓDIGO_BASICS_H

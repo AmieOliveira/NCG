@@ -7,6 +7,7 @@
 
 #include <random>
 #include <vector>
+#include <cmath>
 #include "basics.h"
 #include "Eigen/Dense"
 
@@ -34,11 +35,17 @@ class Data {
     uniform_real_distribution<double>* p_dis;
 
     // Create data (to be called during initialization
+    void createData(DataDistribution distr, int size);
     void createData(DataDistribution distr, int size, int nSamples);
+
+    // Support data creation attributes and methods
+    int _idx;
+    void fill_bas(int n, vector<int> state);
 public:
     // Constructors
     //Data(char* data_path);
     Data(MatrixXd mat);
+    Data(DataDistribution distr, int size);
     Data(DataDistribution distr, int size, int nSamples);
     Data(unsigned seed,
          DataDistribution distr, int size, int nSamples);
@@ -54,7 +61,7 @@ public:
     // Sampling
     VectorXd get_sample(int idx);
     vector<VectorXd> get_batch(int idx, int size);
-    Data* separateTrainTestSets(double trainPercentage);
+    vector<Data> separateTrainTestSets(double trainPercentage);
     // Ideia inicial. Depois posso adicionar k-fold...
 };
 

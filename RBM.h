@@ -29,6 +29,7 @@ class RBM {
     bool patterns;      // True if connectivity patterns are active
     bool hasSeed;       // True if a seed for the random generator has been set
     bool trainReady;    // True if RBM has been setup for training
+    bool isTrained;     // True if RBM has been trained on some dataset
 
     // Dimensions
     int xSize, hSize;
@@ -62,7 +63,18 @@ class RBM {
     double freeEnergy(); // FIXME: Should give parameters?
 
     double normalizationConstant();
+    double normalizationConstant_effX();
     double partialZ(int n);
+    double partialZ_effX(int n);
+
+    // Training variables
+    SampleType stype;       // training method
+    int k_steps;            // gibbs sampling steps
+    int n_iter;             // number of iterations over data
+    int b_size;             // batch size
+    double l_rate;          // learning rate
+    bool calcNLL;           // flag to calculate NLL over iterations (or not)
+    vector<double> history; // NLL
 
 public:
     // Constructors
@@ -87,16 +99,16 @@ public:
     VectorXd getHiddenUnits();
 
     VectorXd getVisibleBiases();
-    //int setVisibleBiases(/* TODO */);
+    int setVisibleBiases(VectorXd vec);
 
     VectorXd getHiddenBiases();
-    //int setHiddenBiases(/* TODO */);
+    int setHiddenBiases(VectorXd vec);
 
     void startBiases();     // Starting randomly. Do not think this will be used for actual training
 
     MatrixXd getWeights();
     int setWeights(MatrixXd mat);
-    void startWeigths();    // Starting randomly, but maybe will want to add choices
+    void startWeights();    // Starting randomly, but maybe will want to add choices
 
     MatrixXd getConnectivity();
     int setConnectivity(MatrixXd mat);
@@ -109,12 +121,16 @@ public:
     VectorXd getProbabilities_h();
 
     // Training methods
-    void trainSetup(/* TODO: Arguments */);
+    void trainSetup();
+    void trainSetup(bool NLL);
+    void trainSetup(SampleType sampleType, int k, int iterations,
+                    int batchSize, double learnRate, bool NLL);
     void fit(Data trainData);
     // TODO: Retornar alguma coisa na função?
 
     // Evaluation methods
     double negativeLogLikelihood(Data data);
+    vector<double> getTrainingHistory();
 
     // Test Functions
     void printVariables();

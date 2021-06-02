@@ -16,6 +16,11 @@ Data::Data(MatrixXd mat) {
     //cout << _n << " samples" << endl;
 }
 
+Data::Data(DataDistribution distr, int size) {
+    hasSeed = false;
+    createData(distr, size);
+}
+
 Data::Data(DataDistribution distr, int size, int nSamples) {
     random_device rd;
     generator.seed(rd());
@@ -31,6 +36,60 @@ Data::Data(unsigned seed, DataDistribution distr, int size, int nSamples) {
     hasSeed = true;
 
     createData(distr, size, nSamples);
+}
+
+void Data::createData(DataDistribution distr, int size) {
+    printInfo("Starting Data creation");
+
+    switch (distr) {
+        case DataDistribution::BAS:
+        {
+            _size = size*size;
+            _n = pow(2, size + 1);
+            _data = MatrixXd::Zero(_size,_n);
+
+            vector<int> state(size, 0);
+            _idx = 0;
+
+            fill_bas(size, state);
+
+            break;
+        }
+        default:
+        {
+            string errorMessage = "Data distribution not implemented";
+            printError(errorMessage);
+            throw runtime_error(errorMessage);
+        }
+    }
+}
+
+void Data::fill_bas(int n, vector<int> state) {
+    if (n == 0) {
+        if ( all_of( state.begin(), state.end(), [](int i){return (i==0);} ) ) {
+            // Skips this samples, it's already zeros
+            _idx = _idx + 2;
+            return;
+        }
+
+        int s = state.size();
+        for (int i = 0; i < s; i++) {
+            for (int j = 0; j < s; j++) {
+                // Horizontal
+                _data(s*i + j, _idx) = state.at(i);
+
+                // Vertical
+                _data(s*j + i, _idx+1) = state.at(i);
+            }
+        }
+
+        _idx = _idx + 2;
+        return;
+    }
+
+    fill_bas(n-1, state);
+    state.at(n-1) = abs(1 - state.at(n-1));
+    fill_bas(n-1, state);
 }
 
 void Data::createData(DataDistribution distr, int size, int nSamples) {
@@ -105,7 +164,7 @@ vector<VectorXd> Data::get_batch(int idx, int size) {
     return batch;
 }
 
-Data* Data::separateTrainTestSets(double trainPercentage) {
+vector<Data> Data::separateTrainTestSets(double trainPercentage) {
     // Function generates two data objects, one with the train set
     //      and the other with the test set.
     // I am separating by the order the data already has, but
@@ -114,7 +173,9 @@ Data* Data::separateTrainTestSets(double trainPercentage) {
 
     Data trainData(_data.block(0,0,_size,limit));
     Data testData(_data.block(0,limit,_size,_n-limit));
-    Data datasets[2] = {trainData, testData};
+    vector<Data> datasets;
+    datasets.push_back(trainData);
+    datasets.push_back(testData);
 
     return datasets;
 }
