@@ -2,8 +2,8 @@
 // Created by Amanda Oliveira on 24/05/21.
 //
 
-#ifndef TESE_CÓDIGO_BASICS_H
-#define TESE_CÓDIGO_BASICS_H
+#ifndef BASICS_H
+#define BASICS_H
 
 namespace colors {
     // Colors
@@ -32,4 +32,4 @@ void printInfo(string msg);
 //// Plotting functions
 //void plotVectorPython(vector<double>);
 
-#endif //TESE_CÓDIGO_BASICS_H
+#endif //BASICS_H

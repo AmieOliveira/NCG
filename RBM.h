@@ -2,8 +2,8 @@
 // Created by Amanda Oliveira on 04/05/21.
 //
 
-#ifndef TESE_CÓDIGO_RBM_H
-#define TESE_CÓDIGO_RBM_H
+#ifndef RBM_H
+#define RBM_H
 
 // Libraries
 #include <random>
@@ -140,4 +140,4 @@ public:
     void validateSample(unsigned seed, int rep);
 };
 
-#endif //TESE_CÓDIGO_RBM_H
+#endif //RBM_H

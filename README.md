@@ -19,6 +19,15 @@ simultaneously.
 
 > TODO: How to run the code...
 
+Dependencies: This repository needs to have the Eigen 
+library installed (tested with Eigen3). 
+The path to the Eigen library must be given during 
+compilation.
+
+The script ``create_executable.sh`` is designed to 
+compile this program, and you must change the Eigen 
+library path to suit your computer's instalation.
 
 Note: Code developed in MacOS, with compiler Clang 
-(version 12.0.5), using C++ 14.
+(version 12.0.5), using C++ 14. Tested for Linux...vim  
+> TODO

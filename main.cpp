@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
-    int iter = 1000;
+    int iter = 6000;    // TODO: For 20k
     if (argc >= 4) {
         iter = atoi(argv[3]);
         msg.str("");
@@ -331,25 +331,34 @@ int main(int argc, char **argv) {
     }
     cout << "------------" << endl;
 
-    RBM model(bas.get_sample_size(), bas.get_sample_size());
-    model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, 1, iter, 5, 0.1, true);
-    model.fit(bas);
+    vector<int> k_values = {1, 2, 5, 10, 20, 100};
+    // TODO: Change code to run only one training, but receive argument for k value. Different k values and
+    //       repetition will be managed submitting multiple jobs 
 
-    vector<double> h = model.getTrainingHistory();
+    for (int k : k_values) {
+        RBM model(bas.get_sample_size(), bas.get_sample_size());
 
-    ofstream outdata;
-    outdata.open("nll_progress.csv"); // opens the file
-    if( !outdata ) { // file couldn't be opened
-        cerr << "Error: file could not be opened" << endl;
-        exit(1);
+        model.setRandomSeed(seed);
+        model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true);
+        model.fit(bas);
+
+        vector<double> h = model.getTrainingHistory();
+
+        ofstream outdata;
+        stringstream fname;
+        fname << "nll_progress_single_k" << k << ".csv";
+        outdata.open(fname.str()); // opens the file
+        if( !outdata ) { // file couldn't be opened
+            cerr << "Error: file could not be opened" << endl;
+            exit(1);
+        }
+
+        outdata << "# NLL through RBM training for BAS" << size << endl;
+        outdata << "NLL" << endl;
+        for (auto i: h)
+            outdata << i << endl;
+        outdata.close();
     }
-
-    outdata << "# NLL through RBM training for BAS" << size << endl;
-    outdata << "NLL" << endl;
-    for (auto i: h)
-        outdata << i << endl;
-    outdata.close();
 
     return 0;
 }

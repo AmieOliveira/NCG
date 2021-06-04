@@ -2,8 +2,8 @@
 // Created by Amanda Oliveira on 20/05/21.
 //
 
-#ifndef TESE_CÓDIGO_DATA_H
-#define TESE_CÓDIGO_DATA_H
+#ifndef DATA_H
+#define DATA_H
 
 #include <random>
 #include <vector>
@@ -66,4 +66,4 @@ public:
 };
 
 
-#endif //TESE_CÓDIGO_DATA_H
+#endif //DATA_H
