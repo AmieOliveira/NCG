@@ -2,6 +2,7 @@
 # Command to compile code
 
 g++ -std=c++14 -I/usr/local/include/eigen3/ main.cpp basics.cpp RBM.cpp Data.cpp -o main.exe
+g++ -std=c++14 -I/usr/local/include/eigen3/ completeGraph.cpp basics.cpp RBM.cpp Data.cpp -o complete.exe
 
 # TODO: Add possibility of executing code too...
 # Eu posso adicionar um argumento para compilar ou não,

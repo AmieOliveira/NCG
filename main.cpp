@@ -1,6 +1,5 @@
 //
 // Created by Amanda Oliveira on 04/05/21.
-//      Para compilar: "g++ -I /usr/local/include/eigen3/ main.cpp RBM.cpp -o main.exe"
 //
 
 #include "RBM.h"
@@ -312,9 +311,17 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
-    int iter = 6000;    // TODO: For 20k
+    int k = 10;
     if (argc >= 4) {
-        iter = atoi(argv[3]);
+        k = atoi(argv[3]);
+        msg.str("");
+        msg << "Setting number of sample steps: " << k;
+        printInfo(msg.str());
+    }
+
+    int iter = 6000;
+    if (argc >= 5) {
+        iter = atoi(argv[5]);
         msg.str("");
         msg << "Setting number of iterations: " << iter;
         printInfo(msg.str());
@@ -331,34 +338,57 @@ int main(int argc, char **argv) {
     }
     cout << "------------" << endl;
 
-    vector<int> k_values = {1, 2, 5, 10, 20, 100};
-    // TODO: Change code to run only one training, but receive argument for k value. Different k values and
-    //       repetition will be managed submitting multiple jobs 
+    int s_size = bas.get_sample_size();
+    RBM model(s_size, s_size);
 
-    for (int k : k_values) {
-        RBM model(bas.get_sample_size(), bas.get_sample_size());
-
-        model.setRandomSeed(seed);
-        model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true);
-        model.fit(bas);
-
-        vector<double> h = model.getTrainingHistory();
-
-        ofstream outdata;
-        stringstream fname;
-        fname << "nll_progress_single_k" << k << ".csv";
-        outdata.open(fname.str()); // opens the file
-        if( !outdata ) { // file couldn't be opened
-            cerr << "Error: file could not be opened" << endl;
-            exit(1);
+    MatrixXd connectivity = MatrixXd::Identity(s_size, s_size);     // Padrao 1: identidade (apenas um vizinho)
+    int neighbors = 1;
+    /*{   // Padrão 2: dois vizinhos
+        int i, j;
+        for (i=0; i<s_size; i++) {
+            j=i+1;
+            if (j >= s_size) j=j-s_size;
+            connectivity(i,j) = 1;
         }
+        neighbors = 2;
+    }*/
+    {   // Padrão 3: três vizinhos
+        int i,j;
+        for (i=0; i<s_size; i++) {
+            j = i+1;
+            if (j >= s_size) j = j-s_size;
+            connectivity(i,j) = 1;
+            j=j+1;
+            if (j >= s_size) j = j-s_size;
+            connectivity(i,j) = 1;
+        }
+        neighbors = 3;
+    } // TODO: Fazer função para gerar estes padrões...
+    model.connectivity(true);
+    model.setConnectivity(connectivity);
 
-        outdata << "# NLL through RBM training for BAS" << size << endl;
-        outdata << "NLL" << endl;
-        for (auto i: h)
-            outdata << i << endl;
-        outdata.close();
+    model.setRandomSeed(seed);
+    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true);
+    model.fit(bas);
+
+    vector<double> h = model.getTrainingHistory();
+
+    ofstream outdata;
+    stringstream fname;
+    fname << "nll_progress_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
+    outdata.open(fname.str()); // opens the file
+    if( !outdata ) { // file couldn't be opened
+        cerr << "Error: file could not be opened" << endl;
+        exit(1);
     }
+
+    outdata << "# NLL through RBM training for BAS" << size << endl;
+    outdata << "NLL" << endl;
+    for (auto i: h)
+        outdata << i << endl;
+    outdata.close();
+
+    model.printVariables();
 
     return 0;
 }
