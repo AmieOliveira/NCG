@@ -321,7 +321,7 @@ int main(int argc, char **argv) {
 
     int iter = 6000;
     if (argc >= 5) {
-        iter = atoi(argv[5]);
+        iter = atoi(argv[4]);
         msg.str("");
         msg << "Setting number of iterations: " << iter;
         printInfo(msg.str());
@@ -341,29 +341,9 @@ int main(int argc, char **argv) {
     int s_size = bas.get_sample_size();
     RBM model(s_size, s_size);
 
-    MatrixXd connectivity = MatrixXd::Identity(s_size, s_size);     // Padrao 1: identidade (apenas um vizinho)
-    int neighbors = 1;
-    /*{   // Padrão 2: dois vizinhos
-        int i, j;
-        for (i=0; i<s_size; i++) {
-            j=i+1;
-            if (j >= s_size) j=j-s_size;
-            connectivity(i,j) = 1;
-        }
-        neighbors = 2;
-    }*/
-    {   // Padrão 3: três vizinhos
-        int i,j;
-        for (i=0; i<s_size; i++) {
-            j = i+1;
-            if (j >= s_size) j = j-s_size;
-            connectivity(i,j) = 1;
-            j=j+1;
-            if (j >= s_size) j = j-s_size;
-            connectivity(i,j) = 1;
-        }
-        neighbors = 3;
-    } // TODO: Fazer função para gerar estes padrões...
+    //int neighbors = 5;
+    //MatrixXd connectivity = n_neightbors(s_size, s_size, neighbors);
+    MatrixXd connectivity = bas_connect(size);
     model.connectivity(true);
     model.setConnectivity(connectivity);
 
@@ -375,7 +355,8 @@ int main(int argc, char **argv) {
 
     ofstream outdata;
     stringstream fname;
-    fname << "nll_progress_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
+    //fname << "nll_progress_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
+    fname << "nll_progress_single_basConnect_k" << k << ".csv";
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;

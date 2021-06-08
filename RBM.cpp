@@ -35,6 +35,7 @@ RBM::RBM(int X, int H) {
 RBM::RBM(int X, int H, bool use_pattern) {
     RBM(X,H);
     patterns = use_pattern;
+    C = W.cwiseProduct(A);
     p_W = &C;
 }
 
@@ -554,6 +555,8 @@ void RBM::fit(Data trainData){
             W_gradient = W_gradient/actualSize;
             if (patterns) W_gradient = W_gradient.cwiseProduct(A);
             W = W + l_rate*W_gradient;
+            if (patterns) {C = W.cwiseProduct(A);}
+            // Ao atualizar W, temos que atualizar C também!
 
             b_gradient = b_gradient/actualSize;
             b = b + l_rate*b_gradient;

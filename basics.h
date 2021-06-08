@@ -21,6 +21,8 @@ namespace colors {
 #include <vector>
 //#include <Python.h>
 
+#include "Eigen/Dense"
+
 using namespace std;
 using namespace colors;
 
@@ -28,6 +30,10 @@ using namespace colors;
 void printError(string msg);
 void printWarning(string msg);
 void printInfo(string msg);
+
+// Connectivity Matrixes
+Eigen::MatrixXd n_neightbors(int nRows, int nCols, int nNeighs);
+Eigen::MatrixXd bas_connect(int basSize);
 
 //// Plotting functions
 //void plotVectorPython(vector<double>);
