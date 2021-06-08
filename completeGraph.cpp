@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     string filePath = "./";
     if (argc >= 3) {
         filePath = argv[2];
-        if (filePath.back() != "/") filePath = filePath + "/";
+        if ( !(filePath[filePath.length() - 1] == '/') ) filePath = filePath + "/";
     }
     msg.str("");
     msg << "File directory: " << filePath;
