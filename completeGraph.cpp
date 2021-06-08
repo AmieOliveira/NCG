@@ -32,33 +32,42 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
-    unsigned seed = 18763258;
+    string filePath = "./";
     if (argc >= 3) {
-        seed = atoi(argv[2]);
-        msg.str("");
-        msg << "Setting seed as: " << seed;
-        printInfo(msg.str());
+        filePath = argv[2];
+        if (filePath.back() != "/") filePath = filePath + "/";
     }
+    msg.str("");
+    msg << "File directory: " << filePath;
+    printInfo(msg.str());
+
+    unsigned seed = 18763258;
+    if (argc >= 4) {
+        seed = atoi(argv[3]);
+    }
+    msg.str("");
+    msg << "Setting seed as: " << seed;
+    printInfo(msg.str());
 
     int size = 4;
-    if (argc >= 4) {
-        size = atoi(argv[3]);
+    if (argc >= 5) {
+        size = atoi(argv[4]);
         msg.str("");
         msg << "Setting BAS size as: " << size;
         printInfo(msg.str());
     }
 
     int k = 10;
-    if (argc >= 5) {
-        k = atoi(argv[4]);
+    if (argc >= 6) {
+        k = atoi(argv[5]);
         msg.str("");
         msg << "Setting number of sample steps: " << k;
         printInfo(msg.str());
     }
 
     int iter = 6000;
-    if (argc >= 6) {
-        iter = atoi(argv[5]);
+    if (argc >= 7) {
+        iter = atoi(argv[6]);
         msg.str("");
         msg << "Setting number of iterations: " << iter;
         printInfo(msg.str());
@@ -77,7 +86,7 @@ int main(int argc, char **argv) {
 
     ofstream outdata;
     stringstream fname;
-    fname << "nll_progress_complete_k" << k << "-run" << fileIDX << ".csv";
+    fname << filePath << "nll_progress_complete_k" << k << "-run" << fileIDX << ".csv";
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
