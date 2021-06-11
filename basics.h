@@ -34,6 +34,7 @@ void printInfo(string msg);
 // Connectivity Matrixes
 Eigen::MatrixXd n_neightbors(int nRows, int nCols, int nNeighs);
 Eigen::MatrixXd bas_connect(int basSize);
+Eigen::MatrixXd bas_connect_2(int basSize);
 
 //// Plotting functions
 //void plotVectorPython(vector<double>);

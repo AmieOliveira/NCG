@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
     ofstream outdata;
     stringstream fname;
     fname << filePath << "nll_progress_complete_k" << k << "-run" << fileIDX << ".csv";
+    cout << "Saving output as " << fname.str() << endl;
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
