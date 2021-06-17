@@ -1,0 +1,54 @@
+#############################
+#   Complete net NLL test   #
+#############################
+
+Dir                     = complete/
+Path                    = /home/users/amandacno/ConnectivityPatterns/result/$(Dir)
+
+Executable              = complete.exe
+Universe                = vanilla
+should_transfer_files   = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+Arguments		= "$(Step) $(Path) $(Step) 4 1 20000"
+Log			= log/complete_CD-1_$(Step).log
+Error			= error/complete_CD-1_$(Step).err
+Output			= out/complete_CD-1_$(Step).out
+transfer_output_files	= $(Path)nll_progress_complete_k1-run$(Step).csv
+Queue 25
+
+Arguments		= "$(Step) $(Path) $(Step) 4 2 20000"
+Log			= log/complete_CD-2_$(Step).log
+Error			= error/complete_CD-2_$(Step).err
+Output			= out/complete_CD-2_$(Step).out
+transfer_output_files	= $(Path)nll_progress_complete_k2-run$(Step).csv
+Queue 25
+
+Arguments		= "$(Step) $(Path) $(Step) 4 5 20000"
+Log			= log/complete_CD-5_$(Step).log
+Error			= error/complete_CD-5_$(Step).err
+Output			= out/complete_CD-5_$(Step).out
+transfer_output_files	= $(Path)nll_progress_complete_k5-run$(Step).csv
+Queue 25
+
+Arguments		= "$(Step) $(Path) $(Step) 4 10 20000"
+Log			= log/complete_CD-10_$(Step).log
+Error			= error/complete_CD-10_$(Step).err
+Output			= out/complete_CD-10_$(Step).out
+transfer_output_files	= $(Path)nll_progress_complete_k10-run$(Step).csv
+Queue 25
+
+Arguments		= "$(Step) $(Path) $(Step) 4 20 20000"
+Log			= log/complete_CD-20_$(Step).log
+Error			= error/complete_CD-20_$(Step).err
+Output			= out/complete_CD-20_$(Step).out
+transfer_output_files	= $(Path)nll_progress_complete_k20-run$(Step).csv
+Queue 25
+
+Arguments		= "$(Step) $(Path) $(Step) 4 100 20000"
+Log			= log/complete_CD-100_$(Step).log
+Error			= error/complete_CD-100_$(Step).err
+Output			= out/complete_CD-100_$(Step).out
+transfer_output_files	= $(Path)nll_progress_complete_k100-run$(Step).csv
+Queue 25
+

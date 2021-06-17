@@ -1,0 +1,22 @@
+############################
+# Teste de submição de job #
+############################
+
+Dir			= test1/
+Path 			= /home/users/amandacno/ConnectivityPatterns/result/$(Dir)
+k			= 1
+BASsize			= 3
+iterations 		= 1000
+
+Executable		= complete.exe
+Universe 		= vanilla
+should_transfer_files	= IF_NEEDED
+when_to_transfer_output	= ON_EXIT
+# requirements         	= TARGET.Machine == node11 
+Arguments		= "$(Step) $(Path) $(Step) $(BASsize) $(k) $(iterations)"
+Log 			= log/test1_$(Step).log
+Output			= out/test1_$(Step).out
+Error 			= error/test1_$(Step).err
+transfer_output_files	= $(Path)nll_progress_complete_k$(k)-run0.csv $(Path)nll_progress_complete_k$(k)-run1.csv
+Queue 2
+
