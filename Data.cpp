@@ -1,5 +1,5 @@
 //
-// Created by Amanda Oliveira on 20/05/21.
+// Data format and datasets to be used by the RBM
 //
 
 #include "Data.h"

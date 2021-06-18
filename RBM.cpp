@@ -1,5 +1,5 @@
 //
-// Created by Amanda Oliveira on 04/05/21.
+// RBM implementation
 //
 
 #include "RBM.h"
@@ -581,7 +581,7 @@ void RBM::fit(Data trainData){
         //cout << "Done iteration " << it+1 << endl;
 
         if (calcNLL) {
-        nll_val = negativeLogLikelihood(trainData);
+            nll_val = negativeLogLikelihood(trainData);
             history.push_back(nll_val);
             cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
         }

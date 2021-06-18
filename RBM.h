@@ -1,5 +1,5 @@
 //
-// Created by Amanda Oliveira on 04/05/21.
+// RBM implementation
 //
 
 #ifndef RBM_H

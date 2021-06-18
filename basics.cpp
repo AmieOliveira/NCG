@@ -1,5 +1,5 @@
 //
-// Created by Amanda Oliveira on 24/05/21.
+// Helper functions
 //
 
 #include "basics.h"
@@ -89,10 +89,41 @@ Eigen::MatrixXd bas_connect(int basSize) {
     return ret;
 }
 
-// TODO: bas_connect considering possibility of not sqare matrix
+// TODO: bas_connect considering possibility of not square matrix
 //       After all, the resulting matrix will seldomly be square
-//       (only for 2x2, and wvwn then it suppresses a desired hidden unit)
+//       (only for 2x2, and even then it suppresses a desired hidden unit)
 //Eigen::MatrixXd bas_connect(int size, )
+
+Eigen::MatrixXd bas_connect_2(int basSize) {
+    if (basSize < 1) {
+        string msg = "Invalid size, should be a positive non null number";
+        printError(msg);
+        throw;
+    } else if (basSize == 1) {
+        string msg = "BAS 1x1 is a very trivial case. Check if you've "
+                     "estipulated the size correctly";
+        printWarning(msg);
+
+        return Eigen::MatrixXd::Constant(1, 1, 1);
+    }
+
+    int size = basSize*basSize;
+
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(size, size);
+
+    int row = 0, col = 0;
+    for (int j = 0; j < size; j++) {
+        row = (int) j/basSize;
+        col = j % basSize;
+
+        for (int a = 0; a < basSize; a++) {
+            ret(j, basSize*row + a) = 1;  // Adding row
+            ret(j, basSize*a + col) = 1;  // Adding column
+        }
+    }
+
+    return ret;
+}
 
 
 

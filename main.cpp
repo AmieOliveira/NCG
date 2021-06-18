@@ -10,6 +10,9 @@
 
 using namespace std;
 
+// FIXME: Change the name of this file to "tester"?
+//        Posso ir fazendo arquivos como o completeGraph para de fato serem usados...
+
 // TODO: Add parser and logger
 
 // Funções de teste (auxiliares)
@@ -341,9 +344,11 @@ int main(int argc, char **argv) {
     int s_size = bas.get_sample_size();
     RBM model(s_size, s_size);
 
-    //int neighbors = 5;
+    //int neighbors = 12;
+    //cout << "Using " << neighbors << " neighbors connectivity" << endl;
     //MatrixXd connectivity = n_neightbors(s_size, s_size, neighbors);
-    MatrixXd connectivity = bas_connect(size);
+    //MatrixXd connectivity = bas_connect(size);
+    MatrixXd connectivity = bas_connect_2(size);
     model.connectivity(true);
     model.setConnectivity(connectivity);
 
@@ -356,7 +361,8 @@ int main(int argc, char **argv) {
     ofstream outdata;
     stringstream fname;
     //fname << "nll_progress_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
-    fname << "nll_progress_single_basConnect_k" << k << ".csv";
+    //fname << "nll_progress_single_basConnect_k" << k << ".csv";
+    fname << "nll_progress_single_basConnect2_k" << k << ".csv";
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;

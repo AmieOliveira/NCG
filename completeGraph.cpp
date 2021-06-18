@@ -76,7 +76,15 @@ int main(int argc, char **argv) {
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
 
-    RBM model(s_size, s_size);
+    int H = s_size;
+    if (argc >= 8) {
+        H = atoi(argv[7]);
+        msg.str("");
+        msg << "Setting number of hidden neurons: " << H;
+        printInfo(msg.str());
+    }
+
+    RBM model(s_size, H);
 
     model.setRandomSeed(seed);
     model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true);
@@ -86,7 +94,10 @@ int main(int argc, char **argv) {
 
     ofstream outdata;
     stringstream fname;
-    fname << filePath << "nll_progress_complete_k" << k << "-run" << fileIDX << ".csv";
+    fname << filePath << "nll_progress_complete_k" << k;
+    if (H != s_size) fname << "_H" << H;
+    fname << "-run" << fileIDX << ".csv";
+    cout << "Saving output as " << fname.str() << endl;
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
