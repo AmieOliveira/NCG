@@ -1,5 +1,5 @@
 //
-// Created by Amanda Oliveira on 24/05/21.
+// Helper functions
 //
 
 #include "basics.h"
