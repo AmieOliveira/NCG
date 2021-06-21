@@ -14,41 +14,41 @@ Arguments		= "$(Step) $(Path) $(Step) 4 1 20000"
 Log			= log/complete_CD-1_$(Step).log
 Error			= error/complete_CD-1_$(Step).err
 Output			= out/complete_CD-1_$(Step).out
-transfer_output_files	= $(Path)nll_progress_complete_k1-run$(Step).csv
+transfer_output_files	= $(Path)nll_progress_complete_k1-run0.csv $(Path)nll_progress_complete_k1-run1.csv $(Path)nll_progress_complete_k1-run2.csv $(Path)nll_progress_complete_k1-run3.csv $(Path)nll_progress_complete_k1-run4.csv $(Path)nll_progress_complete_k1-run5.csv $(Path)nll_progress_complete_k1-run6.csv $(Path)nll_progress_complete_k1-run7.csv $(Path)nll_progress_complete_k1-run8.csv $(Path)nll_progress_complete_k1-run9.csv $(Path)nll_progress_complete_k1-run10.csv $(Path)nll_progress_complete_k1-run11.csv $(Path)nll_progress_complete_k1-run12.csv $(Path)nll_progress_complete_k1-run13.csv $(Path)nll_progress_complete_k1-run14.csv $(Path)nll_progress_complete_k1-run15.csv $(Path)nll_progress_complete_k1-run16.csv $(Path)nll_progress_complete_k1-run17.csv $(Path)nll_progress_complete_k1-run18.csv $(Path)nll_progress_complete_k1-run19.csv $(Path)nll_progress_complete_k1-run20.csv $(Path)nll_progress_complete_k1-run21.csv $(Path)nll_progress_complete_k1-run22.csv $(Path)nll_progress_complete_k1-run23.csv $(Path)nll_progress_complete_k1-run24.csv
 Queue 25
 
 Arguments		= "$(Step) $(Path) $(Step) 4 2 20000"
 Log			= log/complete_CD-2_$(Step).log
 Error			= error/complete_CD-2_$(Step).err
 Output			= out/complete_CD-2_$(Step).out
-transfer_output_files	= $(Path)nll_progress_complete_k2-run$(Step).csv
+transfer_output_files	= $(Path)nll_progress_complete_k2-run0.csv $(Path)nll_progress_complete_k2-run1.csv $(Path)nll_progress_complete_k2-run2.csv $(Path)nll_progress_complete_k2-run3.csv $(Path)nll_progress_complete_k2-run4.csv $(Path)nll_progress_complete_k2-run5.csv $(Path)nll_progress_complete_k2-run6.csv $(Path)nll_progress_complete_k2-run7.csv $(Path)nll_progress_complete_k2-run8.csv $(Path)nll_progress_complete_k2-run9.csv $(Path)nll_progress_complete_k2-run10.csv $(Path)nll_progress_complete_k2-run11.csv $(Path)nll_progress_complete_k2-run12.csv $(Path)nll_progress_complete_k2-run13.csv $(Path)nll_progress_complete_k2-run14.csv $(Path)nll_progress_complete_k2-run15.csv $(Path)nll_progress_complete_k2-run16.csv $(Path)nll_progress_complete_k2-run17.csv $(Path)nll_progress_complete_k2-run18.csv $(Path)nll_progress_complete_k2-run19.csv $(Path)nll_progress_complete_k2-run20.csv $(Path)nll_progress_complete_k2-run21.csv $(Path)nll_progress_complete_k2-run22.csv $(Path)nll_progress_complete_k2-run23.csv $(Path)nll_progress_complete_k2-run24.csv
 Queue 25
 
 Arguments		= "$(Step) $(Path) $(Step) 4 5 20000"
 Log			= log/complete_CD-5_$(Step).log
 Error			= error/complete_CD-5_$(Step).err
 Output			= out/complete_CD-5_$(Step).out
-transfer_output_files	= $(Path)nll_progress_complete_k5-run$(Step).csv
+transfer_output_files	= $(Path)nll_progress_complete_k5-run0.csv $(Path)nll_progress_complete_k5-run1.csv $(Path)nll_progress_complete_k5-run2.csv $(Path)nll_progress_complete_k5-run3.csv $(Path)nll_progress_complete_k5-run4.csv $(Path)nll_progress_complete_k5-run5.csv $(Path)nll_progress_complete_k5-run6.csv $(Path)nll_progress_complete_k5-run7.csv $(Path)nll_progress_complete_k5-run8.csv $(Path)nll_progress_complete_k5-run9.csv $(Path)nll_progress_complete_k5-run10.csv $(Path)nll_progress_complete_k5-run11.csv $(Path)nll_progress_complete_k5-run12.csv $(Path)nll_progress_complete_k5-run13.csv $(Path)nll_progress_complete_k5-run14.csv $(Path)nll_progress_complete_k5-run15.csv $(Path)nll_progress_complete_k5-run16.csv $(Path)nll_progress_complete_k5-run17.csv $(Path)nll_progress_complete_k5-run18.csv $(Path)nll_progress_complete_k5-run19.csv $(Path)nll_progress_complete_k5-run20.csv $(Path)nll_progress_complete_k5-run21.csv $(Path)nll_progress_complete_k5-run22.csv $(Path)nll_progress_complete_k5-run23.csv $(Path)nll_progress_complete_k5-run24.csv
 Queue 25
 
 Arguments		= "$(Step) $(Path) $(Step) 4 10 20000"
 Log			= log/complete_CD-10_$(Step).log
 Error			= error/complete_CD-10_$(Step).err
 Output			= out/complete_CD-10_$(Step).out
-transfer_output_files	= $(Path)nll_progress_complete_k10-run$(Step).csv
+transfer_output_files	= $(Path)nll_progress_complete_k10-run0.csv $(Path)nll_progress_complete_k10-run1.csv $(Path)nll_progress_complete_k10-run2.csv $(Path)nll_progress_complete_k10-run3.csv $(Path)nll_progress_complete_k10-run4.csv $(Path)nll_progress_complete_k10-run5.csv $(Path)nll_progress_complete_k10-run6.csv $(Path)nll_progress_complete_k10-run7.csv $(Path)nll_progress_complete_k10-run8.csv $(Path)nll_progress_complete_k10-run9.csv $(Path)nll_progress_complete_k10-run10.csv $(Path)nll_progress_complete_k10-run11.csv $(Path)nll_progress_complete_k10-run12.csv $(Path)nll_progress_complete_k10-run13.csv $(Path)nll_progress_complete_k10-run14.csv $(Path)nll_progress_complete_k10-run15.csv $(Path)nll_progress_complete_k10-run16.csv $(Path)nll_progress_complete_k10-run17.csv $(Path)nll_progress_complete_k10-run18.csv $(Path)nll_progress_complete_k10-run19.csv $(Path)nll_progress_complete_k10-run20.csv $(Path)nll_progress_complete_k10-run21.csv $(Path)nll_progress_complete_k10-run22.csv $(Path)nll_progress_complete_k10-run23.csv $(Path)nll_progress_complete_k10-run24.csv
 Queue 25
 
 Arguments		= "$(Step) $(Path) $(Step) 4 20 20000"
 Log			= log/complete_CD-20_$(Step).log
 Error			= error/complete_CD-20_$(Step).err
 Output			= out/complete_CD-20_$(Step).out
-transfer_output_files	= $(Path)nll_progress_complete_k20-run$(Step).csv
+transfer_output_files	= $(Path)nll_progress_complete_k20-run0.csv $(Path)nll_progress_complete_k20-run1.csv $(Path)nll_progress_complete_k20-run2.csv $(Path)nll_progress_complete_k20-run3.csv $(Path)nll_progress_complete_k20-run4.csv $(Path)nll_progress_complete_k20-run5.csv $(Path)nll_progress_complete_k20-run6.csv $(Path)nll_progress_complete_k20-run7.csv $(Path)nll_progress_complete_k20-run8.csv $(Path)nll_progress_complete_k20-run9.csv $(Path)nll_progress_complete_k20-run10.csv $(Path)nll_progress_complete_k20-run11.csv $(Path)nll_progress_complete_k20-run12.csv $(Path)nll_progress_complete_k20-run13.csv $(Path)nll_progress_complete_k20-run14.csv $(Path)nll_progress_complete_k20-run15.csv $(Path)nll_progress_complete_k20-run16.csv $(Path)nll_progress_complete_k20-run17.csv $(Path)nll_progress_complete_k20-run18.csv $(Path)nll_progress_complete_k20-run19.csv $(Path)nll_progress_complete_k20-run20.csv $(Path)nll_progress_complete_k20-run21.csv $(Path)nll_progress_complete_k20-run22.csv $(Path)nll_progress_complete_k20-run23.csv $(Path)nll_progress_complete_k20-run24.csv
 Queue 25
 
 Arguments		= "$(Step) $(Path) $(Step) 4 100 20000"
 Log			= log/complete_CD-100_$(Step).log
 Error			= error/complete_CD-100_$(Step).err
 Output			= out/complete_CD-100_$(Step).out
-transfer_output_files	= $(Path)nll_progress_complete_k100-run$(Step).csv
+transfer_output_files	= $(Path)nll_progress_complete_k100-run0.csv $(Path)nll_progress_complete_k100-run1.csv $(Path)nll_progress_complete_k100-run2.csv $(Path)nll_progress_complete_k100-run3.csv $(Path)nll_progress_complete_k100-run4.csv $(Path)nll_progress_complete_k100-run5.csv $(Path)nll_progress_complete_k100-run6.csv $(Path)nll_progress_complete_k100-run7.csv $(Path)nll_progress_complete_k100-run8.csv $(Path)nll_progress_complete_k100-run9.csv $(Path)nll_progress_complete_k100-run10.csv $(Path)nll_progress_complete_k100-run11.csv $(Path)nll_progress_complete_k100-run12.csv $(Path)nll_progress_complete_k100-run13.csv $(Path)nll_progress_complete_k100-run14.csv $(Path)nll_progress_complete_k100-run15.csv $(Path)nll_progress_complete_k100-run16.csv $(Path)nll_progress_complete_k100-run17.csv $(Path)nll_progress_complete_k100-run18.csv $(Path)nll_progress_complete_k100-run19.csv $(Path)nll_progress_complete_k100-run20.csv $(Path)nll_progress_complete_k100-run21.csv $(Path)nll_progress_complete_k100-run22.csv $(Path)nll_progress_complete_k100-run23.csv $(Path)nll_progress_complete_k100-run24.csv
 Queue 25
 

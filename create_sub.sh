@@ -18,7 +18,14 @@ do
 	echo -e "Log\t\t\t= log/complete_CD-${k}_\$(Step).log" >> $file
 	echo -e "Error\t\t\t= error/complete_CD-${k}_\$(Step).err" >> $file
 	echo -e "Output\t\t\t= out/complete_CD-${k}_\$(Step).out" >> $file
-	echo -e "transfer_output_files\t= \$(Path)nll_progress_complete_k${k}-run\$(Step).csv" >> $file
+
+	echo -n -e "transfer_output_files\t= \$(Path)nll_progress_complete_k${k}-run0.csv" >> $file
+	for ((idx=1; idx<$REPEAT; idx++)) 
+	do
+		echo -n -e " \$(Path)nll_progress_complete_k${k}-run${idx}.csv" >> $file
+	done
+	echo -e "\n" >> $file
+
 	echo -e "Queue $REPEAT" >> $file
 	echo -e "" >> $file
 done
