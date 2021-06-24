@@ -3,10 +3,12 @@
 import numpy as np
 from sklearn.neural_network import BernoulliRBM
 
-size = 4
+size = 6
 
 # Create BAS 4x4 data
-data = np.zeros( ( 2**(size+1), size**2 ) )
+dataSize = 2**(size+1)
+data = np.zeros( ( dataSize, size**2 ) )
+labels = np.zeros( dataSize )
 vec = np.zeros(size)
 idx = 0
 
@@ -28,6 +30,9 @@ def fill_BAS(n, vector):
                 # Vertical
                 data[idx+1, size*j + i] = vector[i]
 
+        labels[idx] = 0
+        labels[idx+1] = 1
+
         idx = idx + 2
         return
 
@@ -43,8 +48,8 @@ print(data)
 
 model = BernoulliRBM(n_components=size**2, learning_rate=0.1, n_iter=100, batch_size=5, verbose=1)
 
-model.fit(data)
+model.fit(data)#, labels)
 
 scores = model.score_samples(data)
 #print(scores)
-print(f"NLL: {-sum(scores)/32}")
+print(f"NLL: {-sum(scores)/dataSize}")
