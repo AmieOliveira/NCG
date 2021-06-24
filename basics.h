@@ -19,6 +19,7 @@ namespace colors {
 #include <iostream>
 #include <string>
 #include <vector>
+#include <random>
 //#include <Python.h>
 
 #include "Eigen/Dense"
@@ -32,9 +33,21 @@ void printWarning(string msg);
 void printInfo(string msg);
 
 // Connectivity Matrixes
-Eigen::MatrixXd n_neightbors(int nRows, int nCols, int nNeighs);
+Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs);
 Eigen::MatrixXd bas_connect(int basSize);
 Eigen::MatrixXd bas_connect_2(int basSize);
+
+// Randomizing Connectivity
+class Mixer {
+public:
+    unsigned seed;
+    mt19937 generator;
+
+    Mixer();
+    Mixer(unsigned s);
+
+    Eigen::MatrixXd mix_neighbors(Eigen::MatrixXd regPattern, int iter);
+};
 
 //// Plotting functions
 //void plotVectorPython(vector<double>);

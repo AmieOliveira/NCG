@@ -18,7 +18,7 @@ void printInfo(string msg){
 }
 
 // Connectivity Matrixes
-Eigen::MatrixXd n_neightbors(int nRows, int nCols, int nNeighs) {
+Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs) {
     if (nNeighs <= 0) {
         string msg = "Invalid number of neighbors, set 1 or higher";
         printError(msg);
@@ -126,6 +126,96 @@ Eigen::MatrixXd bas_connect_2(int basSize) {
 }
 
 
+// Randomizing Connectivity
+Mixer::Mixer(unsigned s) {
+    seed = s;
+    generator.seed(seed);
+}
+Mixer::Mixer() {
+    random_device rd;
+    seed = rd();
+    generator.seed(seed);
+}
+
+Eigen::MatrixXd Mixer::mix_neighbors(Eigen::MatrixXd regPattern, int iter) {
+    // This function considers that the given pattern is regular, that is,
+    //      all vertices of a layer have the same degree
+    if (iter == 0) {
+        string msg = "Given argument for zero iterations, no modifications made!";
+        printWarning(msg);
+        return regPattern;
+    }
+
+    int H = regPattern.rows();
+    int X = regPattern.cols();
+    int edges_h = 0;
+    for (int j=0; j<X; j++) {
+        if (regPattern(0,j) == 1) edges_h++;
+    }
+    //cout << "Matrix " << H << "x" << X << ". " << edges_h << " neighbors per h." << endl;
+
+    uniform_int_distribution<int> rdnH(0, H-1);
+    uniform_int_distribution<int> rdn_edge(1, edges_h);
+
+    Eigen::MatrixXd ret = regPattern;
+    int i1, i2, j1, j2;
+    int aux;
+    bool same;
+
+    for (int it=0; it < iter; it++) {
+        i1 = rdnH(generator);
+        aux = rdn_edge(generator);  // j1 is the aux-th edge from hidden unit i1
+        for (int j=0; j<X; j++) {   // Finding j1
+            if (ret(i1,j) == 1) {
+                aux--;
+                if (aux == 0) {
+                    j1 = j;
+                    break;
+                }
+            }
+        }
+        same = true;
+
+        while (same) {
+            i2 = rdnH(generator);
+            aux = rdn_edge(generator);  // j2 is the aux-th edge from hidden unit i2
+            for (int j=0; j<X; j++) {   // Finding j2
+                if (ret(i2,j) == 1) {
+                    aux--;
+                    if (aux == 0) {
+                        j2 = j;
+                        break;
+                    }
+                }
+            }
+
+            same = ((i1 == i2) && (j1 == j2));
+            //cout << "(" << i1 << "," << j1 << "), ("  << i2 << "," << j2 << ")." << endl;
+        }
+        ret(i1,j1) = 0;
+        ret(i2,j2) = 0;
+
+        if ( (ret(i1,j2) == 1) || (ret(i2,j1) == 1) ) {
+            // Invalid switch!
+            ret(i1,j1) = 1;
+            ret(i2,j2) = 1;
+            it--;
+            continue;
+        }
+        ret(i1,j2) = 1;
+        ret(i2,j1) = 1;
+
+        //cout << "Old: (" << i1 << "," << j1 << "), ("  << i2 << "," << j2 << ")." << endl;
+        //cout << "New: (" << i1 << "," << j2 << "), ("  << i2 << "," << j1 << ")." << endl;
+        //cout << ret << endl;
+    }
+
+    return ret;
+
+}
+
+// TODO: Mixing when the pattern is not regular
+//       (will have to sample h_i according to degrees...)
 
 /*
 void plotVectorPython(vector<double>) {
