@@ -30,7 +30,7 @@ for k in k_values:
 
     for r in range(repeat):
         filename = outputPath + "/" + inputBase.format(k, r)
-        df = pd.read_csv(filename, comment="#")
+        df = pd.read_csv(filename, comment="#")  # index_col=0
         df = df.astype(float)
         df = df.iloc[0:lim_iter]
         # df = df.rename(columns={"NLL": f"CD-{k}"})
