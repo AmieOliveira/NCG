@@ -116,10 +116,17 @@ int main(int argc, char **argv) {
     }
 
     outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors (default)." << endl;
+    if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
     outdata << "NLL" << endl;
-    for (auto i: h)
-        outdata << i << endl;
-    outdata.close();
+    //for (auto i: h)
+    //    outdata << i << endl;
+    //outdata.close();
+
+    outdata << ",NLL" << endl;
+    for (int i=0; i<(float(iter)/f_nll); i++) {
+        outdata << i*f_nll << "," << h.at(i) << endl;
+    }
+    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
 
     model.printVariables();
 

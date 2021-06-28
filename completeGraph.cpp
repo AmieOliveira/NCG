@@ -106,16 +106,24 @@ int main(int argc, char **argv) {
     if (H != s_size) fname << "_H" << H;
     fname << "-run" << fileIDX << ".csv";
     cout << "Saving output as " << fname.str() << endl;
+
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
         exit(1);
     }
-
     outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << " All weights." << endl;
-    outdata << "NLL" << endl;
-    for (auto i: h)
-        outdata << i << endl;
+    if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
+    //outdata << "NLL" << endl;
+    //for (auto i: h)
+    //    outdata << i << endl;
+
+    outdata << ",NLL" << endl;
+    for (int i=0; i<(float(iter)/f_nll); i++) {
+        outdata << i*f_nll << "," << h.at(i) << endl;
+    }
+    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
+
     outdata.close();
 
     model.printVariables();

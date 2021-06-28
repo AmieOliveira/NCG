@@ -6,11 +6,11 @@ from math import log
 
 k_values = [10]  # [100, 20, 10, 5, 2, 1]
 n_values = [4, 6, 8, 12, 16]
-H_values = [100, 16, 9, 8, 6, 4]
+#H_values = [16, 9, 8, 6, 4]
 
 size = "default"  # "default", "wide"
 lim_iter = int(1e3)
-plotType = "diffHidden_complete"  # "complete", "neighbors", "basConnect", "diffHidden_complete"
+plotType = "basConnect"  # "complete", "neighbors", "basConnect", "diffHidden_complete"
 
 dataType = "bas"
 dataSize = 4
@@ -84,7 +84,7 @@ elif plotType == "diffHidden_complete":
     plt.title("NLL evolution through RBM training")
 
 plt.xlabel("Iteration")
-plt.ylabel("NLL")
+plt.ylabel("Average NLL")
 plt.grid(color="gray", linestyle=":", linewidth=.2)
 
 # Lower limit of NLL

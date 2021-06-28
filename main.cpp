@@ -330,6 +330,14 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
+    int f_nll = 1;
+    if (argc > 5) {
+        f_nll = atoi(argv[5]);
+        msg.str("");
+        msg << "Setting frequence of NLL calculation: " << f_nll;
+        printInfo(msg.str());
+    }
+
     Data bas(DataDistribution::BAS, size);
 
     for (int i = 0; i < bas.get_number_of_samples(); i++) {
@@ -362,7 +370,7 @@ int main(int argc, char **argv) {
     model.setConnectivity(connectivity);
 
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, 10);
+    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
     model.fit(bas);
 
     vector<double> h = model.getTrainingHistory();
@@ -380,10 +388,15 @@ int main(int argc, char **argv) {
     }
 
     outdata << "# NLL through RBM training for BAS" << size << endl;
-    outdata << "NLL" << endl;
-    for (auto i: h)
-        outdata << i << endl;
-    outdata.close();
+    //outdata << "NLL" << endl;
+    //for (auto i: h)
+    //    outdata << i << endl;
+    //outdata.close();
+    outdata << ",NLL" << endl;
+    for (int i=0; i<(float(iter)/f_nll); i++) {
+        outdata << i*f_nll << "," << h.at(i) << endl;
+    }
+    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
 
     model.printVariables();
 
