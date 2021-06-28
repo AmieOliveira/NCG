@@ -452,14 +452,18 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
 
 // Training methods
 void RBM::trainSetup() {
-    trainSetup(CD, 1, 1000, 5, 0.1, false);
+    trainSetup(false);
 }
 void RBM::trainSetup(bool NLL) {
     trainSetup(CD, 1, 1000, 5, 0.1, NLL);
 }
 void RBM::trainSetup(SampleType sampleType, int k, int iterations,
                      int batchSize, double learnRate, bool NLL) {
+    trainSetup(sampleType, k, iterations, batchSize, learnRate, NLL, 1);
+}
 
+void RBM::trainSetup(SampleType sampleType, int k, int iterations,
+                     int batchSize, double learnRate, bool NLL, int period) {
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot train without RBM dimensions!";
@@ -482,6 +486,7 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
     b_size = batchSize;     // batch size
     l_rate = learnRate;     // learning rate
     calcNLL = NLL;          // flag to calculate NLL over iterations (or not)
+    freqNLL = period;         // Rate of NLL calculation
 
     startWeights();
     // TODO: Adicionar outras inicializações como parâmetro opcional??
@@ -581,9 +586,11 @@ void RBM::fit(Data trainData){
         //cout << "Done iteration " << it+1 << endl;
 
         if (calcNLL) {
-            nll_val = negativeLogLikelihood(trainData);
-            history.push_back(nll_val);
-            cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
+            if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
+                nll_val = negativeLogLikelihood(trainData);
+                history.push_back(nll_val);
+                cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
+            }
         }
     }
 

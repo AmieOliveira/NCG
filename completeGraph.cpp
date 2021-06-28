@@ -1,5 +1,5 @@
 /*
- *  Script to train RBMs with complete graphs
+ *  Script to train RBMs with complete graphs. Hardcodes NLL calculation
  *  Author: Amanda
  *
  */
@@ -73,12 +73,20 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
+    int f_nll = 1;
+    if (argc > 7) {
+        f_nll = atoi(argv[7]);
+        msg.str("");
+        msg << "Setting frequence of NLL calculation: " << f_nll;
+        printInfo(msg.str());
+    }
+
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
 
     int H = s_size;
-    if (argc >= 8) {
-        H = atoi(argv[7]);
+    if (argc > 8) {
+        H = atoi(argv[8]);
         msg.str("");
         msg << "Setting number of hidden neurons: " << H;
         printInfo(msg.str());
@@ -87,7 +95,7 @@ int main(int argc, char **argv) {
     RBM model(s_size, H);
 
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true);
+    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
     model.fit(bas);
 
     vector<double> h = model.getTrainingHistory();

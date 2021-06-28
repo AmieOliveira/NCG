@@ -344,16 +344,25 @@ int main(int argc, char **argv) {
     int s_size = bas.get_sample_size();
     RBM model(s_size, s_size);
 
-    //int neighbors = 12;
-    //cout << "Using " << neighbors << " neighbors connectivity" << endl;
-    //MatrixXd connectivity = n_neightbors(s_size, s_size, neighbors);
+    int neighbors = 8;
+    cout << "Using " << neighbors << " neighbors connectivity" << endl;
+    MatrixXd connectivity = v_neighbors(s_size, s_size, neighbors);
+
     //MatrixXd connectivity = bas_connect(size);
-    MatrixXd connectivity = bas_connect_2(size);
+    //MatrixXd connectivity = bas_connect_2(size);
+
+
+    // Mixer Test
+    cout << "Connectivity before mixing: " << endl << connectivity << endl;
+    Mixer m(seed);
+    MatrixXd c = m.mix_neighbors(connectivity, 100);
+    cout << "Connectivity after mixing: " << endl << c << endl;
+
     model.connectivity(true);
     model.setConnectivity(connectivity);
 
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true);
+    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, 10);
     model.fit(bas);
 
     vector<double> h = model.getTrainingHistory();
@@ -361,8 +370,9 @@ int main(int argc, char **argv) {
     ofstream outdata;
     stringstream fname;
     //fname << "nll_progress_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
+    fname << "nll_progress_mixTest_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
     //fname << "nll_progress_single_basConnect_k" << k << ".csv";
-    fname << "nll_progress_single_basConnect2_k" << k << ".csv";
+    //fname << "nll_progress_single_basConnect2_k" << k << ".csv";
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;

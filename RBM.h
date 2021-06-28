@@ -74,6 +74,7 @@ class RBM {
     int b_size;             // batch size
     double l_rate;          // learning rate
     bool calcNLL;           // flag to calculate NLL over iterations (or not)
+    int freqNLL;            // Rate of NLL calculation (1 calculus every freqNLL iterations)
     vector<double> history; // NLL
 
 public:
@@ -125,6 +126,8 @@ public:
     void trainSetup(bool NLL);
     void trainSetup(SampleType sampleType, int k, int iterations,
                     int batchSize, double learnRate, bool NLL);
+    void trainSetup(SampleType sampleType, int k, int iterations,
+                    int batchSize, double learnRate, bool NLL, int period);
     void fit(Data trainData);
     // TODO: Retornar alguma coisa na função?
 
