@@ -48,6 +48,11 @@ can compile the code:
 source create_executable.sh
 ```
 
+This command should compile all scripts, but you can also 
+stipulate a single script to be compiled with the flag 
+``-s``, adding the paramter ``-s 'main'``, for example, to 
+compile file ``main.cpp``.
+
 Note: This code developed in MacOS Bir Sur, with compiler 
 Clang (version 12.0.5), using C++ 14. Tested on Ubuntu 18,
 with compiler GCC (version 7.5.0).
