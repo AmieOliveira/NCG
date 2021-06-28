@@ -59,7 +59,7 @@ plt.title("NLL evolution through RBM training")
 
 
 plt.xlabel("Iteration")
-plt.ylabel("NLL")
+plt.ylabel("Average NLL")
 plt.grid(color="gray", linestyle=":", linewidth=.2)
 
 # Lower limit of NLL
