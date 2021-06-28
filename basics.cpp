@@ -148,50 +148,44 @@ Eigen::MatrixXd Mixer::mix_neighbors(Eigen::MatrixXd regPattern, int iter) {
 
     int H = regPattern.rows();
     int X = regPattern.cols();
+    vector<int> mapping[H];
     int edges_h = 0;
     for (int j=0; j<X; j++) {
-        if (regPattern(0,j) == 1) edges_h++;
+        if (regPattern(0,j) == 1) {
+            edges_h++;
+            mapping[0].push_back(j);
+        }
+
+        for (int i=1; i<H; i++) {
+            if (regPattern(i,j) == 1) mapping[i].push_back(j);
+        }
     }
     //cout << "Matrix " << H << "x" << X << ". " << edges_h << " neighbors per h." << endl;
 
     uniform_int_distribution<int> rdnH(0, H-1);
-    uniform_int_distribution<int> rdn_edge(1, edges_h);
+    uniform_int_distribution<int> rdn_edge(0, edges_h-1);
 
     Eigen::MatrixXd ret = regPattern;
+
     int i1, i2, j1, j2;
-    int aux;
+    int jIdx1, jIdx2;
     bool same;
 
     for (int it=0; it < iter; it++) {
         i1 = rdnH(generator);
-        aux = rdn_edge(generator);  // j1 is the aux-th edge from hidden unit i1
-        for (int j=0; j<X; j++) {   // Finding j1
-            if (ret(i1,j) == 1) {
-                aux--;
-                if (aux == 0) {
-                    j1 = j;
-                    break;
-                }
-            }
-        }
+        jIdx1 = rdn_edge(generator);
+        j1 = mapping[i1].at(jIdx1);
+
         same = true;
 
         while (same) {
             i2 = rdnH(generator);
-            aux = rdn_edge(generator);  // j2 is the aux-th edge from hidden unit i2
-            for (int j=0; j<X; j++) {   // Finding j2
-                if (ret(i2,j) == 1) {
-                    aux--;
-                    if (aux == 0) {
-                        j2 = j;
-                        break;
-                    }
-                }
-            }
-
+            jIdx2 = rdn_edge(generator);
+            j2 = mapping[i2].at(jIdx2);
             same = ((i1 == i2) && (j1 == j2));
-            //cout << "(" << i1 << "," << j1 << "), ("  << i2 << "," << j2 << ")." << endl;
         }
+
+
         ret(i1,j1) = 0;
         ret(i2,j2) = 0;
 
@@ -205,9 +199,12 @@ Eigen::MatrixXd Mixer::mix_neighbors(Eigen::MatrixXd regPattern, int iter) {
         ret(i1,j2) = 1;
         ret(i2,j1) = 1;
 
-        //cout << "Old: (" << i1 << "," << j1 << "), ("  << i2 << "," << j2 << ")." << endl;
-        //cout << "New: (" << i1 << "," << j2 << "), ("  << i2 << "," << j1 << ")." << endl;
-        //cout << ret << endl;
+        mapping[i1].at(jIdx1) = j2;
+        mapping[i2].at(jIdx2) = j1;
+
+        // cout << "Old: (" << i1 << "," << j1 << "), ("  << i2 << "," << j2 << ")." << endl;
+        // cout << "New: (" << i1 << "," << j2 << "), ("  << i2 << "," << j1 << ")." << endl;
+        // cout << ret << endl;
     }
 
     return ret;
