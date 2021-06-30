@@ -15,8 +15,8 @@ repeat = 25
 dataType = "bas"
 dataSize = 4
 basename = f"meanNll_{dataType}{dataSize}"
-inputPath = "."
-outputPath = "."
+inputPath = "result/complete/"
+outputPath = "result/complete/"
 
 inputBase = "nll_progress_complete_k{}-run{}.csv"
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
@@ -58,6 +58,6 @@ limitante = - log(1.0/nSamples)
 plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
 plt.savefig(f"{outputPath}/{basename}_{plotType}.pdf", transparent=True)
-# plt.show()
-
 meanDF.to_csv(f"{outputPath}/{basename}_{plotType}.csv")
+#plt.show()
+
