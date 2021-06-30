@@ -240,6 +240,7 @@ void RBM::startWeights() {
             W(i,j) = weight;
         }
     }
+    if (patterns) {C = W.cwiseProduct(A);}
 }
 
 MatrixXd RBM::getConnectivity() {
