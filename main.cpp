@@ -340,45 +340,60 @@ int main(int argc, char **argv) {
 
     Data bas(DataDistribution::BAS, size);
 
-    for (int i = 0; i < bas.get_number_of_samples(); i++) {
-        cout << "------------" << endl;
-        RowVectorXd vec = bas.get_sample(i);
-        for (int l = 0; l < size; ++l) {
-            cout << vec.segment(l*size, size) << endl;
+    bool printData = false;
+    if (printData) {
+        for (int i = 0; i < bas.get_number_of_samples(); i++) {
+            cout << "------------" << endl;
+            RowVectorXd vec = bas.get_sample(i);
+            for (int l = 0; l < size; ++l) {
+                cout << vec.segment(l*size, size) << endl;
+            }
         }
+        cout << "------------" << endl;
     }
-    cout << "------------" << endl;
 
     int s_size = bas.get_sample_size();
-    RBM model(s_size, s_size);
 
-    int neighbors = 8;
+    int neighbors = 4;
     cout << "Using " << neighbors << " neighbors connectivity" << endl;
     MatrixXd connectivity = v_neighbors(s_size, s_size, neighbors);
 
-    //MatrixXd connectivity = bas_connect(size);
-    //MatrixXd connectivity = bas_connect_2(size);
+    // MatrixXd connectivity = bas_connect(size);
+    // MatrixXd connectivity = bas_connect_2(size);
 
-
-    // Mixer Test
-    cout << "Connectivity before mixing: " << endl << connectivity << endl;
+    int repeat = 25;
+    int mixIter = 100;
     Mixer m(seed);
-    MatrixXd c = m.mix_neighbors(connectivity, 100);
-    cout << "Connectivity after mixing: " << endl << c << endl;
 
-    model.connectivity(true);
-    model.setConnectivity(connectivity);
+    vector<vector<double>> histories;
 
+    cout << s_size << endl;
+    RBM model(s_size, s_size, true);
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
-    model.fit(bas);
 
-    vector<double> h = model.getTrainingHistory();
+    int check;
+
+    for (int r=0; r<repeat; r++) {
+        connectivity = m.mix_neighbors(connectivity, mixIter);
+        cout << "Connectivity: " << endl << connectivity << endl;
+
+        check = model.setConnectivity(connectivity);
+        if (check != 0) {
+            cerr << "Error: connectivity could not be set" << endl;
+            exit(1);
+        }
+
+        model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
+        model.fit(bas);
+
+        // vector<double> h = model.getTrainingHistory();
+        histories.push_back(model.getTrainingHistory());
+    }
 
     ofstream outdata;
     stringstream fname;
-    //fname << "nll_progress_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
-    fname << "nll_progress_mixTest_single_connect_neighbors" << neighbors << "_k" << k << ".csv";
+    //fname << "nll_progress_single_neighbors" << neighbors << "_k" << k << ".csv";
+    fname << "nll_progress_mixing" << mixIter << "_neighbors" << neighbors << "_k" << k << "_repeat" << repeat << ".csv";
     //fname << "nll_progress_single_basConnect_k" << k << ".csv";
     //fname << "nll_progress_single_basConnect2_k" << k << ".csv";
     outdata.open(fname.str()); // opens the file
@@ -387,18 +402,28 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    outdata << "# NLL through RBM training for BAS" << size << endl;
+    outdata << "# NLL through RBM training for BAS" << size << ", connected with " << neighbors;
+    outdata << " random neighbors. Mixing " << mixIter << "times. Seed is: " << seed << endl;
     //outdata << "NLL" << endl;
     //for (auto i: h)
     //    outdata << i << endl;
     //outdata.close();
-    outdata << ",NLL" << endl;
+    for (int r=0; r<repeat; r++) { outdata << ",NLL-" << r; }
+    outdata << endl;
     for (int i=0; i<(float(iter)/f_nll); i++) {
-        outdata << i*f_nll << "," << h.at(i) << endl;
+        outdata << i*f_nll;
+        for (int r=0; r<repeat; r++) {
+            outdata << "," << histories.at(r).at(i);
+        }
+        outdata << endl;
     }
-    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
+    if ((iter % f_nll) != 0) {
+        outdata << iter-1;
+        for (int r=0; r<repeat; r++) { outdata << "," << histories.at(r).back(); }
+        outdata << endl;
+    }
 
-    model.printVariables();
+    // model.printVariables();
 
     return 0;
 }
