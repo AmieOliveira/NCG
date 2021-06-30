@@ -11,6 +11,14 @@ RBM::RBM() {
 RBM::RBM(int X, int H) {
     initialized = true;
     patterns = false;
+    initializer(X, H);
+}
+RBM::RBM(int X, int H, bool use_pattern) {
+    patterns = use_pattern;
+    initializer(X,H);
+}
+
+void RBM::initializer(int X, int H) {
     hasSeed = false;
     trainReady = false;
     isTrained = false;
@@ -26,19 +34,15 @@ RBM::RBM(int X, int H) {
     d = VectorXd::Zero(X);
     b = VectorXd::Zero(H);
 
-    W = MatrixXd::Zero(H,X); // TODO: Criar função inicializadora
+    W = MatrixXd::Zero(H,X);
     A = MatrixXd::Constant(H,X,1);
 
-    p_W = &W;
-    //C = W; // TODO: Inicializar como zeros aqui
+    if (patterns) {
+        C = W.cwiseProduct(A);
+        p_W = &C;
+    }
+    else p_W = &W;
 }
-RBM::RBM(int X, int H, bool use_pattern) {
-    RBM(X,H);
-    patterns = use_pattern;
-    C = W.cwiseProduct(A);
-    p_W = &C;
-}
-
 
 // Connectivity (de)ativation
 void RBM::connectivity(bool activate) {
@@ -57,10 +61,16 @@ void RBM::connectivity(bool activate) {
 
 // Set dimensions
 void RBM::setDimensions(int X, int H) {
-    RBM(X, H);
+    if (!initialized) {
+        initialized = true;
+        patterns = false;
+    }
+    initializer(X, H);
 }
 void RBM::setDimensions(int X, int H, bool use_pattern) {
-    RBM(X, H, use_pattern);
+    if (!initialized) initialized = true;
+    patterns = use_pattern;
+    initializer(X, H);
 }
 
 
@@ -240,6 +250,7 @@ void RBM::startWeights() {
             W(i,j) = weight;
         }
     }
+    if (patterns) {C = W.cwiseProduct(A);}
 }
 
 MatrixXd RBM::getConnectivity() {
