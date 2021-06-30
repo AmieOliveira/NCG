@@ -21,6 +21,7 @@ if [ "$FILE" = "all" ]; then
     g++ -std=c++14 -I$eigenPath main.cpp basics.cpp RBM.cpp Data.cpp -o main.exe
     g++ -std=c++14 -I$eigenPath completeGraph.cpp basics.cpp RBM.cpp Data.cpp -o complete.exe
     g++ -std=c++14 -I$eigenPath vNeighborsGraph.cpp basics.cpp RBM.cpp Data.cpp -o neighbors.exe
+    g++ -std=c++14 -I$eigenPath BASconnectGraph.cpp basics.cpp RBM.cpp Data.cpp -o BAScon.exe
 
     if [ -n "$string" ] || [ -n "$string2" ] || [ -n "$string3" ]; then
       string="error"
@@ -35,8 +36,12 @@ else
             if [ "$FILE" = "vNeighborsGraph" ]; then
                 OUT=neighbors
             else
-                echo "No viable script selected. Exiting."
-                exit 1
+                if [ "$FILE" = "BASconnectGraph" ]; then
+                    OUT=BAScon
+                else
+                    echo "No viable script selected. Exiting."
+                    exit 1
+                fi
             fi
         fi
     fi
@@ -46,7 +51,4 @@ fi
 
 echo "----------> Done!"
 
-# TODO: Add possibility of executing code too...
-# Eu posso adicionar um argumento para compilar ou não,
-# um para executar ou não e dar os argumentos para a execução,
-# se for o caso (argumentos default, se não?)
+# TODO: Melhorar estrutura do código e da compilação

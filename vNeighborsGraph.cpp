@@ -115,9 +115,8 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors (default)." << endl;
+    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors (default). Seed: " << seed << endl;
     if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
-    outdata << "NLL" << endl;
     //for (auto i: h)
     //    outdata << i << endl;
     //outdata.close();
