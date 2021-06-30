@@ -83,6 +83,8 @@ public:
     RBM(int X, int H);
     RBM(int X, int H, bool use_pattern);
 
+    void initializer(int X, int H);
+
     // Connectivity (de)ativation
     void connectivity(bool activate);
 
