@@ -41,11 +41,11 @@ if plotType == "complete":
             filename = outputPath + "/" + imputBase[plotType].format(k, r)
             df = pd.read_csv(filename, comment="#")  # index_col=0
             df = df.astype(float)
-            df = df.iloc[0:lim_iter+1]
+            df = df.iloc[0:lim_iter + 1]
             df = df.rename(columns={"NLL": f"iter{r}"})
 
             dfList.append(df)
-        
+
         fullDf = pd.concat(dfList, axis=1)
         fullDf[f"CD-{k}"] = fullDf.mean(axis=1)
         # print(fullDf.head(10))
@@ -61,7 +61,7 @@ elif plotType == "neighbors":
             dfList = []
 
             for r in range(repeat):
-                if v == (dataSize*dataSize):
+                if v == (dataSize * dataSize):
                     filename = "result/complete/" + imputBase["complete"].format(k, r)
                 else:
                     filename = outputPath + "/" + imputBase[plotType].format(dataSize, v, k, r)
@@ -70,7 +70,7 @@ elif plotType == "neighbors":
                 if len(df.columns) == 2:
                     df = pd.read_csv(filename, comment="#", index_col=0)
                 df = df.astype(float)
-                df = df.iloc[0:lim_iter+1]
+                df = df.iloc[0:lim_iter + 1]
                 df = df.rename(columns={"NLL": f"iter{r}"})
 
                 dfList.append(df)

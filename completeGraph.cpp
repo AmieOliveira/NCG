@@ -81,12 +81,28 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
+    int b_size = 5;
+    if (argc > 8) {
+        b_size = atoi(argv[8]);
+        msg.str("");
+        msg << "Setting batch size: " << b_size;
+        printInfo(msg.str());
+    }
+
+    double l_rate = 0.1;
+    if (argc > 9) {
+        l_rate = atof(argv[9]);
+        msg.str("");
+        msg << "Setting learning rate: " << l_rate;
+        printInfo(msg.str());
+    }
+
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
 
     int H = s_size;
-    if (argc > 8) {
-        H = atoi(argv[8]);
+    if (argc > 10) {
+        H = atoi(argv[10]);
         msg.str("");
         msg << "Setting number of hidden neurons: " << H;
         printInfo(msg.str());
@@ -95,14 +111,14 @@ int main(int argc, char **argv) {
     RBM model(s_size, H);
 
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
     model.fit(bas);
 
     vector<double> h = model.getTrainingHistory();
 
     ofstream outdata;
     stringstream fname;
-    fname << filePath << "nll_progress_complete_k" << k;
+    fname << filePath << "nll_progress_bas" << size << "_complete_k" << k;
     if (H != s_size) fname << "_H" << H;
     fname << "-run" << fileIDX << ".csv";
     cout << "Saving output as " << fname.str() << endl;
@@ -112,7 +128,8 @@ int main(int argc, char **argv) {
         cerr << "Error: file could not be opened" << endl;
         exit(1);
     }
-    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << " All weights. Seed: " << seed << endl;
+    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << " All weights." << endl;
+    outdata << "# Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
     //outdata << "NLL" << endl;
     //for (auto i: h)

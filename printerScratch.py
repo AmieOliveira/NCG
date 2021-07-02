@@ -4,40 +4,43 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from math import log
 
-fig, ax = plt.subplots(1)
-
 basSize = 4
 
-comparison = "8neighbors-basConnect2-complete"
+# comparison = "8neighbors-basConnect2-complete"
 # "basConnectV1-completeH9-completeH16"
 
-k = 10
-neighbors = 8
-identifier = 2
-lim_iter = 1000
+k = 20
+# neighbors = 8
+# identifier = 2
+lim_iter = 6000
 
-filename = f"nll_progress_single_k{k}.csv"
-df = pd.read_csv(filename, comment="#")
-df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": f"CD-{k}, Complete"})
-df.plot(ax=ax, linewidth=1, alpha=0.8)
+figSize = {"default": (6.7, 5), "wide": (13, 5)}
+sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 
-filename = f"nll_progress_single_basConnect2_k{k}.csv"
-df = pd.read_csv(filename, comment="#")
-df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": f"CD-{k}, BAS pattern v{identifier}"})
-df.plot(ax=ax, linewidth=1, alpha=0.8)
+fig, ax = plt.subplots(1, figsize=figSize["default"])
 
-filename = f"nll_progress_single_connect_neighbors{neighbors}_k{k}.csv"
-df = pd.read_csv(filename, comment="#")
-df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": f"CD-{k}, {neighbors} neighbors"})
-df.plot(ax=ax, linewidth=1, alpha=0.8)
-
-plt.title("NLL evolution through RBM training")
+# filename = f"nll_progress_single_k{k}.csv"
+# df = pd.read_csv(filename, comment="#")
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter]
+# df = df.rename(columns={"NLL": f"CD-{k}, Complete"})
+# df.plot(ax=ax, linewidth=1, alpha=0.8)
+#
+# filename = f"nll_progress_single_basConnect2_k{k}.csv"
+# df = pd.read_csv(filename, comment="#")
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter]
+# df = df.rename(columns={"NLL": f"CD-{k}, BAS pattern v{identifier}"})
+# df.plot(ax=ax, linewidth=1, alpha=0.8)
+#
+# filename = f"nll_progress_single_connect_neighbors{neighbors}_k{k}.csv"
+# df = pd.read_csv(filename, comment="#")
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter]
+# df = df.rename(columns={"NLL": f"CD-{k}, {neighbors} neighbors"})
+# df.plot(ax=ax, linewidth=1, alpha=0.8)
+#
+# plt.title("NLL evolution through RBM training")
 
 
 # # ---------
@@ -57,14 +60,46 @@ plt.title("NLL evolution through RBM training")
 # plt.title(f"NLL evolution through RBM training for CD-{k} and 9 hidden units")
 # # ---------
 
+# # LL plot ---------
+# filename = f"Training Outputs/meanNll_bas4_complete.csv"
+# df = pd.read_csv(filename, comment="#", index_col=0)
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter]
+# nSamples = 2**(basSize+1)
+# df = df.apply( lambda x: x * -nSamples )
+# df.plot(ax=ax, linewidth=1, alpha=0.8)
+#
+# plt.title("NLL evolution through RBM training")
+# plt.xlabel("Iteration")
+# plt.ylabel("Log-Likelihood")
+# # plt.ylabel("Average NLL")
+# plt.grid(color="gray", linestyle=":", linewidth=.2)
+# # plt.xlim(-10, lim_iter+10)
+# # plt.ylim(-350, -100)
+# plt.savefig("Plots/meanNll_25rep_bas4_complete_LL-short.pdf", transparent=True)
+# # ---------
 
+
+filename = f"Training Outputs/meanNll_bas4_neighbors.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+cols = []
+lIdx = 3 + sizeNum[k] + 1
+for c in df.columns:
+    if c[:lIdx] == f"CD-{k},":
+        cols += [c]
+df[cols].plot(ax=ax, linewidth=1, alpha=0.8)
+
+plt.title(f"NLL evolution for CD-{k}")
 plt.xlabel("Iteration")
 plt.ylabel("Average NLL")
 plt.grid(color="gray", linestyle=":", linewidth=.2)
+# plt.xlim(-10, lim_iter+10)
 
 # Lower limit of NLL
 nSamples = 2**(basSize+1)
 limitante = - log(1.0/nSamples)
 plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
-plt.savefig(f"Plots/nll_bas{basSize}_comparison-{comparison}.pdf", transparent=True)
+# plt.savefig(f"Plots/nll_bas{basSize}_comparison-{comparison}.pdf", transparent=True)
+plt.savefig(f"Plots/meanNll_25rep_bas4_neighbors_CD-{k}.pdf", transparent=True)
