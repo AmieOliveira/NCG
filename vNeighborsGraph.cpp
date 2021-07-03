@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     //outdata.close();
 
     outdata << ",NLL" << endl;
-    for (int i=0; i<(float(iter)/f_nll); i++) {
+    for (int i=0; i<=(float(iter)/f_nll); i++) {
         outdata << i*f_nll << "," << h.at(i) << endl;
     }
     if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
