@@ -8,10 +8,11 @@ import numpy as np
 
 k_values = [100, 20, 10, 5, 2, 1]
 v_values = [16, 12, 8, 6, 4]
+versions = [1, 2]
 
 size = "wide"  # "default", "wide"
-lim_iter = int(6e3)
-plotType = "neighbors"  # "complete", "neighbors"
+lim_iter = int(10e3)
+plotType = "BAScon"  # "complete", "neighbors", "BAScon"
 repeat = 25
 
 periodoNLL = 1
@@ -19,11 +20,12 @@ periodoNLL = 1
 dataType = "bas"
 dataSize = 4
 basename = f"meanNll_{dataType}{dataSize}"
-inputPath = "result/neighbors/"
-outputPath = "result/neighbors/"
+inputPath = f"result/{plotType}/"
+outputPath = f"result/{plotType}/"
 
-imputBase = { "complete": "nll_progress_complete_k{}-run{}.csv",
-              "neighbors": "nll_progress_bas{}_neighbors{}_k{}-run{}.csv" }
+imputBase = { "complete":   "nll_progress_complete_k{}-run{}.csv",
+              "neighbors":  "nll_progress_bas{}_neighbors{}_k{}-run{}.csv",
+              "BAScon":     "nll_progress_bas{}_BASconV{}_k{}-run{}.csv" }
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
 
@@ -84,6 +86,29 @@ elif plotType == "neighbors":
 
             fullDf[f"CD-{k}, {v} neighbors"].plot(ax=ax, linewidth=1, alpha=0.8)
             meanDF[f"CD-{k}, {v} neighbors"] = fullDf[f"CD-{k}, {v} neighbors"]
+
+elif plotType == "BAScon":
+    for k in k_values:
+        for v in versions:
+            dfList = []
+
+            for r in range(repeat):
+                filename = outputPath + "/" + imputBase[plotType].format(dataSize, v, k, r)
+
+                df = pd.read_csv(filename, comment="#", index_col=0)
+                df = df.astype(float)
+                df = df.iloc[0:lim_iter + 1]
+                df = df.rename(columns={"NLL": f"iter{r}"})
+
+                dfList.append(df)
+
+            fullDf = pd.concat(dfList, axis=1)
+            fullDf[f"CD-{k}, Specialist v{v}"] = fullDf.mean(axis=1)
+            # if periodoNLL != 1:
+            #     fullDf.set_index(indexes)     # In this training indexes should already be set!
+
+            fullDf[f"CD-{k}, Specialist v{v}"].plot(ax=ax, linewidth=1, alpha=0.8)
+            meanDF[f"CD-{k}, Specialist v{v}"] = fullDf[f"CD-{k}, Specialist v{v}"]
 
 
 plt.legend()
