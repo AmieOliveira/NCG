@@ -361,11 +361,11 @@ int main(int argc, char **argv) {
     // MatrixXd connectivity = bas_connect(size);
     // MatrixXd connectivity = bas_connect_2(size);
 
-    int repeat = 25;
+    int repeat = 2;
     int mixIter = 100;
     Mixer m(seed);
 
-    vector<vector<double>> histories;
+    vector<double> histories[repeat];
 
     cout << s_size << endl;
     RBM model(s_size, s_size, true);
@@ -387,7 +387,11 @@ int main(int argc, char **argv) {
         model.fit(bas);
 
         // vector<double> h = model.getTrainingHistory();
-        histories.push_back(model.getTrainingHistory());
+        histories[r] = model.getTrainingHistory();
+        cout << "NLL" << endl;
+        for (auto i: histories[r])
+            cout << i << ", ";
+        cout << endl;
     }
 
     ofstream outdata;
@@ -413,13 +417,13 @@ int main(int argc, char **argv) {
     for (int i=0; i<(float(iter)/f_nll); i++) {
         outdata << i*f_nll;
         for (int r=0; r<repeat; r++) {
-            outdata << "," << histories.at(r).at(i);
+            outdata << "," << histories[r][i];
         }
         outdata << endl;
     }
     if ((iter % f_nll) != 0) {
         outdata << iter-1;
-        for (int r=0; r<repeat; r++) { outdata << "," << histories.at(r).back(); }
+        for (int r=0; r<repeat; r++) { outdata << "," << histories[r].back(); }
         outdata << endl;
     }
 

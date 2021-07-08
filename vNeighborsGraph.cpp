@@ -90,6 +90,10 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
+    string neighType = "line";  // Alternative should be "spiral"
+    // TODO: Add spiral neighbors option. Will need to give setting as argument, change this variable accordingly and use the spiral pattern creation function
+    // All still needs to be implemented
+
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
     MatrixXd connectivity = v_neighbors(s_size, s_size, v);
@@ -106,7 +110,7 @@ int main(int argc, char **argv) {
 
     ofstream outdata;
     stringstream fname;
-    fname << filePath << "nll_progress_bas" << size << "_neighbors" << v << "_k" << k;
+    fname << filePath << "nll_progress_bas" << size << "_neighbors" << v << "_" << neighType << "_k" << k;
     fname << "-run" << fileIDX << ".csv";
     cout << "Saving output as " << fname.str() << endl;
     outdata.open(fname.str()); // opens the file
@@ -115,7 +119,8 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors (default). Seed: " << seed << endl;
+    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors in line." << endl;
+    outdata << "# Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
     //for (auto i: h)
     //    outdata << i << endl;
