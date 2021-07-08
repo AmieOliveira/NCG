@@ -8,21 +8,21 @@ import numpy as np
 
 k_values = [1]  # [100, 20, 10, 5, 2, 1]
 v_values = [13]  # [16, 12, 8, 6, 4]
-versions = [1, 2]
+versions = [2]  # [1, 2]
 
 size = "default"  # "default", "wide"
-lim_iter = int(1e3)
+lim_iter = int(2e3)
 plotType = "complete"  # "complete", "neighbors", "BAScon"
-errorType = "quartile"  # None, "std", "quartile"
-repeat = 2
+errorType = None  # None, "std", "quartile"
+repeat = 5
 
-periodoNLL = 1
+periodoNLL = 10
 
 dataType = "bas"
-dataSize = 3
+dataSize = 5
 basename = f"meanNll_{dataType}{dataSize}"
-inputPath = f"Training Outputs/Teste Servidor"
-outputPath = f"Training Outputs/Teste Servidor"
+inputPath = f"result/bas5"
+outputPath = inputPath
 
 imputBase = { "complete":   "nll_progress_bas{}_complete_k{}-run{}.csv",
               "neighbors":  "nll_progress_bas{}_neighbors{}_k{}-run{}.csv",
@@ -55,15 +55,14 @@ if plotType == "complete":
             dfList.append(df)
 
         fullDf = pd.concat(dfList, axis=1)
+        fullDf.set_index(indexes, inplace=True)
         # print(fullDf.head(10))
         # print(fullDf.tail(10))
-        fullDf.set_index(indexes)
 
         meanDF[f"CD-{k}"] = fullDf.mean(axis=1)                     # mean
         meanDF[f"CD-{k} std"] = fullDf.std(axis=1)                  # standard deviation
         meanDF[f"CD-{k} q1"] = fullDf.quantile(q=0.25, axis=1)      # first quartile
         meanDF[f"CD-{k} q3"] = fullDf.quantile(q=0.75, axis=1)      # third quartile
-
 
         meanDF[f"CD-{k}"].plot(ax=ax, linewidth=1, alpha=0.8)
 
@@ -85,7 +84,8 @@ elif plotType == "neighbors":
 
             for r in range(repeat):
                 if v == (dataSize * dataSize):
-                    filename = "result/complete/" + imputBase["complete"].format(k, r)
+                    # filename = "result/complete/" + imputBase["complete"].format(dataSize, k, r)
+                    filename = "result/complete/nll_progress_complete_k{}-run{}.csv".format(k, r)
                 else:
                     filename = outputPath + "/" + imputBase[plotType].format(dataSize, v, k, r)
 
@@ -99,10 +99,8 @@ elif plotType == "neighbors":
                 dfList.append(df)
 
             fullDf = pd.concat(dfList, axis=1)
-            # print(fullDf.head(10))
-            # print(fullDf.tail(10))
             if periodoNLL != 1:
-                fullDf.set_index(indexes)
+                fullDf.set_index(indexes, inplace=True)
 
             meanDF[f"CD-{k}, {v} neighbors"] = fullDf.mean(axis=1)  # mean
             meanDF[f"CD-{k}, {v} neighbors - std"] = fullDf.std(axis=1)  # standard deviation
@@ -138,7 +136,7 @@ elif plotType == "BAScon":
 
             fullDf = pd.concat(dfList, axis=1)
             # if periodoNLL != 1:
-            #     fullDf.set_index(indexes)     # In this training indexes should already be set!
+            #     fullDf = fullDf.set_index(indexes)     # In this training indexes should already be set!
 
             meanDF[f"CD-{k}, Specialist v{v}"] = fullDf.mean(axis=1)  # mean
             meanDF[f"CD-{k}, Specialist v{v} - std"] = fullDf.std(axis=1)  # standard deviation
@@ -172,8 +170,10 @@ plt.plot([0, lim_iter], [limitante, limitante], "r--")
 if periodoNLL != 1:
     meanDF.set_index(indexes)
 
+
 errorPrint = f"-{errorType}Err" if errorType else ""
 
 plt.savefig(f"{outputPath}/{basename}_{plotType}-{repeat}rep{errorPrint}.pdf", transparent=True)
 meanDF.to_csv(f"{outputPath}/{basename}_{plotType}-{repeat}rep.csv")
 # plt.show()
+
