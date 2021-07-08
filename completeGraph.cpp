@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
-    double l_rate = 0.1;
+    double l_rate = 0.01;
     if (argc > 9) {
         l_rate = atof(argv[9]);
         msg.str("");
