@@ -57,28 +57,28 @@ int main(int argc, char **argv) {
     msg << "Setting BAS size as: " << size;
     printInfo(msg.str());
 
-    int k = 10;
+    int version = 2;
     if (argc > 5) {
-        k = atoi(argv[5]);
+        version = atoi(argv[5]);
+    }
+    msg.str("");
+    msg << "Setting BAS connect version " << version;
+    printInfo(msg.str());
+
+    int k = 10;
+    if (argc > 6) {
+        k = atoi(argv[6]);
     }
     msg.str("");
     msg << "Setting number of sample steps: " << k;
     printInfo(msg.str());
 
     int iter = 6000;
-    if (argc > 6) {
-        iter = atoi(argv[6]);
+    if (argc > 7) {
+        iter = atoi(argv[7]);
     }
     msg.str("");
     msg << "Setting number of iterations: " << iter;
-    printInfo(msg.str());
-
-    int version = 2;
-    if (argc > 7) {
-        version = atoi(argv[7]);
-    }
-    msg.str("");
-    msg << "Setting BAS connect version " << version;
     printInfo(msg.str());
 
     int b_size = 5;

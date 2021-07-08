@@ -68,10 +68,10 @@ int main(int argc, char **argv) {
 
     char vType = 'l';
     if (argc > 6) {
-        vType = argv[6];
+        vType = argv[6][0];
     }
     msg.str("");
-    msg << "Setting number of neighbors as: " << v;
+    msg << "Setting neighborhood type as: " << vType;
     printInfo(msg.str());
 
     int k = 10;
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
         default:
             msg.str("");
             msg << "Neighbors of type '" << vType << "' not implemented. Aborting execution";
-            msg.printError(msg.str());
+            printError(msg.str());
             cerr << "Error: Invalid neighborhood version. Aborting." << endl;
             exit(1);
     }
