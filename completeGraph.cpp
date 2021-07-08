@@ -73,27 +73,27 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
-    int f_nll = 1;
-    if (argc > 7) {
-        f_nll = atoi(argv[7]);
-        msg.str("");
-        msg << "Setting frequence of NLL calculation: " << f_nll;
-        printInfo(msg.str());
-    }
-
     int b_size = 5;
-    if (argc > 8) {
-        b_size = atoi(argv[8]);
+    if (argc > 7) {
+        b_size = atoi(argv[7]);
         msg.str("");
         msg << "Setting batch size: " << b_size;
         printInfo(msg.str());
     }
 
-    double l_rate = 0.1;
-    if (argc > 9) {
-        l_rate = atof(argv[9]);
+    double l_rate = 0.01;
+    if (argc > 8) {
+        l_rate = atof(argv[8]);
         msg.str("");
         msg << "Setting learning rate: " << l_rate;
+        printInfo(msg.str());
+    }
+
+    int f_nll = 1;
+    if (argc > 9) {
+        f_nll = atoi(argv[9]);
+        msg.str("");
+        msg << "Setting frequence of NLL calculation: " << f_nll;
         printInfo(msg.str());
     }
 

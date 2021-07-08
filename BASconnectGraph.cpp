@@ -52,42 +52,59 @@ int main(int argc, char **argv) {
     int size = 4;
     if (argc > 4) {
         size = atoi(argv[4]);
-        msg.str("");
-        msg << "Setting BAS size as: " << size;
-        printInfo(msg.str());
     }
-
-    int k = 10;
-    if (argc > 5) {
-        k = atoi(argv[5]);
-        msg.str("");
-        msg << "Setting number of sample steps: " << k;
-        printInfo(msg.str());
-    }
-
-    int iter = 6000;
-    if (argc > 6) {
-        iter = atoi(argv[6]);
-        msg.str("");
-        msg << "Setting number of iterations: " << iter;
-        printInfo(msg.str());
-    }
+    msg.str("");
+    msg << "Setting BAS size as: " << size;
+    printInfo(msg.str());
 
     int version = 2;
-    if (argc > 7) {
-        version = atoi(argv[7]);
-        msg.str("");
-        msg << "Setting BAS connect version " << version;
-        printInfo(msg.str());
+    if (argc > 5) {
+        version = atoi(argv[5]);
     }
+    msg.str("");
+    msg << "Setting BAS connect version " << version;
+    printInfo(msg.str());
+
+    int k = 10;
+    if (argc > 6) {
+        k = atoi(argv[6]);
+    }
+    msg.str("");
+    msg << "Setting number of sample steps: " << k;
+    printInfo(msg.str());
+
+    int iter = 6000;
+    if (argc > 7) {
+        iter = atoi(argv[7]);
+    }
+    msg.str("");
+    msg << "Setting number of iterations: " << iter;
+    printInfo(msg.str());
+
+    int b_size = 5;
+    if (argc > 8) {
+        b_size = atoi(argv[8]);
+    }
+    msg.str("");
+    msg << "Setting batch size: " << b_size;
+    printInfo(msg.str());
+
+    double l_rate = 0.01;
+    if (argc > 9) {
+        l_rate = atof(argv[9]);
+    }
+    msg.str("");
+    msg << "Setting learning rate: " << l_rate;
+    printInfo(msg.str());
 
     int f_nll = 1;
-    if (argc > 8) {
-        f_nll = atoi(argv[8]);
-        msg.str("");
-        msg << "Setting frequence of NLL calculation: " << f_nll;
-        printInfo(msg.str());
+    if (argc > 10) {
+        f_nll = atoi(argv[10]);
     }
+    msg.str("");
+    msg << "Setting frequence of NLL calculation: " << f_nll;
+    printInfo(msg.str());
+
 
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
@@ -97,9 +114,14 @@ int main(int argc, char **argv) {
         case 1:
             connectivity = bas_connect(size);
             break;
-        case 2:
+
+        case 2:         // axis connectivity
             connectivity = bas_connect_2(size);
             break;
+
+        // case 3:         // convolutional
+        //     connectivity =
+        //     break;
         default:
             msg.str("");
             msg << "BAS connect v" << version << " not implemented.";
@@ -107,13 +129,14 @@ int main(int argc, char **argv) {
             cerr << "Error: Invalid connectivity version. Aborting." << endl;
             exit(1);
     }
+    // TODO: Add third specialist version
 
     RBM model(s_size, s_size);
     model.connectivity(true);
     model.setConnectivity(connectivity);
 
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
     model.fit(bas);
 
     vector<double> h = model.getTrainingHistory();
