@@ -129,7 +129,8 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", BASconnect version " << version << ". Seed: " << seed << endl;
+    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", Specialist pattern version " << version << "." << endl;
+    outdata << "# Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
     outdata << ",NLL" << endl;
     for (int i=0; i<=(float(iter)/f_nll); i++) {
