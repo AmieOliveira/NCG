@@ -354,80 +354,96 @@ int main(int argc, char **argv) {
 
     int s_size = bas.get_sample_size();
 
-    int neighbors = 4;
-    cout << "Using " << neighbors << " neighbors connectivity" << endl;
-    MatrixXd connectivity = v_neighbors(s_size, s_size, neighbors);
-
+    //int neighbors = 4;
+    //cout << "Using " << neighbors << " neighbors connectivity" << endl;
+    //MatrixXd connectivity = v_neighbors(s_size, s_size, neighbors);
+    //
     // MatrixXd connectivity = bas_connect(size);
     // MatrixXd connectivity = bas_connect_2(size);
+    MatrixXd connectivity = bas_connect_3(size);
 
-    int repeat = 2;
-    int mixIter = 100;
-    Mixer m(seed);
 
-    vector<double> histories[repeat];
-
-    cout << s_size << endl;
-    RBM model(s_size, s_size, true);
-    model.setRandomSeed(seed);
-
-    int check;
-
-    for (int r=0; r<repeat; r++) {
-        connectivity = m.mix_neighbors(connectivity, mixIter);
-        cout << "Connectivity: " << endl << connectivity << endl;
-
-        check = model.setConnectivity(connectivity);
-        if (check != 0) {
-            cerr << "Error: connectivity could not be set" << endl;
-            exit(1);
+    printInfo("Connectivity matrix");
+    cout << connectivity << endl;
+    cout << "Now squared for each hidden unit" << endl;
+    RowVectorXd vec;
+    for (int i = 0; i < s_size; i++) {
+        cout << "------------" << endl;
+        vec = connectivity.col(i);
+        for (int l = 0; l < size; ++l) {
+            cout << vec.segment(l*size, size) << endl;
         }
-
-        model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
-        model.fit(bas);
-
-        // vector<double> h = model.getTrainingHistory();
-        histories[r] = model.getTrainingHistory();
-        cout << "NLL" << endl;
-        for (auto i: histories[r])
-            cout << i << ", ";
-        cout << endl;
     }
+    cout << "------------" << endl;
 
-    ofstream outdata;
-    stringstream fname;
-    //fname << "nll_progress_single_neighbors" << neighbors << "_k" << k << ".csv";
-    fname << "nll_progress_mixing" << mixIter << "_neighbors" << neighbors << "_k" << k << "_repeat" << repeat << ".csv";
-    //fname << "nll_progress_single_basConnect_k" << k << ".csv";
-    //fname << "nll_progress_single_basConnect2_k" << k << ".csv";
-    outdata.open(fname.str()); // opens the file
-    if( !outdata ) { // file couldn't be opened
-        cerr << "Error: file could not be opened" << endl;
-        exit(1);
-    }
 
-    outdata << "# NLL through RBM training for BAS" << size << ", connected with " << neighbors;
-    outdata << " random neighbors. Mixing " << mixIter << "times. Seed is: " << seed << endl;
-    //outdata << "NLL" << endl;
-    //for (auto i: h)
-    //    outdata << i << endl;
-    //outdata.close();
-    for (int r=0; r<repeat; r++) { outdata << ",NLL-" << r; }
-    outdata << endl;
-    for (int i=0; i<(float(iter)/f_nll); i++) {
-        outdata << i*f_nll;
-        for (int r=0; r<repeat; r++) {
-            outdata << "," << histories[r][i];
-        }
-        outdata << endl;
-    }
-    if ((iter % f_nll) != 0) {
-        outdata << iter-1;
-        for (int r=0; r<repeat; r++) { outdata << "," << histories[r].back(); }
-        outdata << endl;
-    }
-
-    // model.printVariables();
+    //int repeat = 2;
+    //int mixIter = 100;
+    //Mixer m(seed);
+    //
+    //vector<double> histories[repeat];
+    //
+    //cout << s_size << endl;
+    //RBM model(s_size, s_size, true);
+    //model.setRandomSeed(seed);
+    //
+    //int check;
+    //
+    //for (int r=0; r<repeat; r++) {
+    //    connectivity = m.mix_neighbors(connectivity, mixIter);
+    //    cout << "Connectivity: " << endl << connectivity << endl;
+    //
+    //    check = model.setConnectivity(connectivity);
+    //    if (check != 0) {
+    //        cerr << "Error: connectivity could not be set" << endl;
+    //        exit(1);
+    //    }
+    //
+    //    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
+    //    model.fit(bas);
+    //
+    //    // vector<double> h = model.getTrainingHistory();
+    //    histories[r] = model.getTrainingHistory();
+    //    cout << "NLL" << endl;
+    //    for (auto i: histories[r])
+    //        cout << i << ", ";
+    //    cout << endl;
+    //}
+    //
+    //ofstream outdata;
+    //stringstream fname;
+    ////fname << "nll_progress_single_neighbors" << neighbors << "_k" << k << ".csv";
+    //fname << "nll_progress_mixing" << mixIter << "_neighbors" << neighbors << "_k" << k << "_repeat" << repeat << ".csv";
+    ////fname << "nll_progress_single_basConnect_k" << k << ".csv";
+    ////fname << "nll_progress_single_basConnect2_k" << k << ".csv";
+    //outdata.open(fname.str()); // opens the file
+    //if( !outdata ) { // file couldn't be opened
+    //    cerr << "Error: file could not be opened" << endl;
+    //    exit(1);
+    //}
+    //
+    //outdata << "# NLL through RBM training for BAS" << size << ", connected with " << neighbors;
+    //outdata << " random neighbors. Mixing " << mixIter << "times. Seed is: " << seed << endl;
+    ////outdata << "NLL" << endl;
+    ////for (auto i: h)
+    ////    outdata << i << endl;
+    ////outdata.close();
+    //for (int r=0; r<repeat; r++) { outdata << ",NLL-" << r; }
+    //outdata << endl;
+    //for (int i=0; i<(float(iter)/f_nll); i++) {
+    //    outdata << i*f_nll;
+    //    for (int r=0; r<repeat; r++) {
+    //        outdata << "," << histories[r][i];
+    //    }
+    //    outdata << endl;
+    //}
+    //if ((iter % f_nll) != 0) {
+    //    outdata << iter-1;
+    //    for (int r=0; r<repeat; r++) { outdata << "," << histories[r].back(); }
+    //    outdata << endl;
+    //}
+    //
+    //// model.printVariables();
 
     return 0;
 }

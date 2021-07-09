@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors in line." << endl;
+    outdata << "# NLL through RBM training for BAS" << size << ". CD-" << k << ", " << v << " neighbors in " << neighType << "." << endl;
     outdata << "# Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
     //for (auto i: h)

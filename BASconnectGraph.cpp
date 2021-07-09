@@ -119,9 +119,10 @@ int main(int argc, char **argv) {
             connectivity = bas_connect_2(size);
             break;
 
-        // case 3:         // convolutional
-        //     connectivity =
-        //     break;
+        case 3:         // convolutional
+            connectivity = bas_connect_3(size);
+            break;
+
         default:
             msg.str("");
             msg << "BAS connect v" << version << " not implemented.";
@@ -129,7 +130,6 @@ int main(int argc, char **argv) {
             cerr << "Error: Invalid connectivity version. Aborting." << endl;
             exit(1);
     }
-    // TODO: Add third specialist version
 
     RBM model(s_size, s_size);
     model.connectivity(true);
