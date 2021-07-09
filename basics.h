@@ -36,6 +36,10 @@ void printInfo(string msg);
 Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs);
 Eigen::MatrixXd bas_connect(int basSize);
 Eigen::MatrixXd bas_connect_2(int basSize);
+Eigen::MatrixXd bas_connect_3(int basSize);
+
+// Helper functions
+int wraparound(int x, int lim);
 
 // Randomizing Connectivity
 class Mixer {

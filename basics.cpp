@@ -125,6 +125,48 @@ Eigen::MatrixXd bas_connect_2(int basSize) {
     return ret;
 }
 
+int wraparound(int x, int lim) {
+    if (x < 0) { return lim + x; }
+    if (x >= lim) { return x - lim; }
+    return x;
+}
+
+Eigen::MatrixXd bas_connect_3(int basSize) {
+    if (basSize < 1) {
+        string msg = "Invalid size, should be a positive non null number";
+        printError(msg);
+        throw;
+    } else if (basSize == 1) {
+        string msg = "BAS 1x1 is a very trivial case. Check if you've "
+                     "estipulated the size correctly";
+        printWarning(msg);
+
+        return Eigen::MatrixXd::Constant(1, 1, 1);
+    }
+
+    int size = basSize*basSize;
+
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Identity(size, size);
+
+    int c, r;
+    for (int i=0; i<size; i++) {
+        r = int( i/basSize );
+        c = i % basSize;
+
+        // (i, i) já está adicionado
+        ret( i, basSize*r + wraparound(c+1, basSize) ) = 1;
+        ret( i, basSize*r + wraparound(c-1, basSize) ) = 1;
+        ret( i, wraparound(i + basSize, size) ) = 1;
+        ret( i, basSize * wraparound(r+1, basSize) + wraparound(c+1, basSize) ) = 1;
+        ret( i, basSize * wraparound(r+1, basSize) + wraparound(c-1, basSize) ) = 1;
+        ret( i, wraparound(i - basSize, size) ) = 1;
+        ret( i, basSize * wraparound(r-1, basSize) + wraparound(c+1, basSize) ) = 1;
+        ret( i, basSize * wraparound(r-1, basSize) + wraparound(c-1, basSize) ) = 1;
+    }
+
+    return ret;
+}
+
 
 // Randomizing Connectivity
 Mixer::Mixer(unsigned s) {
