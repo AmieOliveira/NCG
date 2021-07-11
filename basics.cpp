@@ -167,6 +167,85 @@ Eigen::MatrixXd bas_connect_3(int basSize) {
     return ret;
 }
 
+Eigen::MatrixXd v_neighbors_spiral(int nRows, int nCols, int nNeighs) {
+    if (nNeighs <= 0) {
+        string msg = "Invalid number of neighbors, set 1 or higher";
+        printError(msg);
+        throw;
+    }
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Identity(nRows, nCols);
+
+    if (nNeighs == 1) {
+        return ret;
+    }
+
+    int basSize = int(sqrt(nCols));
+
+    for (int i=0; i<nRows; i++) {
+        int l;
+        int g_r, g_c;
+        int v_r, v_c;
+        int r = int(i/basSize);
+        int c = i % basSize;
+
+        // Values initialization
+        if (basSize % 2 == 0) {
+            // Has an even-sided square
+            l = 2;
+            v_r = 0;
+            v_c = -1;
+            g_r = r;
+            g_c = wraparound(c - 1, basSize);
+        } else {
+            // Has odd sized square
+            l = 1;
+            v_r = 0;
+            v_c = 0;
+            g_r = r;
+            g_c = c;
+        }
+
+        for (int v = 2; v <= nNeighs; v++) {
+            // cout << "Current position (" << r << "," << c << "), movement (" << v_r
+            //      << "," << v_c << ") next goal (" << g_r << ", " << g_c << ")" << endl;
+
+            // Add next neighbor
+            r = wraparound(r + v_r, basSize);
+            c = wraparound(c + v_c, basSize);
+
+            if ( ret(i, basSize*r + c) == 1 ) {
+                // Finished lap! Begin new one!
+                l += 2;
+                r = wraparound( r+1, basSize );
+                v_r = 0;
+                v_c = -1;
+                g_r = r;
+                g_c = wraparound( c - int(l/2), basSize );
+
+                // cout << "Adding neighbor: (" << i << ", " << basSize*r + c << ")" << endl;
+                ret(i, basSize*r + c) = 1;
+                continue;
+            }
+
+            // cout << "Adding neighbor: (" << i << ", " << basSize*r + c << ")" << endl;
+            ret(i, basSize*r + c) = 1;
+
+            if ( (r == g_r) && (c == g_c) ) {
+                // Turn
+                int tmp = v_r;
+                v_r = v_c;
+                v_c = - tmp;
+
+                g_r = wraparound( r + (v_r*(l-1)), basSize );
+                g_c = wraparound( c + (v_c*(l-1)), basSize );
+            }
+        }
+
+    }
+
+    return ret;
+}
+
 
 // Randomizing Connectivity
 Mixer::Mixer(unsigned s) {

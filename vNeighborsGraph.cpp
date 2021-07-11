@@ -126,10 +126,10 @@ int main(int argc, char **argv) {
             connectivity = v_neighbors(s_size, s_size, v);
             break;
 
-        // case 's':
-        //     neighType = "spiral";
-        //     connectivity =
-        //     break;
+        case 's':
+            neighType = "spiral";
+            connectivity = v_neighbors_spiral(s_size, s_size, v);
+            break;
 
         default:
             msg.str("");
@@ -138,7 +138,6 @@ int main(int argc, char **argv) {
             cerr << "Error: Invalid neighborhood version. Aborting." << endl;
             exit(1);
     }
-    // TODO: Add spiral neighbors option.
 
     RBM model(s_size, s_size);
     model.connectivity(true);

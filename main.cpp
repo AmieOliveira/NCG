@@ -354,13 +354,14 @@ int main(int argc, char **argv) {
 
     int s_size = bas.get_sample_size();
 
-    //int neighbors = 4;
-    //cout << "Using " << neighbors << " neighbors connectivity" << endl;
+    int neighbors = 8;
+    cout << "Using " << neighbors << " neighbors connectivity" << endl;
     //MatrixXd connectivity = v_neighbors(s_size, s_size, neighbors);
-    //
+    MatrixXd connectivity = v_neighbors_spiral(s_size, s_size, neighbors);
+
     // MatrixXd connectivity = bas_connect(size);
     // MatrixXd connectivity = bas_connect_2(size);
-    MatrixXd connectivity = bas_connect_3(size);
+    // MatrixXd connectivity = bas_connect_3(size);
 
 
     printInfo("Connectivity matrix");
@@ -369,7 +370,7 @@ int main(int argc, char **argv) {
     RowVectorXd vec;
     for (int i = 0; i < s_size; i++) {
         cout << "------------" << endl;
-        vec = connectivity.col(i);
+        vec = connectivity.row(i);
         for (int l = 0; l < size; ++l) {
             cout << vec.segment(l*size, size) << endl;
         }
