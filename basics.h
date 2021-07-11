@@ -20,6 +20,7 @@ namespace colors {
 #include <string>
 #include <vector>
 #include <random>
+#include <cmath>
 //#include <Python.h>
 
 #include "Eigen/Dense"
@@ -34,6 +35,8 @@ void printInfo(string msg);
 
 // Connectivity Matrixes
 Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs);
+Eigen::MatrixXd v_neighbors_spiral(int nRows, int nCols, int nNeighs);
+
 Eigen::MatrixXd bas_connect(int basSize);
 Eigen::MatrixXd bas_connect_2(int basSize);
 Eigen::MatrixXd bas_connect_3(int basSize);
