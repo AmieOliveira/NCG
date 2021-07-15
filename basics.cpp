@@ -95,6 +95,8 @@ Eigen::MatrixXd bas_connect(int basSize) {
 //Eigen::MatrixXd bas_connect(int size, )
 
 Eigen::MatrixXd bas_connect_2(int basSize) {
+    // "Crux connectivity". Has 2*(basSize)-1 neighbors, and connects all units
+    // on the same row and/or column as a central point
     if (basSize < 1) {
         string msg = "Invalid size, should be a positive non null number";
         printError(msg);
@@ -132,6 +134,8 @@ int wraparound(int x, int lim) {
 }
 
 Eigen::MatrixXd bas_connect_3(int basSize) {
+    // "Convolutional connectivity". Has 9 neighbors, and connects
+    // units to a square around a central point
     if (basSize < 1) {
         string msg = "Invalid size, should be a positive non null number";
         printError(msg);
@@ -241,6 +245,45 @@ Eigen::MatrixXd v_neighbors_spiral(int nRows, int nCols, int nNeighs) {
             }
         }
 
+    }
+
+    return ret;
+}
+
+Eigen::MatrixXd bas_connect_4(int basSize) {
+    // "Stairs connectivity". Has 2*(basSize) neighbors, and tracks all rows and all
+    // columns in the pattern
+    if (basSize < 1) {
+        string msg = "Invalid size, should be a positive non null number";
+        printError(msg);
+        throw;
+    } else if (basSize == 1) {
+        string msg = "BAS 1x1 is a very trivial case. Check if you've "
+                     "estipulated the size correctly";
+        printWarning(msg);
+
+        return Eigen::MatrixXd::Constant(1, 1, 1);
+    }
+
+    int size = basSize*basSize;
+
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Identity(size, size);
+
+    int c, r;
+    for (int i=0; i<size; i++) {
+        r = int( i/basSize );
+        c = i % basSize;
+
+        // (i, i) já está adicionado
+        c = wraparound(c+1, basSize);
+        ret( i, basSize*r + c ) = 1;
+
+        for (int l=1; l<basSize; l++) {
+            r = wraparound(r+1, basSize);
+            ret( i, basSize*r + c ) = 1;
+            c = wraparound(c+1, basSize);
+            ret( i, basSize*r + c ) = 1;
+        }
     }
 
     return ret;
