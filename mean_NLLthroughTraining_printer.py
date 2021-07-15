@@ -6,26 +6,27 @@ from math import log
 import numpy as np
 
 
-k_values = [1]  # [100, 20, 10, 5, 2, 1]
-v_values = [13]  # [16, 12, 8, 6, 4]
-versions = [2]  # [1, 2]
+k_values = [100, 20, 10, 5, 2, 1]
+v_values = [16, 14, 12, 10, 8, 6, 4]
+versions = [2, 3]  # [1, 2]
 
 size = "default"  # "default", "wide"
-lim_iter = int(2e3)
-plotType = "complete"  # "complete", "neighbors", "BAScon"
+lim_iter = int(10e3)
+plotType = "neighbors"  # "complete", "neighbors", "BAScon"
+neighType = "line"
 errorType = None  # None, "std", "quartile"
-repeat = 5
+repeat = 25
 
-periodoNLL = 10
+periodoNLL = 1
 
 dataType = "bas"
-dataSize = 5
+dataSize = 4
 basename = f"meanNll_{dataType}{dataSize}"
-inputPath = f"result/bas5"
+inputPath = f"result/{plotType}"
 outputPath = inputPath
 
 imputBase = { "complete":   "nll_progress_bas{}_complete_k{}-run{}.csv",
-              "neighbors":  "nll_progress_bas{}_neighbors{}_k{}-run{}.csv",
+              "neighbors":  "nll_progress_bas{}_neighbors{}_{}_k{}-run{}.csv",
               "BAScon":     "nll_progress_bas{}_BASconV{}_k{}-run{}.csv" }
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
@@ -84,14 +85,15 @@ elif plotType == "neighbors":
 
             for r in range(repeat):
                 if v == (dataSize * dataSize):
-                    # filename = "result/complete/" + imputBase["complete"].format(dataSize, k, r)
-                    filename = "result/complete/nll_progress_complete_k{}-run{}.csv".format(k, r)
+                    filename = "result/complete/" + imputBase["complete"].format(dataSize, k, r)
+                    # filename = "result/complete/nll_progress_complete_k{}-run{}.csv".format(k, r)
                 else:
-                    filename = outputPath + "/" + imputBase[plotType].format(dataSize, v, k, r)
+                    # filename = outputPath + "/nll_progress_bas{}_neighbors{}_k{}-run{}.csv".format(dataSize, v, k, r)
+                    filename = outputPath + "/" + imputBase[plotType].format(dataSize, v, neighType, k, r)
 
-                df = pd.read_csv(filename, comment="#")  # index_col=0
-                if len(df.columns) == 2:
-                    df = pd.read_csv(filename, comment="#", index_col=0)
+                # df = pd.read_csv(filename, comment="#")  # index_col=0
+                # if len(df.columns) == 2:
+                df = pd.read_csv(filename, comment="#", index_col=0)
                 df = df.astype(float)
                 df = df.iloc[0:lim_iter + 1]
                 df = df.rename(columns={"NLL": f"iter{r}"})
@@ -104,21 +106,21 @@ elif plotType == "neighbors":
             if periodoNLL != 1:
                 fullDf.set_index(indexes, inplace=True)
 
-            meanDF[f"CD-{k}, {v} neighbors"] = fullDf.mean(axis=1)  # mean
-            meanDF[f"CD-{k}, {v} neighbors - std"] = fullDf.std(axis=1)  # standard deviation
-            meanDF[f"CD-{k}, {v} neighbors - q1"] = fullDf.quantile(q=0.25, axis=1)  # first quartile
-            meanDF[f"CD-{k}, {v} neighbors - q3"] = fullDf.quantile(q=0.75, axis=1)  # third quartile
+            meanDF[f"CD-{k}, {v} neighbors in {neighType}"] = fullDf.mean(axis=1)  # mean
+            meanDF[f"CD-{k}, {v} neighbors {neighType} - std"] = fullDf.std(axis=1)  # standard deviation
+            meanDF[f"CD-{k}, {v} neighbors {neighType} - q1"] = fullDf.quantile(q=0.25, axis=1)  # first quartile
+            meanDF[f"CD-{k}, {v} neighbors {neighType} - q3"] = fullDf.quantile(q=0.75, axis=1)  # third quartile
 
-            meanDF[f"CD-{k}, {v} neighbors"].plot(ax=ax, linewidth=1, alpha=0.8)
+            meanDF[f"CD-{k}, {v} neighbors in {neighType}"].plot(ax=ax, linewidth=1, alpha=0.8)
 
             if errorType == "std":
-                error = meanDF[f"CD-{k}, {v} neighbors - std"].to_numpy()
-                mean = meanDF[f"CD-{k}, {v} neighbors"].to_numpy()
+                error = meanDF[f"CD-{k}, {v} neighbors {neighType} - std"].to_numpy()
+                mean = meanDF[f"CD-{k}, {v} neighbors in {neighType}"].to_numpy()
                 ax.fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
             elif errorType == "quartile":
-                errorPlus = meanDF[f"CD-{k}, {v} neighbors - q3"].to_numpy()
-                errorMinus = meanDF[f"CD-{k}, {v} neighbors - q1"].to_numpy()
+                errorPlus = meanDF[f"CD-{k}, {v} neighbors {neighType} - q3"].to_numpy()
+                errorMinus = meanDF[f"CD-{k}, {v} neighbors {neighType} - q1"].to_numpy()
                 ax.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
 elif plotType == "BAScon":
@@ -174,8 +176,9 @@ if periodoNLL != 1:
 
 
 errorPrint = f"-{errorType}Err" if errorType else ""
+neighPrint = f"_{neighType}" if plotType == "neighbors" else ""
 
-plt.savefig(f"{outputPath}/{basename}_{plotType}-{repeat}rep{errorPrint}.pdf", transparent=True)
-meanDF.to_csv(f"{outputPath}/{basename}_{plotType}-{repeat}rep.csv")
+plt.savefig(f"{outputPath}/{basename}_{plotType}{neighPrint}-{repeat}rep{errorPrint}.pdf", transparent=True)
+meanDF.to_csv(f"{outputPath}/{basename}_{plotType}{neighPrint}-{repeat}rep.csv")
 # plt.show()
 

@@ -115,12 +115,16 @@ int main(int argc, char **argv) {
             connectivity = bas_connect(size);
             break;
 
-        case 2:         // axis connectivity
+        case 2:         // crux (connects unit's axis)
             connectivity = bas_connect_2(size);
             break;
 
         case 3:         // convolutional
             connectivity = bas_connect_3(size);
+            break;
+
+        case 4:         // stairs (tracks all rows and columns)
+            connectivity = bas_connect_4(size);
             break;
 
         default:
