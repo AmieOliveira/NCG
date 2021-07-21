@@ -6,6 +6,7 @@
 #define RBM_H
 
 // Libraries
+#include <fstream>
 #include <random>
 #include <vector>
 #include <cmath>
@@ -23,6 +24,11 @@ enum SampleType {
     //PT
 };
 
+enum Heuristic {
+    SGD,            // Classical training
+    // SA_SGD
+};
+
 class RBM {
     // Flags
     bool initialized;   // True if RBM has dimensions
@@ -30,6 +36,7 @@ class RBM {
     bool hasSeed;       // True if a seed for the random generator has been set
     bool trainReady;    // True if RBM has been setup for training
     bool isTrained;     // True if RBM has been trained on some dataset
+    bool optReady;      // True if RBM has been set up to optimize A
 
     // Dimensions
     int xSize, hSize;
@@ -77,6 +84,21 @@ class RBM {
     int freqNLL;            // Rate of NLL calculation (1 calculus every freqNLL iterations)
     vector<double> history; // NLL
 
+    // Training's optimization variables
+    Heuristic opt_type;     // Connectivity optimization method
+    string connect_out;     // Filename of connectivity output (dumps A throughout training)
+    double a_prob;          // Probability used for initialization of A
+
+    double limiar;
+    double margin;
+
+
+    // Training methods
+    void optimizer_SGD(Data trainData);
+
+    // Helper function
+    string printConnectivity_linear();
+
 public:
     // Constructors
     RBM();
@@ -106,7 +128,6 @@ public:
 
     VectorXd getHiddenBiases();
     int setHiddenBiases(VectorXd vec);
-
     void startBiases();     // Starting randomly. Do not think this will be used for actual training
 
     MatrixXd getWeights();
@@ -115,6 +136,7 @@ public:
 
     MatrixXd getConnectivity();
     int setConnectivity(MatrixXd mat);
+    void startConnectivity(double p);   // With p probability of any given edge existing
 
     // Random generator functions
     void setRandomSeed(unsigned seed);
@@ -130,8 +152,14 @@ public:
                     int batchSize, double learnRate, bool NLL);
     void trainSetup(SampleType sampleType, int k, int iterations,
                     int batchSize, double learnRate, bool NLL, int period);
+
     void fit(Data trainData);
-    // TODO: Retornar alguma coisa na função?
+
+    void optSetup();
+    void optSetup(Heuristic method, double p);
+    void optSetup(Heuristic method, string connFileName, double p);
+
+    void fit_connectivity(Data trainData);
 
     // Evaluation methods
     double negativeLogLikelihood(Data data);

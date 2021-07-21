@@ -14,6 +14,7 @@ RBM::RBM(int X, int H) {
     initializer(X, H);
 }
 RBM::RBM(int X, int H, bool use_pattern) {
+    initialized = true;
     patterns = use_pattern;
     initializer(X,H);
 }
@@ -21,6 +22,7 @@ RBM::RBM(int X, int H, bool use_pattern) {
 void RBM::initializer(int X, int H) {
     hasSeed = false;
     trainReady = false;
+    optReady = false;
     isTrained = false;
 
     xSize = X;
@@ -283,6 +285,47 @@ int RBM::setConnectivity(MatrixXd mat) {
     }
 }
 
+void RBM::startConnectivity(double p) {
+    // Initializes the connectivity pattern randomly according to the
+    //      probability p of any given edge existing
+    if (!initialized){
+        string errorMessage = "Tried to set a matrix that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        exit(1);
+    }
+    if (!patterns) {
+        string errorMessage = "Tried to set connectivity matrix, but it is not active "
+                              "for this RBM!";
+        printError(errorMessage);
+        exit(1);
+    }
+    if ( (p < 0) || (p > 1) ) {
+        string errorMessage = "Tried to set connectivity matrix, "
+                              "with invalid probability value!";
+        printError(errorMessage);
+        cerr << "Probability p = " << p << " is not valid. Please assign a value " <<
+                "between 0 and 1" << endl;
+        exit(1);
+    }
+
+
+    double moeda;
+
+    for (int i=0; i<hSize; i++) {
+        for (int j=0; j<xSize; j++) {
+            moeda = (*p_dis)(generator);
+
+            if (moeda < p) A(i,j) = 1;
+            else A(i,j) = 0;
+        }
+    }
+
+    // cout << "Connecttivity matrix, initialated with p = " << p << endl;
+    // cout << A << endl;
+    // cout << "Percentage of connections activated: " << A.sum()/(xSize*hSize) << endl;
+}
 
 // RBM probabilities
 VectorXd RBM::getProbabilities_x() {
@@ -504,8 +547,6 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
 }
 
 void RBM::fit(Data trainData){
-    // TODO: Treinar padrões de conectividade
-
     if (!trainReady){
         string errorMessage;
         errorMessage = "Cannot train machine without setting up "
@@ -615,6 +656,191 @@ void RBM::fit(Data trainData){
     cout << endl;
      */
 }
+
+
+void RBM::fit_connectivity(Data trainData) {
+    if ( !patterns ){
+        printError("Cannot optimize patterns if we have a classical RBM");
+        cerr << "Cannot optimize patterns if we have a classical RBM, "
+             << "please set connectivity to true before proceeding" << endl;
+        exit(1);
+    }
+    if ( !trainReady ) {
+        printError("Cannot optmize connectivity without setting up training parameters");
+        cerr << "Please set up training parameters in 'trainSetup' before attempting to train connectivity" << endl;
+        exit(1);
+    }
+    if ( !optReady ) {
+        printError("Cannot optmize connectivity without setting up the optimization parameters");
+        cerr << "Please set up optimization parameters in 'optSetp' before attempting to train connectivity" << endl;
+        exit(1);
+    }
+
+    switch (opt_type) {
+        case Heuristic::SGD:
+            optimizer_SGD(trainData);
+            break;
+        default:
+            printError("Not yet implemented!");
+            cerr << "Optimization via " << opt_type << " heuristic is not implemented" << endl;
+    }
+}
+
+
+void RBM::optSetup(){
+    optSetup(SGD, "connectivity", 1);
+}
+
+void RBM::optSetup(Heuristic method, string connFileName, double p){
+    opt_type = method;
+    connect_out = connFileName;
+    a_prob = p;
+    startConnectivity(p);
+
+    // SGD parameters
+    limiar = 0.5;
+    margin = 0.45;
+    // TODO: Change this so it is not hardcoded
+    // Talvez fazer umas funções setThreshold e setMargin, ou uma setSGDparams, opcional,
+    //  para mudar essas coisas... Só fica bem chato ter que dar três setups diferentes, mas
+    //  não tô pensando em uma forma melhor no momento
+
+    optReady = true;
+}
+
+string RBM::printConnectivity_linear() {
+    stringstream ret;
+    const char* separator = "";
+    for (int i=0; i<hSize; i++) {
+        for (int j=0; j<xSize; j++) {
+            ret << separator << A(i,j);
+            separator = ",";
+        }
+    }
+    return ret.str();
+}
+
+void RBM::optimizer_SGD(Data trainData) {
+    printInfo("------- TRAINING DATA: Optimizing A -------");
+
+    int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
+    vector<VectorXd> batch, sampled;
+    MatrixXd W_gradient(hSize, xSize);
+    VectorXd b_gradient(hSize), d_gradient(xSize);
+    MatrixXd A_gradient(hSize, xSize);
+    VectorXd h_hat(hSize);
+    int actualSize;
+    double nll_val;
+
+    MatrixXd A_(hSize, xSize);    // Continuous version of A
+    for (int i=0; i<hSize; i++) {
+        for (int j=0; j<xSize; j++) {
+            A_(i,j) = abs( A(i,j) - margin );
+        }
+    }
+
+    //stringstream mat_dump;
+    //mat_dump << connect_out << "_SGD_lim" << limiar << "_CD-" << k;
+    // TODO: Rever esse nome (o que eu quero e não quero por? E vai dar certo criar o nome aqui dentro?)
+
+    ofstream output;
+    output.open(connect_out);
+
+    if (calcNLL) {
+        history.push_back(negativeLogLikelihood(trainData)); // Before training
+    }
+    output << "# Connectivity patterns throughout training" << endl;
+    output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
+    output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
+    output << "# A initialized with p = " << a_prob << ", A_ with margin " << margin << endl;
+    output << "0," << printConnectivity_linear() << endl;
+
+    for (int it = 0; it < n_iter; ++it) {
+        // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
+        //if (it != 0) trainData.shuffleOrder();
+
+        actualSize = b_size;
+
+        for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
+
+            batch = trainData.get_batch(bIdx, b_size);
+            sampled = sampleXtilde(stype, k_steps, batch);
+
+            W_gradient = MatrixXd::Zero(hSize, xSize);
+            b_gradient = VectorXd::Zero(hSize);
+            d_gradient = VectorXd::Zero(xSize);
+
+            A_gradient = MatrixXd::Zero(hSize, xSize);
+
+            for (int s = 0; s < batch.size(); ++s) {
+
+                x = batch.at(s);
+                h_hat = getProbabilities_h();
+                W_gradient += h_hat*x.transpose();
+                b_gradient += h_hat;
+                d_gradient += x;
+                A_gradient += W.cwiseProduct( h_hat*x.transpose() );
+
+                x = sampled.at(s);
+                h_hat = getProbabilities_h();
+                W_gradient -= h_hat*x.transpose();
+                b_gradient -= h_hat;
+                d_gradient -= x;
+                A_gradient -= W.cwiseProduct( h_hat*x.transpose() );
+            }
+
+            if (bIdx == n_batches-1) actualSize = batch.size();
+
+            W_gradient = W_gradient/actualSize;
+            W_gradient = W_gradient.cwiseProduct(A);
+            W = W + l_rate*W_gradient;
+
+            A_gradient = A_gradient/actualSize;
+            A_ = A_ + l_rate * A_gradient;
+            for (int i=0; i<hSize; i++) {
+                for (int j=0; j<xSize; j++) {
+                    if ( A_(i,j) < limiar ) {
+                        A(i,j) = 0;
+
+                        if ( A_(i,j) < 0 ) A_(i,j) = 0;
+                    }
+                    else if ( A_(i,j) > limiar ) {
+                        A(i,j) = 1;
+
+                        if ( A_(i,j) > 1 ) A_(i,j) = 1;
+                    }
+                }
+            }   // NOTE: Talvez criar uma função para binarizar a matriz A
+
+            // cout << "Maximum and minimum coefficients of A's gradient: "
+            //      << A_gradient.maxCoeff() << ", " << A_gradient.minCoeff() << endl;
+
+            // // Print for debugging
+            // cout << "Continuous connectivity: " << endl;
+            // cout << A_ << endl;
+
+            C = W.cwiseProduct(A);
+
+            b_gradient = b_gradient/actualSize;
+            b = b + l_rate*b_gradient;
+
+            d_gradient = d_gradient/actualSize;
+            d = d + l_rate*d_gradient;
+        }
+
+        if (calcNLL) {
+            if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
+                nll_val = negativeLogLikelihood(trainData);
+                history.push_back(nll_val);
+                cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
+            }
+        }
+        output << it+1 << "," << printConnectivity_linear() << endl;
+    }
+
+    isTrained = true;
+}
+
 
 // Evaluation methods
 double RBM::negativeLogLikelihood(Data data) {
