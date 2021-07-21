@@ -2,27 +2,32 @@
 
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from math import log
 
 basSize = 4
 
-comparison = ""
+comparison = "neighbors10-14_BAScon2-4_complete"
+# "neighTypes"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-k_vals = [100, 20, 10, 5, 2, 1]
+k_vals = [1]  # [100, 20, 10, 5, 2, 1]
 # k = 1
-neighbors = [16, 14, 12, 10, 8, 6, 4]
-neighType = "line"      # "line", "spiral"
-identifier = 2
+neighbors = [14, 12, 10]   # 16 [14, 12, 10, 8, 6, 4]
+# neighType = "spiral"      # "line", "spiral"
+versions = [2, 3, 4]
+# identifier = 2
 lim_iter = 10000
-errorType = "quartile"       # None, "std", "quartile"
+errorType = None        # None, "std", "quartile"
 repeat = 25
+
+plotSize = "default"            # "default", "wide"
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
 sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 
-# fig, ax = plt.subplots(1, figsize=figSize["default"])
+# fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 #
 # filename = f"Training Outputs/meanNll_bas{basSize}_complete-5rep.csv"
 # df = pd.read_csv(filename, comment="#", index_col=0)
@@ -150,79 +155,141 @@ sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 # Get all CD-k for a comparison ---------
 linwdth = 1  # .5
 shadalph = .3
+colormap = 'tab20'
+cmsize = 20.0
 
-# filenameC = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
-# dfC = pd.read_csv(filenameC, comment="#", index_col=0)
-# dfC = dfC.astype(float)
-# dfC = dfC.iloc[0:lim_iter]
+cmap = cm.get_cmap(colormap)
+
+filenameC = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
+dfC = pd.read_csv(filenameC, comment="#", index_col=0)
+dfC = dfC.astype(float)
+dfC = dfC.iloc[0:lim_iter]
 
 filenameNl = f"Training Outputs/meanNll_bas{basSize}_neighbors_line-{repeat}rep.csv"
 dfNl = pd.read_csv(filenameNl, comment="#", index_col=0)
 dfNl = dfNl.astype(float)
 dfNl = dfNl.iloc[0:lim_iter]
 
-# filename = f"Training Outputs/meanNll_bas4_BAScon-25rep.csv"
-# dfS = pd.read_csv(filename, comment="#", index_col=0)
-# dfS = dfS.astype(float)
-# dfS = dfS.iloc[0:lim_iter]
+filenameNs = f"Training Outputs/meanNll_bas{basSize}_neighbors_spiral-{repeat}rep.csv"
+dfNs = pd.read_csv(filenameNs, comment="#", index_col=0)
+dfNs = dfNs.astype(float)
+dfNs = dfNs.iloc[0:lim_iter]
+
+filename = f"Training Outputs/meanNll_bas4_BAScon-25rep.csv"
+dfS = pd.read_csv(filename, comment="#", index_col=0)
+dfS = dfS.astype(float)
+dfS = dfS.iloc[0:lim_iter]
 
 for k in k_vals:
-    fig, ax = plt.subplots(1, figsize=figSize["default"])
+    fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 
-    # dfC = dfC.rename(columns={f"CD-{k}": f"CD-{k}, Complete"})
-    # dfC[f"CD-{k}, Complete"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+    dfC = dfC.rename(columns={f"CD-{k}": f"CD-{k}, Complete"})
+    dfC[f"CD-{k}, Complete"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
 
-    # dfS[f"CD-{k}, Specialist v{identifier}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
-
+    i = 2*1
     for v in neighbors:
-        dfNl[f"CD-{k}, {v} neighbors in {neighType}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+        # NOTE: argument 'cmap' does not work since I plot one at a time
+        dfNl[f"CD-{k}, {v} neighbors in line"].plot(ax=ax, linewidth=linwdth, alpha=0.8, color=cmap((i)/cmsize))
+        dfNs[f"CD-{k}, {v} neighbors in spiral"].plot(ax=ax, linestyle='dashed', linewidth=linwdth, alpha=0.8, color=cmap((i+1)/cmsize))
+        i = i+2
+
+    for identifier in versions:
+        dfS[f"CD-{k}, Specialist v{identifier}"].plot(ax=ax, linewidth=linwdth, alpha=0.8, color=cmap(i/cmsize))
+        i += 2
 
     if errorType == "std":
         # ind = dfC.index
-        ind = dfNl.index
-        # errorC = dfC[f"CD-{k} std"].to_numpy()
-        # meanC = dfC[f"CD-{k}, Complete"].to_numpy()
-        # ax.fill_between(ind, meanC - errorC, meanC + errorC, alpha=shadalph)
+        # ind = dfNl.index
+        ind = dfNs.index
+        # ind = dfS.index
 
-        # errorS = dfS[f"CD-{k}, Specialist v{identifier} - std"].to_numpy()
-        # meanS = dfS[f"CD-{k}, Specialist v{identifier}"].to_numpy()
-        # ax.fill_between(ind, meanS - errorS, meanS + errorS, alpha=shadalph)
+        errorC = dfC[f"CD-{k} std"].to_numpy()
+        meanC = dfC[f"CD-{k}, Complete"].to_numpy()
+        ax.fill_between(ind, meanC - errorC, meanC + errorC, alpha=shadalph)
 
+        i = 2*1
         for v in neighbors:
-            errorV = dfNl[f"CD-{k}, {v} neighbors {neighType} - std"].to_numpy()
-            meanV = dfNl[f"CD-{k}, {v} neighbors in {neighType}"].to_numpy()
-            ax.fill_between(ind, meanV - errorV, meanV + errorV, alpha=shadalph)
+            errorVl = dfNl[f"CD-{k}, {v} neighbors line - std"].to_numpy()
+            meanVl = dfNl[f"CD-{k}, {v} neighbors in line"].to_numpy()
+            ax.fill_between(ind, meanVl - errorVl, meanVl + errorVl, alpha=shadalph, color=cmap((i)/cmsize))
+
+            errorVs = dfNs[f"CD-{k}, {v} neighbors spiral - std"].to_numpy()
+            meanVs = dfNs[f"CD-{k}, {v} neighbors in spiral"].to_numpy()
+            ax.fill_between(ind, meanVs - errorVs, meanVs + errorVs, alpha=shadalph, color=cmap((i+1)/cmsize))
+            i = i + 2
+
+        for identifier in versions:
+            errorS = dfS[f"CD-{k}, Specialist v{identifier} - std"].to_numpy()
+            meanS = dfS[f"CD-{k}, Specialist v{identifier}"].to_numpy()
+            ax.fill_between(ind, meanS - errorS, meanS + errorS, alpha=shadalph, color=cmap(i/cmsize))
+            i += 2
 
     elif errorType == "quartile":
         # ind = dfC.index
-        ind = dfNl.index
-        # TODO: Others
+        # ind = dfNl.index
+        ind = dfNs.index
+        # ind = dfS.index
 
+        errorPlus = dfC[f"CD-{k} q3"].to_numpy()
+        errorMinus = dfC[f"CD-{k} q1"].to_numpy()
+        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+
+        i = 2*1
         for v in neighbors:
-            errorPlus = dfNl[f"CD-{k}, {v} neighbors {neighType} - q3"].to_numpy()
-            errorMinus = dfNl[f"CD-{k}, {v} neighbors {neighType} - q1"].to_numpy()
-            ax.fill_between(ind, errorMinus, errorPlus, alpha=0.3)
+            errorPlus = dfNl[f"CD-{k}, {v} neighbors line - q3"].to_numpy()
+            errorMinus = dfNl[f"CD-{k}, {v} neighbors line - q1"].to_numpy()
+            ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph, color=cmap((i)/cmsize))
+
+            errorPlus = dfNs[f"CD-{k}, {v} neighbors spiral - q3"].to_numpy()
+            errorMinus = dfNs[f"CD-{k}, {v} neighbors spiral - q1"].to_numpy()
+            ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph, color=cmap((i+1)/cmsize))
+            i = i + 2
+
+        for identifier in versions:
+            errorPlus = dfS[f"CD-{k}, Specialist v{identifier} - q3"].to_numpy()
+            errorMinus = dfS[f"CD-{k}, Specialist v{identifier} - q1"].to_numpy()
+            ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph, color=cmap(i/cmsize))
+            i += 2
 
     plt.title(f"NLL evolution for CD-{k}")
 
     plt.xlabel("Iteration")
     plt.ylabel("Average NLL")
     plt.grid(color="gray", linestyle=":", linewidth=.2)
-    plt.legend()
+    plt.legend(prop={'size': 6})
 
     # Lower limit of NLL
     nSamples = 2**(basSize+1)
     limitante = - log(1.0/nSamples)
     plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
-    # plt.ylim(3, 7)
+    # plt.ylim(5, 8)
+    # plt.xlim(2000, 10000)
 
     errorPrint = f"-{errorType}Err" if errorType else ""
+    sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
 
-    # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}-{repeat}rep{errorPrint}.pdf", transparent=True)
-    plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_neighbors_line-{repeat}rep{errorPrint}.pdf", transparent=True)
+    plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}"
+                f"-{repeat}rep{errorPrint}{sizeAppend}.pdf", transparent=True)
+    # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_neighbors_spiral-{repeat}rep{errorPrint}.pdf", transparent=True)
+    # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_BAScon-{repeat}rep{errorPrint}.pdf", transparent=True)
 # ---------
 
+
+# # NLL error plot ---------
+# filename = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
+# df = pd.read_csv(filename, comment="#", index_col=0)
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter]
+#
+# for k in k_vals:
+#     df[f"CD-{k}"].plot(ax=ax, linewidth=1, alpha=0.8)
+#     errorPlus = df[f"CD-{k} q3"].to_numpy()
+#     errorMinus = df[f"CD-{k} q1"].to_numpy()
+#     ax.fill_between(df.index, errorMinus, errorPlus, alpha=0.3)
+#
+# plt.title(f"NLL evolution through complete RBM training")
+# # ---------
 
 # plt.xlabel("Iteration")
 # plt.ylabel("Average NLL")
@@ -235,5 +302,7 @@ for k in k_vals:
 # limitante = - log(1.0/nSamples)
 # plt.plot([0, lim_iter], [limitante, limitante], "r--")
 #
-# plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
+# plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
+#
+# # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
 # # plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
