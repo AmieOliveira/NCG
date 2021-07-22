@@ -7,11 +7,11 @@ from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Inputs ---------------
-inputfilename = "Training Outputs/Teste SGD/connectivity_bas4_SGD_CD-1_p0.5.csv"
+inputfilename = "Training Outputs/Teste SGD/connectivity_bas4_SGD_CD-1_p1.csv"
 
 basSize = 4
 k = 1
-p = 0.5
+p = 1
 # ---------------
 
 
@@ -49,9 +49,9 @@ if __name__ == "__main__":
         gh_max[i] = max(gh)
 
         gx = [sum(conn[i, :, c]) for c in range(size)]
-        gx_med[i] = sum(gh) / len(gh)
-        gx_min[i] = min(gh)
-        gx_max[i] = max(gh)
+        gx_med[i] = sum(gx)/len(gx)
+        gx_min[i] = min(gx)
+        gx_max[i] = max(gx)
 
     fig, ax = plt.subplots(nrows=2, ncols=1, sharex='col', figsize=figSize["default"])
     fig.suptitle(f"Unit's degree for CD-{k}, p = {p}")
