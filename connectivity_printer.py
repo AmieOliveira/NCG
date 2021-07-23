@@ -7,11 +7,13 @@ from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Inputs ---------------
-inputfilename = "Training Outputs/Teste SGD/connectivity_bas4_SGD_CD-1_p1.csv"
-
 basSize = 4
 k = 1
 p = 1
+seed = 89237
+
+inputfilename = f"Training Outputs/Teste SGD/connectivity_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.csv"
+outpath = "Plots/Teste SGD"
 # ---------------
 
 
@@ -73,7 +75,7 @@ if __name__ == "__main__":
     plt.xlabel("Iteration")
 
     # plt.show()
-    plt.savefig(f"Plots/Teste SGD/nodeDegree_bas{basSize}_SGD_CD-{k}_p{p}.pdf", transparent=True)
+    plt.savefig(f"{outpath}/nodeDegree_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.pdf", transparent=True)
 
 
     # Edge activation graphs
@@ -117,4 +119,4 @@ if __name__ == "__main__":
 
     #fig.tight_layout()
     # plt.show()
-    plt.savefig(f"Plots/Teste SGD/edgeActivation_bas{basSize}_SGD_CD-{k}_p{p}.pdf", transparent=True)
+    plt.savefig(f"{outpath}/edgeActivation_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.pdf", transparent=True)
