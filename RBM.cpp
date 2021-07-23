@@ -699,11 +699,8 @@ void RBM::optSetup(Heuristic method, string connFileName, double p){
 
     // SGD parameters
     limiar = 0.5;
-    margin = 0.45;
     // TODO: Change this so it is not hardcoded
-    // Talvez fazer umas funções setThreshold e setMargin, ou uma setSGDparams, opcional,
-    //  para mudar essas coisas... Só fica bem chato ter que dar três setups diferentes, mas
-    //  não tô pensando em uma forma melhor no momento
+    // Talvez fazer uma função setThreshold, só fica bem chato ter que dar três setups diferentes
 
     optReady = true;
 }
@@ -735,7 +732,10 @@ void RBM::optimizer_SGD(Data trainData) {
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
         for (int j=0; j<xSize; j++) {
-            A_(i,j) = abs( A(i,j) - margin );
+            A_(i,j) = (*p_dis)(generator)/2;
+            if (A(i,j) == 1) A_(i,j) += 0.5;
+            // A_ is initialized uniformly between 0 and 0.5 or
+            // between 0.5 and 1, according to A's values
         }
     }
 
@@ -752,7 +752,7 @@ void RBM::optimizer_SGD(Data trainData) {
     output << "# Connectivity patterns throughout training" << endl;
     output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
     output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
-    output << "# A initialized with p = " << a_prob << ", A_ with margin " << margin << endl;
+    output << "# A initialized with p = " << a_prob << endl;
     output << "0," << printConnectivity_linear() << endl;
 
     for (int it = 0; it < n_iter; ++it) {
@@ -964,14 +964,6 @@ void RBM::printVariables() {
     cout << endl;
 }
 
-/* double RBM::getRandomNumber() {
-    if (!hasSeed){
-        string errorMessage = "Tried to get random number with no random seed set!";
-        printError(errorMessage);
-        throw runtime_error(errorMessage);
-    }
-    return (*p_dis)(generator);
-} */
 
 void RBM::sampleXH() {
     VectorXd vec = sample_x();

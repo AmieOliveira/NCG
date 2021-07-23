@@ -90,7 +90,6 @@ class RBM {
     double a_prob;          // Probability used for initialization of A
 
     double limiar;
-    double margin;
 
 
     // Training methods

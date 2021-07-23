@@ -377,8 +377,8 @@ int main(int argc, char **argv) {
     // cout << "------------" << endl;
 
     int b_size = 5;
-    double l_rate = 0.01;
-    double p = 0.75;
+    double l_rate = 0.1;
+    double p = 1;
 
     vector<double> h;
 
@@ -386,7 +386,7 @@ int main(int argc, char **argv) {
     model.setRandomSeed(seed);
     // model.setConnectivity(connectivity);
     stringstream c_filename;
-    c_filename << "Training Outputs/Teste SGD/connectivity_bas" << size << "_SGD_CD-" << k << "_p" << p << "_seed" << seed << ".csv";
+    c_filename << "Training Outputs/Teste SGD/connectivity_bas" << size << "_SGD_CD-" << k << "_lr" << l_rate << "_p" << p << "_seed" << seed << ".csv";
 
     model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
     model.optSetup(Heuristic::SGD, c_filename.str(), p);
@@ -428,7 +428,7 @@ int main(int argc, char **argv) {
     //fname << "nll_progress_mixing" << mixIter << "_neighbors" << neighbors << "_k" << k << "_repeat" << repeat << ".csv";
     //fname << "nll_progress_single_basConnect_k" << k << ".csv";
     //fname << "nll_progress_single_basConnect2_k" << k << ".csv";
-    fname << "Training Outputs/Teste SGD/nll_progress_bas" << size << "_SGDoptimization_CD-" << k << "_p" << p << "_seed" << seed << ".csv";
+    fname << "Training Outputs/Teste SGD/nll_progress_bas" << size << "_SGDoptimization_CD-" << k << "_lr" << l_rate << "_p" << p << "_seed" << seed << ".csv";
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
