@@ -8,12 +8,12 @@ import numpy as np
 
 k_values = [100, 20, 10, 5, 2, 1]
 v_values = [16, 14, 12, 10, 8, 6, 4]
-versions = [2, 3]  # [1, 2]
+versions = [2, 3, 4]  # [1, 2]
 
 size = "default"  # "default", "wide"
 lim_iter = int(10e3)
-plotType = "neighbors"  # "complete", "neighbors", "BAScon"
-neighType = "line"
+plotType = "BAScon"  # "complete", "neighbors", "BAScon"
+neighType = "spiral"    # "line", "spiral"
 errorType = None  # None, "std", "quartile"
 repeat = 25
 
