@@ -4,7 +4,6 @@
 
 #include "RBM.h"
 
-#include <fstream>
 #include <stdlib.h>
 //#include <chrono>
 
@@ -364,33 +363,44 @@ int main(int argc, char **argv) {
     // MatrixXd connectivity = bas_connect_3(size);
     MatrixXd connectivity = bas_connect_4(size);
 
+    // printInfo("Connectivity matrix");
+    // cout << connectivity << endl;
+    // cout << "Now squared for each hidden unit" << endl;
+    // RowVectorXd vec;
+    // for (int i = 0; i < s_size; i++) {
+    //     cout << "------------" << endl;
+    //     vec = connectivity.row(i);
+    //     for (int l = 0; l < size; ++l) {
+    //         cout << vec.segment(l*size, size) << endl;
+    //     }
+    // }
+    // cout << "------------" << endl;
 
-    printInfo("Connectivity matrix");
-    cout << connectivity << endl;
-    cout << "Now squared for each hidden unit" << endl;
-    RowVectorXd vec;
-    for (int i = 0; i < s_size; i++) {
-        cout << "------------" << endl;
-        vec = connectivity.row(i);
-        for (int l = 0; l < size; ++l) {
-            cout << vec.segment(l*size, size) << endl;
-        }
-    }
-    cout << "------------" << endl;
+    int b_size = 5;
+    double l_rate = 0.1;
+    double p = 1;
 
+    vector<double> h;
+
+    RBM model(s_size, s_size, true);
+    model.setRandomSeed(seed);
+    // model.setConnectivity(connectivity);
+    stringstream c_filename;
+    c_filename << "Training Outputs/Teste SGD/connectivity_bas" << size << "_SGD_CD-" << k << "_lr" << l_rate << "_p" << p << "_seed" << seed << ".csv";
+
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
+    model.optSetup(Heuristic::SGD, c_filename.str(), p);
+
+    model.fit_connectivity(bas);
+
+    model.printVariables();
+
+    h = model.getTrainingHistory();
 
     //int repeat = 2;
     //int mixIter = 100;
     //Mixer m(seed);
-    //
-    //vector<double> histories[repeat];
-    //
-    //cout << s_size << endl;
-    //RBM model(s_size, s_size, true);
-    //model.setRandomSeed(seed);
-    //
     //int check;
-    //
     //for (int r=0; r<repeat; r++) {
     //    connectivity = m.mix_neighbors(connectivity, mixIter);
     //    cout << "Connectivity: " << endl << connectivity << endl;
@@ -411,41 +421,33 @@ int main(int argc, char **argv) {
     //        cout << i << ", ";
     //    cout << endl;
     //}
-    //
-    //ofstream outdata;
-    //stringstream fname;
-    ////fname << "nll_progress_single_neighbors" << neighbors << "_k" << k << ".csv";
+
+    ofstream outdata;
+    stringstream fname;
+    //fname << "nll_progress_single_neighbors" << neighbors << "_k" << k << ".csv";
     //fname << "nll_progress_mixing" << mixIter << "_neighbors" << neighbors << "_k" << k << "_repeat" << repeat << ".csv";
-    ////fname << "nll_progress_single_basConnect_k" << k << ".csv";
-    ////fname << "nll_progress_single_basConnect2_k" << k << ".csv";
-    //outdata.open(fname.str()); // opens the file
-    //if( !outdata ) { // file couldn't be opened
-    //    cerr << "Error: file could not be opened" << endl;
-    //    exit(1);
-    //}
-    //
-    //outdata << "# NLL through RBM training for BAS" << size << ", connected with " << neighbors;
-    //outdata << " random neighbors. Mixing " << mixIter << "times. Seed is: " << seed << endl;
-    ////outdata << "NLL" << endl;
-    ////for (auto i: h)
-    ////    outdata << i << endl;
-    ////outdata.close();
-    //for (int r=0; r<repeat; r++) { outdata << ",NLL-" << r; }
-    //outdata << endl;
-    //for (int i=0; i<(float(iter)/f_nll); i++) {
-    //    outdata << i*f_nll;
-    //    for (int r=0; r<repeat; r++) {
-    //        outdata << "," << histories[r][i];
-    //    }
-    //    outdata << endl;
-    //}
-    //if ((iter % f_nll) != 0) {
-    //    outdata << iter-1;
-    //    for (int r=0; r<repeat; r++) { outdata << "," << histories[r].back(); }
-    //    outdata << endl;
-    //}
-    //
-    //// model.printVariables();
+    //fname << "nll_progress_single_basConnect_k" << k << ".csv";
+    //fname << "nll_progress_single_basConnect2_k" << k << ".csv";
+    fname << "Training Outputs/Teste SGD/nll_progress_bas" << size << "_SGDoptimization_CD-" << k << "_lr" << l_rate << "_p" << p << "_seed" << seed << ".csv";
+    outdata.open(fname.str()); // opens the file
+    if( !outdata ) { // file couldn't be opened
+        cerr << "Error: file could not be opened" << endl;
+        exit(1);
+    }
+
+    outdata << "# NLL through RBM training for BAS" << size << ". Testing SGD connectivity optimization." << endl;
+    outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
+    if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
+
+    // outdata << "NLL" << endl;
+    // for (auto i: h)
+    //     outdata << i << endl;
+    // outdata.close();
+    outdata << ",NLL" << endl;
+    for (int i=0; i<=(float(iter)/f_nll); i++) {
+        outdata << i*f_nll << "," << h.at(i) << endl;
+    }
+    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
 
     return 0;
 }
