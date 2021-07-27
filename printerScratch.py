@@ -7,7 +7,7 @@ from math import log
 
 basSize = 4
 
-comparison = "p"
+comparison = "inicializacaoA_"  # "p"
 # "neighTypes", "neighbors10-14_BAScon2-4_complete"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
@@ -21,7 +21,8 @@ k = 1
 lim_iter = 2000
 # errorType = None        # None, "std", "quartile"
 # repeat = 25
-p_vals = [1, 0.75, 0.5]
+# p_vals = [1, 0.75, 0.5]
+p = 1
 seed = 89237
 
 plotSize = "default"            # "default", "wide"
@@ -301,13 +302,27 @@ df = df.iloc[0:lim_iter]
 df = df.rename(columns={f"CD-{k}": "Traditional RBM average"})
 df["Traditional RBM average"].plot(ax=ax, linewidth=1, alpha=0.6, color="gray")
 
-for p in p_vals:
-    filename = f"Training Outputs/Teste SGD/Old A_/nll_progress_bas4_SGDoptimization_CD-{k}_p{p}_seed{seed}.csv"
-    df = pd.read_csv(filename, comment="#", index_col=0)
-    df = df.astype(float)
-    df = df.iloc[0:lim_iter]
-    df = df.rename(columns={"NLL": f"p = {p}"})
-    df.plot(ax=ax, linewidth=1, alpha=0.9)
+# for p in p_vals:
+#     filename = f"Training Outputs/Teste SGD/Old A_/nll_progress_bas4_SGDoptimization_CD-{k}_p{p}_seed{seed}.csv"
+#     df = pd.read_csv(filename, comment="#", index_col=0)
+#     df = df.astype(float)
+#     df = df.iloc[0:lim_iter]
+#     df = df.rename(columns={"NLL": f"p = {p}"})
+#     df.plot(ax=ax, linewidth=1, alpha=0.9)
+
+filename = f"Training Outputs/Teste SGD/Old A_/nll_progress_bas4_SGDoptimization_CD-{k}_p{p}_seed{seed}.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter]
+df = df.rename(columns={"NLL": "Fixo"})   # r"$ a'_{ij} = | a_{ij} - 0{,}45 | $"
+df.plot(ax=ax, linewidth=1, alpha=0.9)
+
+filename = f"Training Outputs/Teste SGD/nll_progress_bas4_SGDoptimization_CD-{k}_lr0.01_p{p}_seed{seed}.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter]
+df = df.rename(columns={"NLL": "Uniforme"})
+df.plot(ax=ax, linewidth=1, alpha=0.9)
 
 plt.title(f"Connectivity optimization for CD-{k}")
 # ---------
@@ -323,7 +338,7 @@ nSamples = 2**(basSize+1)
 limitante = - log(1.0/nSamples)
 plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
-plt.savefig(f"Plots/Teste SGD/Old A_/nll_bas{basSize}_SGD_CD-{k}_comparison-{comparison}_seed{seed}.pdf", transparent=True)
+plt.savefig(f"Plots/Teste SGD//nll_bas{basSize}_SGD_CD-{k}_comparison-{comparison}_seed{seed}.pdf", transparent=True)
 # plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
 # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
 # plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
