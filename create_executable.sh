@@ -22,7 +22,7 @@ if [ "$FILE" = "all" ]; then
     g++ -std=c++14 -I$eigenPath completeGraph.cpp basics.cpp RBM.cpp Data.cpp -o complete.exe
     g++ -std=c++14 -I$eigenPath vNeighborsGraph.cpp basics.cpp RBM.cpp Data.cpp -o neighbors.exe
     g++ -std=c++14 -I$eigenPath BASconnectGraph.cpp basics.cpp RBM.cpp Data.cpp -o BAScon.exe
-    g++ -std=c++14 -I$eigenPath sgd.cpp basics.cpp RBM.cpp Data.cpp -o sgd.exe
+    g++ -std=c++14 -I$eigenPath sgd.cpp basics.cpp RBM.cpp Data.cpp -o SGD.exe
 
     if [ -n "$string" ] || [ -n "$string2" ] || [ -n "$string3" ]; then
       string="error"
@@ -41,7 +41,7 @@ else
                     OUT=BAScon
                 else
                     if [ "$FILE" = "sgd" ]; then
-                        OUT=sgd
+                        OUT=SGD
                     else
                         echo "No viable script selected. Exiting."
                         exit 1
