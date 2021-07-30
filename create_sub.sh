@@ -3,7 +3,7 @@
 # Executable to complete sub files. Must be edited for each use
 
 
-filename=sgd_test
+filename=sgd_025
 baseId=SGD
 
 K_VAL=(1 2 5 10 20 100)
@@ -15,7 +15,7 @@ REPEAT=25
 # V_TYPE=s
 # VERSIONS=(2 3 4)
 LR_VAL=(0.1 0.01)
-P_VAL=(1 0.75 0.5)
+P_VAL=(0.25)
 
 basePath=$PWD
 file=result/${baseId}/${filename}.sub
