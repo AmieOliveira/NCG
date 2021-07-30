@@ -8,11 +8,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Inputs ---------------
 basSize = 4
-k = 1
-p = 1
-seed = 89237
+k = 5
+p = 0.75
+seed = 103
+lrate = 0.1
 
-inputfilename = f"Training Outputs/Teste SGD/connectivity_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.csv"
+# inputfilename = f"Training Outputs/Teste SGD/connectivity_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.csv"
+inputfilename = f"Training Outputs/Teste SGD/connectivity_bas{basSize}_SGD_CD-{k}_lr{lrate}_p{p}_run{seed-100}.csv"
 outpath = "Plots/Teste SGD"
 # ---------------
 
@@ -117,6 +119,6 @@ if __name__ == "__main__":
     cax = divider.append_axes("right", size="5%", pad=0.05)
     fig.colorbar(cm.ScalarMappable(cmap=cmapname), cax=cax)
 
-    #fig.tight_layout()
+    # fig.tight_layout()
     # plt.show()
     plt.savefig(f"{outpath}/edgeActivation_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.pdf", transparent=True)
