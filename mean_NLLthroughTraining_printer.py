@@ -6,17 +6,17 @@ from math import log
 import numpy as np
 
 
-k_values = [5]  # [100, 20, 10, 5, 2, 1]
+k_values = [100, 20, 10, 5, 2, 1]
 v_values = [16, 14, 12, 10, 8, 6, 4]
 versions = [2, 3, 4]  # [1, 2]
-p_val = [0.75]  # [1, 0.75, 0.5]
+p_val = [1, 0.75, 0.5, 0.25]
 
 size = "default"  # "default", "wide"
-lim_iter = 10 # int(10e3)
+lim_iter = int(20e3)
 plotType = "SGD"  # "complete", "neighbors", "BAScon", "SGD"
 neighType = "line"
 errorType = None  # None, "std", "quartile"
-repeat = 4  # 25
+repeat = 25
 
 periodoNLL = 1
 
@@ -24,8 +24,8 @@ dataType = "bas"
 dataSize = 4
 lRate = 0.1
 basename = f"meanNll_{dataType}{dataSize}"
-inputPath = "Training Outputs/Teste SGD"  # f"result/{plotType}"
-outputPath = "Plots/Teste SGD"  # inputPath
+inputPath = f"result/{plotType}"
+outputPath = inputPath
 
 imputBase = { "complete":   "nll_progress_bas{}_complete_k{}-run{}.csv",
               "neighbors":  "nll_progress_bas{}_neighbors{}_{}_k{}-run{}.csv",
@@ -307,10 +307,10 @@ if periodoNLL != 1:
 errorPrint = f"-{errorType}Err" if errorType else ""
 neighPrint = f"_{neighType}" if plotType == "neighbors" else ""
 
-plt.savefig(f"{outputPath}/{basename}_{plotType}{neighPrint}-{repeat}rep{errorPrint}.pdf", transparent=True)
+plt.savefig(f"{outputPath}/{basename}_{plotType}{neighPrint}_lr{lRate}-{repeat}rep{errorPrint}.pdf", transparent=True)
 # plt.show()
 
-meanDF.to_csv(f"{outputPath}/{basename}_{plotType}{neighPrint}-{repeat}rep.csv")
+meanDF.to_csv(f"{outputPath}/{basename}_{plotType}{neighPrint}_lr{lRate}-{repeat}rep.csv")
 
 if plotType == "SGD":
-    connectivityDF.to_csv(f"{outputPath}/meanDeg_{dataType}{dataSize}_{plotType}{neighPrint}-{repeat}rep.csv")
+    connectivityDF.to_csv(f"{outputPath}/meanDeg_{dataType}{dataSize}_{plotType}{neighPrint}_lr{lRate}-{repeat}rep.csv")

@@ -422,20 +422,6 @@ VectorXd RBM::sample_h() {
     //   and other functions should have performed the necessary
     //   checks
 
-    /*if (!initialized){
-        string errorMessage;
-        errorMessage = "Tried to sample vector that has no dimension!\n\t"
-                       "You need to set the RBM dimensions before "
-                       "sampling values!";
-        printError(errorMessage);
-        throw runtime_error("Tried to sample vector that has no dimension!");
-    }
-    if (!hasSeed){
-        string errorMessage;
-        errorMessage = "Tried to sample vector without random seed!";
-        printError(errorMessage);
-        throw runtime_error(errorMessage);
-    }*/
     //cout << "Sampling h!" << endl;
 
     VectorXd output(hSize);
@@ -465,12 +451,6 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
     //   RBM training, and that one should already have performed
     //   the necessary checks
 
-    //MatrixXd* p_W;
-    //if (patterns) {
-    //    p_W = &C;
-    //} else {
-    //    p_W = &W;
-    //}
     vector<VectorXd> ret;
 
     switch (sType) {

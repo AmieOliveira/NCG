@@ -7,30 +7,33 @@ from math import log
 
 basSize = 4
 
-comparison = "inicializacaoA_"  # "p"
+# comparison = "p"  # "inicializacaoA_"
 # "neighTypes", "neighbors10-14_BAScon2-4_complete"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-# k_vals = [100, 20, 10, 5, 2, 1]
-k = 1
+k_vals = [100, 20, 10, 5, 2, 1]
+# k = 1
 # neighbors = [14, 12, 10]   # 16 [14, 12, 10, 8, 6, 4]
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
-lim_iter = 2000
-# errorType = None        # None, "std", "quartile"
+lim_iter = 10000
+errorType = None        # None, "std", "quartile"
 # repeat = 25
-# p_vals = [1, 0.75, 0.5]
-p = 1
-seed = 89237
+p_vals = [1, 0.75, 0.5, 0.25]
+# p = 1
+# seed = 89237
+lRate = 0.01
+addOthers = True
+zoom = True
 
-plotSize = "default"            # "default", "wide"
+plotSize = "wide"            # "default", "wide"
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
 sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 
-fig, ax = plt.subplots(1, figsize=figSize[plotSize])
+# fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 
 # filename = f"Training Outputs/meanNll_bas{basSize}_complete-5rep.csv"
 # df = pd.read_csv(filename, comment="#", index_col=0)
@@ -295,50 +298,110 @@ fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 # # ---------
 
 # Simple SGD optimization tests ---------
-filename = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
+repeat = 25
+
+filenameComplete = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
+if lRate == 0.1:
+    filenameComplete = f"Training Outputs/Old Learning Rate/meanNll_bas4_complete-25rep.csv"
+dfC = pd.read_csv(filenameComplete, comment="#", index_col=0)
+dfC = dfC.astype(float)
+dfC = dfC.iloc[0:lim_iter]
+
+filename = f"Training Outputs/meanNll_bas4_SGD_lr{lRate}-25rep.csv"
 df = pd.read_csv(filename, comment="#", index_col=0)
 df = df.astype(float)
 df = df.iloc[0:lim_iter]
-df = df.rename(columns={f"CD-{k}": "Traditional RBM average"})
-df["Traditional RBM average"].plot(ax=ax, linewidth=1, alpha=0.6, color="gray")
 
-# for p in p_vals:
-#     filename = f"Training Outputs/Teste SGD/Old A_/nll_progress_bas4_SGDoptimization_CD-{k}_p{p}_seed{seed}.csv"
-#     df = pd.read_csv(filename, comment="#", index_col=0)
-#     df = df.astype(float)
-#     df = df.iloc[0:lim_iter]
-#     df = df.rename(columns={"NLL": f"p = {p}"})
-#     df.plot(ax=ax, linewidth=1, alpha=0.9)
+if addOthers:
+    if lRate == 0.01:
+        filenameSNeigh = f"Training Outputs/meanNll_bas4_neighbors_spiral-25rep.csv"
+        dfNS = pd.read_csv(filenameSNeigh, comment="#", index_col=0)
+        dfNS = dfNS.astype(float)
+        dfNS = dfNS.iloc[0:lim_iter]
 
-filename = f"Training Outputs/Teste SGD/Old A_/nll_progress_bas4_SGDoptimization_CD-{k}_p{p}_seed{seed}.csv"
-df = pd.read_csv(filename, comment="#", index_col=0)
-df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": "Fixo"})   # r"$ a'_{ij} = | a_{ij} - 0{,}45 | $"
-df.plot(ax=ax, linewidth=1, alpha=0.9)
+        filenameLNeigh = f"Training Outputs/meanNll_bas4_neighbors_line-25rep.csv"
+        dfNL = pd.read_csv(filenameLNeigh, comment="#", index_col=0)
+        dfNL = dfNL.astype(float)
+        dfNL = dfNL.iloc[0:lim_iter]
 
-filename = f"Training Outputs/Teste SGD/nll_progress_bas4_SGDoptimization_CD-{k}_lr0.01_p{p}_seed{seed}.csv"
-df = pd.read_csv(filename, comment="#", index_col=0)
-df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": "Uniforme"})
-df.plot(ax=ax, linewidth=1, alpha=0.9)
+        # filenameSpec = f"Training Outputs/meanNll_bas4_BAScon-25rep.csv"
+        # dfS = pd.read_csv(filenameSpec, comment="#", index_col=0)
+        # dfS = dfS.astype(float)
+        # dfS = dfS.iloc[0:lim_iter]
 
-plt.title(f"Connectivity optimization for CD-{k}")
+for k in k_vals:
+    fig, ax = plt.subplots(1, figsize=figSize[plotSize])
+
+    for p in p_vals:
+        df[f"CD-{k}, p = {p}"].plot(ax=ax, linewidth=1, alpha=0.9)
+
+    if addOthers:
+        if lRate == 0.01:
+            dfNLtmp = dfNL.rename(columns={f"CD-{k}, 10 neighbors in line": "10 neighbors in line"})
+            dfNLtmp["10 neighbors in line"].plot(ax=ax, linewidth=1, alpha=0.9)
+
+            dfNStmp = dfNS.rename(columns={f"CD-{k}, 12 neighbors in spiral": "12 neighbors in spiral"})
+            dfNStmp["12 neighbors in spiral"].plot(ax=ax, linewidth=1, alpha=0.9) #, color="tan")
+
+            # dfStmp = dfS.rename(columns={f"CD-{k}, Specialist v3": "Convolutional connectivity"})
+            # dfStmp["Convolutional connectivity"].plot(ax=ax, linewidth=1, alpha=0.9) #, color="lightsteelblue")
+
+    compAlpha = 0.9 if addOthers else 0.6
+    dfCtmp = dfC.rename(columns={f"CD-{k}": "Traditional RBM average"})
+    dfCtmp["Traditional RBM average"].plot(ax=ax, linewidth=1, alpha=compAlpha, color="gray")
+
+    plt.title(f"Connectivity optimization for CD-{k}")
+
+    plt.xlabel("Iteration")
+    plt.ylabel("Average NLL")
+    plt.grid(color="gray", linestyle=":", linewidth=.2)
+
+    zoomStr = ""
+    if zoom:
+        zoomStr = "-zoom"
+        plt.xlim(6000, lim_iter)
+        if k == 100:
+            plt.ylim(3.5, 4.1)
+        elif k == 20:
+            plt.ylim(3.6, 4.1)
+        elif k == 10:
+            plt.ylim(3.7, 4.3)
+        elif k == 5:
+            plt.ylim(3.9, 4.6)
+        elif k == 2:
+            plt.ylim(4.5, 5.5)
+        elif k == 1:
+            plt.ylim(5.2, 6.2)
+    plt.legend()
+
+    # Lower limit of NLL
+    nSamples = 2 ** (basSize + 1)
+    limitante = - log(1.0 / nSamples)
+    plt.plot([0, lim_iter], [limitante, limitante], "r--")
+
+    errorPrint = f"-{errorType}Err" if errorType else ""
+
+    otherPlots = ""
+    if addOthers:
+        if lRate == 0.01:
+            otherPlots = "Full"
+
+    plt.savefig(f"Plots/meanNll_bas{basSize}_SGD_CD-{k}_lr{lRate}_pComparison{otherPlots}-{repeat}rep{errorPrint}{zoomStr}.pdf",
+                transparent=True)
 # ---------
 
-plt.xlabel("Iteration")
-plt.ylabel("Average NLL")
-plt.grid(color="gray", linestyle=":", linewidth=.2)
-# plt.xlim(-10, lim_iter+10)
-plt.legend()
-
-# Lower limit of NLL
-nSamples = 2**(basSize+1)
-limitante = - log(1.0/nSamples)
-plt.plot([0, lim_iter], [limitante, limitante], "r--")
-
-plt.savefig(f"Plots/Teste SGD//nll_bas{basSize}_SGD_CD-{k}_comparison-{comparison}_seed{seed}.pdf", transparent=True)
-# plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
-# plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
-# plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
+# plt.xlabel("Iteration")
+# plt.ylabel("Average NLL")
+# plt.grid(color="gray", linestyle=":", linewidth=.2)
+# # plt.xlim(-10, lim_iter+10)
+# plt.legend()
+#
+# # Lower limit of NLL
+# nSamples = 2**(basSize+1)
+# limitante = - log(1.0/nSamples)
+# plt.plot([0, lim_iter], [limitante, limitante], "r--")
+#
+# plt.savefig(f"Plots/Teste SGD//nll_bas{basSize}_SGD_CD-{k}_comparison-{comparison}_seed{seed}.pdf", transparent=True)
+# # plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
+# # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
+# # plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
