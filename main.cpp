@@ -87,68 +87,6 @@ void testVariables(int argc, char **argv){
     rbm.printVariables();
 }
 
-/*
-void testRandomGenerator(){
-    typedef std::chrono::high_resolution_clock myclock;
-    myclock::time_point beginning = myclock::now();
-
-    unsigned seed1 = 2000051;
-    std::mt19937 generator (seed1);
-    std::cout << "Your seed produced: " << generator() << " and " << generator() << std::endl;
-
-    myclock::duration d = myclock::now() - beginning;
-    unsigned seed2 = d.count();
-    generator.seed (seed2);
-    std::cout << "A time seed produced: " << generator() << " and " << generator() << std::endl;
-
-    cout << endl << "Considering the (0,1) distribution: " << endl;
-    std::uniform_real_distribution<double> dis(0.0, 1.0);
-    std::cout << "A time seed produced: " << dis(generator) << " and " << dis(generator) << std::endl;
-    generator.seed (seed1);
-    std::cout << "Your seed produced: " << dis(generator) << " - " << dis(generator) << " - "
-              << dis(generator) << " - " << dis(generator) << " - " << dis(generator)
-              << " - " << dis(generator) << " - " << dis(generator) << std::endl;
-}
-void testRandomGenOnRBM(){
-    stringstream msg;
-
-    if (argc < 2) {
-        msg.str("You have entered too few arguments: only ");
-        msg << argc << " found.\n\tFirst argument should be X and second H (redo if done wrong)";
-        printError(msg.str());
-        exit(1);
-    }
-
-    int X = atoi(argv[1]);
-    int H = atoi(argv[2]);    // Numbers in ASCII characters begin at 48
-
-    if (X == 0) {
-        msg.str("Cannot have no visible units!\n\t\tExpecting a positive number, but received ");
-        msg << argv[1];
-        printError(msg.str());
-        exit(1);
-    }
-    if (H == 0) {
-        msg.str("Cannot have no hidden units!\n\t\tExpecting a positive number, but received ");
-        msg << argv[2];
-        printError(msg.str());
-        exit(1);
-    }
-
-    msg.str("You have set the RBM to have ");
-    msg << X << " visible units and " << H << " hidden ones.";
-    printInfo(msg.str());
-
-    RBM rbm(X, H);
-
-    //double rnd = rbm.getRandomNumber(); // Should give error!
-
-    rbm.setRandomSeed(X+H);
-    cout << "Random numbers: " << rbm.getRandomNumber() << " - "
-         << rbm.getRandomNumber() << " - " << rbm.getRandomNumber() << endl;
-}
-*/
-
 void testSampling(int argc, char **argv){
     stringstream msg;
 
@@ -213,7 +151,6 @@ void testSampling(int argc, char **argv){
 
     rbm.printVariables();
 }
-
 
 void testRandomGenerator(){
     RBM rbm1(2, 2);
@@ -285,169 +222,37 @@ void checkNormalizationConstant(){
     model.printVariables();
 }
 
-
 int main(int argc, char **argv) {
-    //testVariables(argc,argv);
-    //testRandomGenerator();
-    //testRandomGenOnRBM();
-    //testSampling();
-    //testRandomGenerator();
-    //testaDataCreation(4,32);
-    //checkNormalizationConstant();
+    Data mnist("Datasets/bin_mnist-train.data");
+    // mnist = mnist.separateTrainTestSets(1/12).at(0);
 
-    stringstream msg;
-
-    unsigned seed = 18763258;
-    if (argc >= 2) {
-        seed = atoi(argv[1]);
-        msg.str("");
-        msg << "Setting seed as: " << seed;
-        printInfo(msg.str());
-    }
-
-    int size = 4;
-    if (argc >= 3) {
-        size = atoi(argv[2]);
-        msg.str("");
-        msg << "Setting BAS size as: " << size;
-        printInfo(msg.str());
-    }
+    int size = mnist.get_sample_size();
 
     int k = 10;
-    if (argc >= 4) {
-        k = atoi(argv[3]);
-        msg.str("");
-        msg << "Setting number of sample steps: " << k;
-        printInfo(msg.str());
-    }
-
-    int iter = 6000;
-    if (argc >= 5) {
-        iter = atoi(argv[4]);
-        msg.str("");
-        msg << "Setting number of iterations: " << iter;
-        printInfo(msg.str());
-    }
-
-    int f_nll = 1;
-    if (argc > 5) {
-        f_nll = atoi(argv[5]);
-        msg.str("");
-        msg << "Setting frequence of NLL calculation: " << f_nll;
-        printInfo(msg.str());
-    }
-
-    Data bas(DataDistribution::BAS, size);
-
-    bool printData = false;
-    if (printData) {
-        for (int i = 0; i < bas.get_number_of_samples(); i++) {
-            cout << "------------" << endl;
-            RowVectorXd vec = bas.get_sample(i);
-            for (int l = 0; l < size; ++l) {
-                cout << vec.segment(l*size, size) << endl;
-            }
-        }
-        cout << "------------" << endl;
-    }
-
-    int s_size = bas.get_sample_size();
-
-    //int neighbors = 8;
-    //cout << "Using " << neighbors << " neighbors connectivity" << endl;
-    //MatrixXd connectivity = v_neighbors(s_size, s_size, neighbors);
-    //MatrixXd connectivity = v_neighbors_spiral(s_size, s_size, neighbors);
-
-    // MatrixXd connectivity = bas_connect(size);
-    // MatrixXd connectivity = bas_connect_2(size);
-    // MatrixXd connectivity = bas_connect_3(size);
-    MatrixXd connectivity = bas_connect_4(size);
-
-    // printInfo("Connectivity matrix");
-    // cout << connectivity << endl;
-    // cout << "Now squared for each hidden unit" << endl;
-    // RowVectorXd vec;
-    // for (int i = 0; i < s_size; i++) {
-    //     cout << "------------" << endl;
-    //     vec = connectivity.row(i);
-    //     for (int l = 0; l < size; ++l) {
-    //         cout << vec.segment(l*size, size) << endl;
-    //     }
-    // }
-    // cout << "------------" << endl;
-
-    int b_size = 5;
-    double l_rate = 0.1;
+    int iter = 1;
+    int b_size = 600;
+    double l_rate = 0.01;
     double p = 1;
+    unsigned seed = 100;
 
-    vector<double> h;
 
-    RBM model(s_size, s_size, true);
+    // Traditional RBM
+    RBM model(size, 500, false);
+
     model.setRandomSeed(seed);
-    // model.setConnectivity(connectivity);
-    stringstream c_filename;
-    c_filename << "Training Outputs/Teste SGD/connectivity_bas" << size << "_SGD_CD-" << k << "_lr" << l_rate << "_p" << p << "_seed" << seed << ".csv";
-
-    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
-    model.optSetup(Heuristic::SGD, c_filename.str(), p);
-
-    model.fit_connectivity(bas);
-
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
+    model.fit(mnist);
     model.printVariables();
 
-    h = model.getTrainingHistory();
 
-    //int repeat = 2;
-    //int mixIter = 100;
-    //Mixer m(seed);
-    //int check;
-    //for (int r=0; r<repeat; r++) {
-    //    connectivity = m.mix_neighbors(connectivity, mixIter);
-    //    cout << "Connectivity: " << endl << connectivity << endl;
+    // // SGD connectivity optimization
+    // RBM sgd(size, 500, true);
     //
-    //    check = model.setConnectivity(connectivity);
-    //    if (check != 0) {
-    //        cerr << "Error: connectivity could not be set" << endl;
-    //        exit(1);
-    //    }
-    //
-    //    model.trainSetup(SampleType::CD, k, iter, 5, 0.1, true, f_nll);
-    //    model.fit(bas);
-    //
-    //    // vector<double> h = model.getTrainingHistory();
-    //    histories[r] = model.getTrainingHistory();
-    //    cout << "NLL" << endl;
-    //    for (auto i: histories[r])
-    //        cout << i << ", ";
-    //    cout << endl;
-    //}
-
-    ofstream outdata;
-    stringstream fname;
-    //fname << "nll_progress_single_neighbors" << neighbors << "_k" << k << ".csv";
-    //fname << "nll_progress_mixing" << mixIter << "_neighbors" << neighbors << "_k" << k << "_repeat" << repeat << ".csv";
-    //fname << "nll_progress_single_basConnect_k" << k << ".csv";
-    //fname << "nll_progress_single_basConnect2_k" << k << ".csv";
-    fname << "Training Outputs/Teste SGD/nll_progress_bas" << size << "_SGDoptimization_CD-" << k << "_lr" << l_rate << "_p" << p << "_seed" << seed << ".csv";
-    outdata.open(fname.str()); // opens the file
-    if( !outdata ) { // file couldn't be opened
-        cerr << "Error: file could not be opened" << endl;
-        exit(1);
-    }
-
-    outdata << "# NLL through RBM training for BAS" << size << ". Testing SGD connectivity optimization." << endl;
-    outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
-    if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
-
-    // outdata << "NLL" << endl;
-    // for (auto i: h)
-    //     outdata << i << endl;
-    // outdata.close();
-    outdata << ",NLL" << endl;
-    for (int i=0; i<=(float(iter)/f_nll); i++) {
-        outdata << i*f_nll << "," << h.at(i) << endl;
-    }
-    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
+    // sgd.setRandomSeed(seed);
+    // sgd.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
+    // sgd.optSetup(Heuristic::SGD, "test.csv", p);
+    // sgd.fit_connectivity(mnist);
+    // // sgd.printVariables();
 
     return 0;
 }
