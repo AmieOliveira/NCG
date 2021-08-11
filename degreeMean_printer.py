@@ -24,7 +24,7 @@ parser.add_argument("--iter", type=int, default=None,
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
 basSize = 4
-lRate = 0.01
+lRate = 0.05
 
 p_val = [1, 0.75, 0.5, 0.25]
 k_val = [100, 20, 10, 5, 2, 1]
@@ -36,6 +36,13 @@ k_val = [100, 20, 10, 5, 2, 1]
 
 if __name__ == "__main__":
     args = parser.parse_args()
+
+    if f"bas{basSize}_" not in args.input:
+        print("ERROR: Specified BAS size does not match")
+        exit(1)
+    if f"lr{lRate}-" not in args.input:
+        print("ERROR: Specified learning rate does not match")
+        exit(1)
 
     df = pd.read_csv(args.input)
     if args.iter:

@@ -24,9 +24,9 @@ errorType = None        # None, "std", "quartile"
 p_vals = [1, 0.75, 0.5, 0.25]
 # p = 1
 # seed = 89237
-lRate = 0.01
-addOthers = True
-zoom = True
+lRate = 0.05
+addOthers = False
+zoom = False
 
 plotSize = "wide"            # "default", "wide"
 
@@ -300,12 +300,12 @@ sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 # Simple SGD optimization tests ---------
 repeat = 25
 
-filenameComplete = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
-if lRate == 0.1:
-    filenameComplete = f"Training Outputs/Old Learning Rate/meanNll_bas4_complete-25rep.csv"
-dfC = pd.read_csv(filenameComplete, comment="#", index_col=0)
-dfC = dfC.astype(float)
-dfC = dfC.iloc[0:lim_iter]
+# filenameComplete = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
+# if lRate == 0.1:
+#     filenameComplete = f"Training Outputs/Old Learning Rate/meanNll_bas4_complete-25rep.csv"
+# dfC = pd.read_csv(filenameComplete, comment="#", index_col=0)
+# dfC = dfC.astype(float)
+# dfC = dfC.iloc[0:lim_iter]
 
 filename = f"Training Outputs/meanNll_bas4_SGD_lr{lRate}-25rep.csv"
 df = pd.read_csv(filename, comment="#", index_col=0)
@@ -346,9 +346,9 @@ for k in k_vals:
             # dfStmp = dfS.rename(columns={f"CD-{k}, Specialist v3": "Convolutional connectivity"})
             # dfStmp["Convolutional connectivity"].plot(ax=ax, linewidth=1, alpha=0.9) #, color="lightsteelblue")
 
-    compAlpha = 0.9 if addOthers else 0.6
-    dfCtmp = dfC.rename(columns={f"CD-{k}": "Traditional RBM average"})
-    dfCtmp["Traditional RBM average"].plot(ax=ax, linewidth=1, alpha=compAlpha, color="gray")
+    # compAlpha = 0.9 if addOthers else 0.6
+    # dfCtmp = dfC.rename(columns={f"CD-{k}": "Traditional RBM average"})
+    # dfCtmp["Traditional RBM average"].plot(ax=ax, linewidth=1, alpha=compAlpha, color="gray")
 
     plt.title(f"Connectivity optimization for CD-{k}")
 
