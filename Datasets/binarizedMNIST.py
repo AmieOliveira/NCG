@@ -13,7 +13,7 @@ import tensorflow_datasets as tfds
 from random import random, seed
 
 dataset = "mnist"
-split = "train"
+split = "test"  # "train"
 
 ds, info = tfds.load(dataset, split=split, with_info=True)
 # ds, info = tfds.load('binarized_mnist', split='train', with_info=True)

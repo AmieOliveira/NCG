@@ -327,6 +327,10 @@ void RBM::startConnectivity(double p) {
     // cout << "Percentage of connections activated: " << A.sum()/(xSize*hSize) << endl;
 }
 
+MatrixXd RBM::getConnectivityWeights() {
+    return *p_W;
+}
+
 // RBM probabilities
 VectorXd RBM::getProbabilities_x() {
     if (!initialized){
@@ -446,10 +450,19 @@ VectorXd RBM::sample_h() {
 vector<VectorXd> RBM::sampleXtilde(SampleType sType,
                                    int k, //int b_size,
                                    vector<VectorXd> vecs) {
-    // NOTE: Will not check if has been initialized and/or has seed,
-    //   because this method should be called only as part of the
-    //   RBM training, and that one should already have performed
-    //   the necessary checks
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot sample without RBM dimensions!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Cannot sample from RBM without random seed!\n\t"
+                       "Use 'setRandomSeed' before proceeding";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
 
     vector<VectorXd> ret;
 
@@ -552,7 +565,7 @@ void RBM::fit(Data trainData){
     }
 
     for (int it = 0; it < n_iter; ++it) {
-        //cout << "Iteration " << it+1 << " of " << n_iter << endl;
+        cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
         //if (it != 0) trainData.shuffleOrder();
@@ -738,6 +751,8 @@ void RBM::optimizer_SGD(Data trainData) {
     for (int it = 0; it < n_iter; ++it) {
         // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
         //if (it != 0) trainData.shuffleOrder();
+
+        cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         actualSize = b_size;
 
@@ -926,6 +941,167 @@ double RBM::partialZ_effX(int n) {
     ret += partialZ_effX(n-1);
 
     return ret;
+}
+
+double RBM::normalizationConstant_AISestimation() {
+    // FIXME: In theory I'd give some other RBM, with tuned d biases
+    //        So far, the prior RBM has all weights and biases null
+    RBM prior(xSize, hSize);
+    prior.setRandomSeed(generator());
+    // NOTE: Code implemented assuming RBM has same shape as current one (even if it can get non zero biases)
+
+    // FIXME: These are preliminary parameters, should change them
+    int n_runs = 100;
+    int n_betas = 10000;
+    int transitionRepeat = 1;
+    double betas[n_betas];
+
+    for (int k=0; k < n_betas; k++) {
+        betas[k] = double(k)/(n_betas - 1);
+    }
+
+    // Importance weights
+    vector<double> weights;
+
+    VectorXd x_k[n_betas];  // NOTE: Talvez seja melhor guardar só 2? E ir trocando ao longo das iterações?
+
+    // Initial samples:
+    vector<VectorXd> x_0(n_runs, VectorXd::Zero(xSize));
+    x_0 = prior.sampleXtilde(SampleType::CD, 1, x_0);
+    // TODO: Check that I really want to give 1 step
+    // If I keep these zero biases, than it makes no difference to give more steps and
+    // it's better to leave it at that
+
+    RowVectorXd va_B;  // va_A;
+    VectorXd hA(hSize);
+    VectorXd dA, bA;
+    double prob, moeda, part_w, w_r;
+
+    bA = prior.getHiddenBiases();
+    dA = prior.getVisibleBiases();
+    // WA = prior.getConnectivityWeights();
+
+    for (int r=0; r < n_runs; r++) {
+        /* Do an AIS run */
+        x_k[0] = x_0.at(r);
+
+        x = x_k[0];
+        prior.setVisibleUnits( x_k[0] );
+
+        // First importance weight ratio
+        part_w = 0;
+        va_B = (*p_W) * x_k[0];
+        // va_A = 0;  // va_A = WA * x_k[0];
+
+        for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
+            part_w += log( 1 + exp( betas[1]*(va_B(i) + b(i)) ) );
+            part_w += log( 1 + exp( (1 - betas[1])*bA(i) ) );
+            // part_w += log( 1 + exp( (1 - betas[1])*(va_A(i) + bA(i)) ) );
+            part_w -= log( 1 + exp( betas[0]*(va_B(i) + b(i)) ) );
+            part_w -= log( 1 + exp( (1 - betas[0])*bA(i) ) );
+            // part_w -= log( 1 + exp( (1 - betas[0])*(va_A(i) + bA(i)) ) );
+        }
+
+        w_r = exp( ((betas[1] - betas[0]) * (x_k[0].transpose() * d))(0) +
+                    ((betas[0] - betas[1]) * (x_k[0].transpose() * dA))(0) +
+                    part_w );
+
+        for (int k = 1; k < n_betas; k++) {
+            /* Sample x_k from x_{k-1} */
+            // FIXME: If I keep the RBM with all biases null, I can optimize calculations here
+
+            x_k[k] = x;
+            int tr = 0;
+
+            do {
+                // Part 1: Sample h
+                va_B = (*p_W) * x;
+                // va_A = 0;  // WA * prior.getVisibleUnits();
+
+                for (int i=0; i<hSize; i++){
+                    prob = 1.0/( 1 + exp( - betas[k]*( b(i) + va_B(i) ) ) );
+                    moeda = (*p_dis)(generator);
+
+                    if (moeda < prob)
+                        h(i) = 1;
+                    else
+                        h(i) = 0;
+
+                    prob = 1.0/( 1 + exp( - (1 - betas[k])*( bA(i) ) ) );
+                    moeda = (*p_dis)(generator);
+
+                    if (moeda < prob)
+                        hA(i) = 1;
+                    else
+                        hA(i) = 0;
+                }
+                prior.setHiddenUnits(hA);  // Acho que não é necessário deixar isso
+
+                // Part 2: Sample x
+                va_B = h.transpose() * (*p_W);
+                // va_A = 0;  // hA.transpose() * WA;
+
+                for (int j=0; j<xSize; j++){
+                    prob = 1.0/( 1 + exp( -( betas[k]*( d(j) + va_B(j) ) + (1-betas[k])*( dA(j) ) ) ) );
+                    moeda = (*p_dis)(generator);
+
+                    if (moeda < prob)
+                        x_k[k](j) = 1;
+                    else
+                        x_k[k](j) = 0;
+                }
+
+                x = x_k[k];
+                prior.setVisibleUnits( x_k[k] );
+
+                tr++;
+            } while (tr < transitionRepeat);
+
+            // Calculate current ratio for the importance weight
+            part_w = 0;
+            va_B = (*p_W) * x_k[k];
+            // va_A = 0;  // WA * x_k[k];
+
+            for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
+                part_w += log( 1 + exp( betas[k+1]*(va_B(i) + b(i)) ) );
+                part_w += log( 1 + exp( (1 - betas[k+1])*bA(i) ) );
+                part_w -= log( 1 + exp( betas[k]*(va_B(i) + b(i)) ) );
+                part_w -= log( 1 + exp( (1 - betas[k])*bA(i) ) );
+            }
+            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k[k].transpose() * d))(0) +
+                        ((betas[k] - betas[k+1]) * (x_k[k].transpose() * dA))(0) +
+                         part_w );
+        }
+
+        // cout << "Importance weight for run " << r << ": " << w_r << endl;
+
+        weights.push_back(w_r);
+    }
+
+    double ZA = 1;
+    for (int i=0; i<hSize; i++) {
+        ZA *= 1 + exp(bA(i));
+    }
+    for (int j=0; j<xSize; j++) {
+        ZA *= 1 + exp(dA(j));
+    }
+
+    double ratio_estimation = 0;
+    double variance = 0;
+    for (auto wr: weights) {
+        ratio_estimation += wr;
+    }
+    ratio_estimation /= n_runs;
+
+    for (auto wr: weights) {
+        variance += (ratio_estimation - wr)*(ratio_estimation - wr);
+    }
+    variance /= n_runs;
+
+    cout << "Ratio estimations: " << ratio_estimation << endl;
+    cout << "Variance: " << variance << endl;
+
+    return ratio_estimation * ZA;
 }
 
 

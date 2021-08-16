@@ -69,8 +69,6 @@ class RBM {
     double energy(); // TODO
     double freeEnergy(); // FIXME: Should give parameters?
 
-    double normalizationConstant();
-    double normalizationConstant_effX();
     double partialZ(int n);
     double partialZ_effX(int n);
 
@@ -137,6 +135,8 @@ public:
     int setConnectivity(MatrixXd mat);
     void startConnectivity(double p);   // With p probability of any given edge existing
 
+    MatrixXd getConnectivityWeights();
+
     // Random generator functions
     void setRandomSeed(unsigned seed);
 
@@ -163,6 +163,10 @@ public:
     // Evaluation methods
     double negativeLogLikelihood(Data data);
     vector<double> getTrainingHistory();
+
+    double normalizationConstant();
+    double normalizationConstant_effX();
+    double normalizationConstant_AISestimation();
 
     // Test Functions
     void printVariables();

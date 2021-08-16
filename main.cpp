@@ -222,37 +222,60 @@ void checkNormalizationConstant(){
     model.printVariables();
 }
 
+void checkNormConstantEstimation(){
+    Data bas(DataDistribution::BAS, 3);
+
+    RBM model(9, 9);
+
+    model.setRandomSeed(873);
+    model.trainSetup(SampleType::CD, 1, 100, 5, 0.01, false);
+    model.fit(bas);
+
+    // double exact = log( model.normalizationConstant_effX() );
+    // double estimated = log( model.normalizationConstant_AISestimation() );
+
+    double exact = model.normalizationConstant_effX();
+    double estimated = model.normalizationConstant_AISestimation();
+
+    cout << "Exact value: " << exact << endl;
+    cout << "Estimated value: " << estimated << endl;
+}
+
+
 int main(int argc, char **argv) {
-    Data mnist("Datasets/bin_mnist-train.data");
-    // mnist = mnist.separateTrainTestSets(1/12).at(0);
 
-    int size = mnist.get_sample_size();
+    checkNormConstantEstimation();
 
-    int k = 10;
-    int iter = 1;
-    int b_size = 600;
-    double l_rate = 0.01;
-    double p = 1;
-    unsigned seed = 100;
-
-
-    // Traditional RBM
-    RBM model(size, 500, false);
-
-    model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
-    model.fit(mnist);
-    model.printVariables();
-
-
-    // // SGD connectivity optimization
-    // RBM sgd(size, 500, true);
+    //Data mnist("Datasets/bin_mnist-train.data");
+    //// mnist = mnist.separateTrainTestSets(1/12).at(0);
     //
-    // sgd.setRandomSeed(seed);
-    // sgd.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
-    // sgd.optSetup(Heuristic::SGD, "test.csv", p);
-    // sgd.fit_connectivity(mnist);
-    // // sgd.printVariables();
+    //int size = mnist.get_sample_size();
+    //
+    //int k = 10;
+    //int iter = 1;
+    //int b_size = 600;
+    //double l_rate = 0.01;
+    //double p = 1;
+    //unsigned seed = 100;
+    //
+    //
+    //// Traditional RBM
+    //RBM model(size, 500, false);
+    //
+    //model.setRandomSeed(seed);
+    //model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
+    //model.fit(mnist);
+    //model.printVariables();
+    //
+    //
+    //// // SGD connectivity optimization
+    //// RBM sgd(size, 500, true);
+    ////
+    //// sgd.setRandomSeed(seed);
+    //// sgd.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
+    //// sgd.optSetup(Heuristic::SGD, "test.csv", p);
+    //// sgd.fit_connectivity(mnist);
+    //// // sgd.printVariables();
 
     return 0;
 }
