@@ -222,29 +222,59 @@ void checkNormalizationConstant(){
     model.printVariables();
 }
 
+void testSaveLoad() {
+    int basSize = 2;
+    int size = basSize*basSize;
+
+    Data bas(DataDistribution::BAS, basSize);
+
+    RBM model(size, size+1);
+    model.setRandomSeed(0);
+    model.trainSetup(SampleType::CD, 1, 100, 5, 0.01, false);
+    model.fit(bas);
+    model.printVariables();
+    model.save("test.rbm");
+
+    RBM m2;
+    m2.load("test.rbm");
+    m2.printVariables();
+}
+
 void checkNormConstantEstimation(){
     Data bas(DataDistribution::BAS, 3);
 
     RBM model(9, 9);
 
-    model.setRandomSeed(873);
+    model.setRandomSeed(0);
     model.trainSetup(SampleType::CD, 1, 100, 5, 0.01, false);
     model.fit(bas);
 
-    // double exact = log( model.normalizationConstant_effX() );
-    // double estimated = log( model.normalizationConstant_AISestimation() );
-
-    double exact = model.normalizationConstant_effX();
-    double estimated = model.normalizationConstant_AISestimation();
-
+    double exact = log( model.normalizationConstant_effX() );
     cout << "Exact value: " << exact << endl;
-    cout << "Estimated value: " << estimated << endl;
+
+    for (int i=0; i<10; i++) {
+        model.setRandomSeed(262 + 10*i);
+        double estimated = log( model.normalizationConstant_AISestimation() );
+        cout << "Estimated value: " << estimated << endl;
+    }
 }
 
 
 int main(int argc, char **argv) {
 
-    checkNormConstantEstimation();
+    // checkNormConstantEstimation();
+
+    int basSize = 4;
+    int size = basSize*basSize;
+
+    Data bas(DataDistribution::BAS, basSize);
+
+    RBM model(size, size);
+    model.setRandomSeed(0);
+    model.trainSetup(SampleType::CD, 1, 2500, 5, 0.01, false);
+    model.fit(bas);
+    model.printVariables();
+    model.save("Training Outputs/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
 
     //Data mnist("Datasets/bin_mnist-train.data");
     //// mnist = mnist.separateTrainTestSets(1/12).at(0);

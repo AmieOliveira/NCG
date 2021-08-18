@@ -168,6 +168,10 @@ public:
     double normalizationConstant_effX();
     double normalizationConstant_AISestimation();
 
+    // Saving methods
+    void save(string filename);
+    void load(string filename);
+
     // Test Functions
     void printVariables();
     //double getRandomNumber();

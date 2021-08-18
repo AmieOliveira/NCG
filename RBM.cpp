@@ -468,6 +468,7 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
 
     switch (sType) {
         case SampleType::CD:
+        // case SampleType::PCD:
             //cout << "Beginning Contrastive Divergence!" << endl;
             for (vector<VectorXd>::iterator x_0 = vecs.begin();
                  x_0 != vecs.end();
@@ -491,7 +492,6 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
             throw runtime_error(errorMessage);
 
         // TODO: Outros tipos de treinamento
-        // case SampleType::PCD:
     }
     return ret;
 }
@@ -951,8 +951,8 @@ double RBM::normalizationConstant_AISestimation() {
     // NOTE: Code implemented assuming RBM has same shape as current one (even if it can get non zero biases)
 
     // FIXME: These are preliminary parameters, should change them
-    int n_runs = 100;
-    int n_betas = 10000;
+    int n_runs = 10;
+    int n_betas = 1000;
     int transitionRepeat = 1;
     double betas[n_betas];
 
@@ -989,37 +989,36 @@ double RBM::normalizationConstant_AISestimation() {
         prior.setVisibleUnits( x_k[0] );
 
         // First importance weight ratio
-        part_w = 0;
-        va_B = (*p_W) * x_k[0];
+        part_w = 1;
+        va_B = (*p_W) * x_k[0] + b;
         // va_A = 0;  // va_A = WA * x_k[0];
 
         for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
-            part_w += log( 1 + exp( betas[1]*(va_B(i) + b(i)) ) );
-            part_w += log( 1 + exp( (1 - betas[1])*bA(i) ) );
-            // part_w += log( 1 + exp( (1 - betas[1])*(va_A(i) + bA(i)) ) );
-            part_w -= log( 1 + exp( betas[0]*(va_B(i) + b(i)) ) );
-            part_w -= log( 1 + exp( (1 - betas[0])*bA(i) ) );
-            // part_w -= log( 1 + exp( (1 - betas[0])*(va_A(i) + bA(i)) ) );
+            part_w *= ( 1 + exp( (1 - betas[1])*bA(i) ) );
+            part_w *= ( 1 + exp( betas[1]*va_B(i) ) );
+            // part_w *= ( 1 + exp( (1 - betas[1])*(va_A(i) + bA(i)) ) );
+            part_w /= ( 1 + exp( betas[0]*va_B(i) ) );
+            part_w /= ( 1 + exp( (1 - betas[0])*bA(i) ) );
+            // part_w /= ( 1 + exp( (1 - betas[0])*(va_A(i) + bA(i)) ) );
         }
 
-        w_r = exp( ((betas[1] - betas[0]) * (x_k[0].transpose() * d))(0) +
-                    ((betas[0] - betas[1]) * (x_k[0].transpose() * dA))(0) +
-                    part_w );
+        w_r = exp( ( (betas[1] - betas[0]) * (x_k[0].transpose() * d )(0) ) +
+                   ( (betas[0] - betas[1]) * (x_k[0].transpose() * dA)(0) )  ) * part_w;
 
         for (int k = 1; k < n_betas; k++) {
             /* Sample x_k from x_{k-1} */
             // FIXME: If I keep the RBM with all biases null, I can optimize calculations here
 
-            x_k[k] = x;
-            int tr = 0;
+            x_k[k] = x_k[k-1];
 
+            int tr = 0;
             do {
                 // Part 1: Sample h
                 va_B = (*p_W) * x;
                 // va_A = 0;  // WA * prior.getVisibleUnits();
 
                 for (int i=0; i<hSize; i++){
-                    prob = 1.0/( 1 + exp( - betas[k]*( b(i) + va_B(i) ) ) );
+                    prob = 1.0/( 1 + exp( - betas[k] * ( b(i) + va_B(i) ) ) );
                     moeda = (*p_dis)(generator);
 
                     if (moeda < prob)
@@ -1027,7 +1026,7 @@ double RBM::normalizationConstant_AISestimation() {
                     else
                         h(i) = 0;
 
-                    prob = 1.0/( 1 + exp( - (1 - betas[k])*( bA(i) ) ) );
+                    prob = 1.0/( 1 + exp( - (1 - betas[k]) * bA(i) ) );
                     moeda = (*p_dis)(generator);
 
                     if (moeda < prob)
@@ -1036,6 +1035,7 @@ double RBM::normalizationConstant_AISestimation() {
                         hA(i) = 0;
                 }
                 prior.setHiddenUnits(hA);  // Acho que não é necessário deixar isso
+                // FIXME: Preciso de hA para alguma coisa? Parece que posso retirar dos calculos!
 
                 // Part 2: Sample x
                 va_B = h.transpose() * (*p_W);
@@ -1058,19 +1058,18 @@ double RBM::normalizationConstant_AISestimation() {
             } while (tr < transitionRepeat);
 
             // Calculate current ratio for the importance weight
-            part_w = 0;
-            va_B = (*p_W) * x_k[k];
+            part_w = 1;
+            va_B = (*p_W) * x_k[k] + b;
             // va_A = 0;  // WA * x_k[k];
 
             for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
-                part_w += log( 1 + exp( betas[k+1]*(va_B(i) + b(i)) ) );
-                part_w += log( 1 + exp( (1 - betas[k+1])*bA(i) ) );
-                part_w -= log( 1 + exp( betas[k]*(va_B(i) + b(i)) ) );
-                part_w -= log( 1 + exp( (1 - betas[k])*bA(i) ) );
+                part_w *= ( 1 + exp( betas[k+1] * va_B(i) ) );
+                part_w *= ( 1 + exp( (1 - betas[k+1]) * bA(i) ) );
+                part_w /= ( 1 + exp( betas[k] * va_B(i) ) );
+                part_w /= ( 1 + exp( (1 - betas[k]) * bA(i) ) );
             }
-            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k[k].transpose() * d))(0) +
-                        ((betas[k] - betas[k+1]) * (x_k[k].transpose() * dA))(0) +
-                         part_w );
+            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k[k].transpose() * d ))(0) +
+                        ((betas[k] - betas[k+1]) * (x_k[k].transpose() * dA))(0)  ) * part_w;
         }
 
         // cout << "Importance weight for run " << r << ": " << w_r << endl;
@@ -1087,12 +1086,12 @@ double RBM::normalizationConstant_AISestimation() {
     }
 
     double ratio_estimation = 0;
-    double variance = 0;
     for (auto wr: weights) {
         ratio_estimation += wr;
     }
     ratio_estimation /= n_runs;
 
+    double variance = 0;
     for (auto wr: weights) {
         variance += (ratio_estimation - wr)*(ratio_estimation - wr);
     }
@@ -1102,6 +1101,86 @@ double RBM::normalizationConstant_AISestimation() {
     cout << "Variance: " << variance << endl;
 
     return ratio_estimation * ZA;
+}
+
+
+// Saving methods
+void RBM::save(string filename) {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot train without RBM dimensions!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+
+    ofstream output;
+    output.open(filename);
+
+    output << "# RBM parameters" << endl;
+    output << "# Contains sizes (X and H), weights and biases (visible, then hidden). "
+           << "Does not save connectivity separated" << endl;
+
+    if (!isTrained) {
+        printWarning("Saving RBM that has not been trained, you may want to reconsider this.");
+    } else {
+        output << "# CD-" << k_steps << ", learning rate " << l_rate << ". " << n_iter
+               << " iterations (epochs), batches of " << b_size << endl;
+    }
+
+    output << xSize << " " << hSize << endl;
+    output << (*p_W) << endl;
+    output << d.transpose() << endl;
+    output << b.transpose() << endl;
+
+    printInfo("Saved RBM into '" + filename + "'");
+}
+
+void RBM::load(string filename) {
+    // NOTE: Note that loading an RBM reinitializes it, so previous configurations may be lost
+    initialized = true;
+    patterns = false;    // In the way it is loading, that is the case
+    calcNLL = false;
+
+    fstream input;
+    input.open(filename.c_str(), ios::in);
+
+    string line;
+
+    int idx = 0;
+    while (getline(input, line)) {
+        if (line.substr(0,1) != "#") break;
+    }
+
+    stringstream ss(line);
+
+    int X, H;
+    ss >> X;
+    ss >> H;
+
+    initializer(X, H);
+
+    for (int i = 0; i < hSize; i++) {
+        getline(input, line);
+        ss.clear();
+        ss.str(line);
+
+        for (int j = 0; j < xSize; j++) ss >> W(i,j);
+    }
+
+    getline(input, line);
+    ss.clear();
+    ss.str(line);
+
+    for (int j = 0; j < xSize; j++) ss >> d(j);
+
+    getline(input, line);
+    ss.clear();
+    ss.str(line);
+
+    for (int i = 0; i < hSize; i++) ss >> b(i);
+
+    printInfo("Loaded RBM from '" + filename + "'");
 }
 
 
