@@ -943,34 +943,35 @@ double RBM::partialZ_effX(int n) {
     return ret;
 }
 
+/*********************
 double RBM::normalizationConstant_AISestimation() {
-    // FIXME: In theory I'd give some other RBM, with tuned d biases
+    // Reference: Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
+
+    // FIXME: Estimation has unidentified bug
+
+    // TODO: In theory I'd give some other RBM, with tuned d biases
     //        So far, the prior RBM has all weights and biases null
+    // Reference "An Infinite Restricted Boltzmann Machine" uses same visible biases as model
     RBM prior(xSize, hSize);
     prior.setRandomSeed(generator());
-    // NOTE: Code implemented assuming RBM has same shape as current one (even if it can get non zero biases)
+    // NOTE: Code implemented assuming RBM has same shape as current one (but does not assume zero biases)
+    // prior.setVisibleBiases(d);
 
     // FIXME: These are preliminary parameters, should change them
     int n_runs = 10;
-    int n_betas = 1000;
+    int n_betas = 10000;
     int transitionRepeat = 1;
     double betas[n_betas];
 
     for (int k=0; k < n_betas; k++) {
         betas[k] = double(k)/(n_betas - 1);
+        // cout << "Beta_" << k << ": " << betas[k] << endl;
     }
 
     // Importance weights
     vector<double> weights;
 
-    VectorXd x_k[n_betas];  // NOTE: Talvez seja melhor guardar só 2? E ir trocando ao longo das iterações?
-
-    // Initial samples:
-    vector<VectorXd> x_0(n_runs, VectorXd::Zero(xSize));
-    x_0 = prior.sampleXtilde(SampleType::CD, 1, x_0);
-    // TODO: Check that I really want to give 1 step
-    // If I keep these zero biases, than it makes no difference to give more steps and
-    // it's better to leave it at that
+    VectorXd x_k;
 
     RowVectorXd va_B;  // va_A;
     VectorXd hA(hSize);
@@ -982,16 +983,16 @@ double RBM::normalizationConstant_AISestimation() {
     // WA = prior.getConnectivityWeights();
 
     for (int r=0; r < n_runs; r++) {
-        /* Do an AIS run */
-        x_k[0] = x_0.at(r);
+        // Do an AIS run
+        x_k = prior.sample_x();  // NOTE: Since weights are null, x does not depend on h, and I only need this step
 
-        x = x_k[0];
-        prior.setVisibleUnits( x_k[0] );
+        x = x_k;
+        prior.setVisibleUnits( x_k );
 
         // First importance weight ratio
         part_w = 1;
-        va_B = (*p_W) * x_k[0] + b;
-        // va_A = 0;  // va_A = WA * x_k[0];
+        va_B = ((*p_W) * x_k) + b;
+        // va_A = 0;  // va_A = WA * x_k;
 
         for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
             part_w *= ( 1 + exp( (1 - betas[1])*bA(i) ) );
@@ -1002,14 +1003,12 @@ double RBM::normalizationConstant_AISestimation() {
             // part_w /= ( 1 + exp( (1 - betas[0])*(va_A(i) + bA(i)) ) );
         }
 
-        w_r = exp( ( (betas[1] - betas[0]) * (x_k[0].transpose() * d )(0) ) +
-                   ( (betas[0] - betas[1]) * (x_k[0].transpose() * dA)(0) )  ) * part_w;
+        w_r = exp( ( (betas[1] - betas[0]) * (x_k.transpose() * d )(0) ) +
+                   ( (betas[0] - betas[1]) * (x_k.transpose() * dA)(0) )  ) * part_w;
 
         for (int k = 1; k < n_betas; k++) {
-            /* Sample x_k from x_{k-1} */
-            // FIXME: If I keep the RBM with all biases null, I can optimize calculations here
-
-            x_k[k] = x_k[k-1];
+            // Sample x_k from x_{k-1}
+            // FIXME: If I keep the RBM with some or all biases null, I can optimize calculations here
 
             int tr = 0;
             do {
@@ -1046,21 +1045,21 @@ double RBM::normalizationConstant_AISestimation() {
                     moeda = (*p_dis)(generator);
 
                     if (moeda < prob)
-                        x_k[k](j) = 1;
+                        x_k(j) = 1;
                     else
-                        x_k[k](j) = 0;
+                        x_k(j) = 0;
                 }
 
-                x = x_k[k];
-                prior.setVisibleUnits( x_k[k] );
+                x = x_k;
+                prior.setVisibleUnits( x_k );
 
                 tr++;
             } while (tr < transitionRepeat);
 
             // Calculate current ratio for the importance weight
             part_w = 1;
-            va_B = (*p_W) * x_k[k] + b;
-            // va_A = 0;  // WA * x_k[k];
+            va_B = ((*p_W) * x_k) + b;
+            // va_A = 0;  // WA * x_k;
 
             for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
                 part_w *= ( 1 + exp( betas[k+1] * va_B(i) ) );
@@ -1068,8 +1067,8 @@ double RBM::normalizationConstant_AISestimation() {
                 part_w /= ( 1 + exp( betas[k] * va_B(i) ) );
                 part_w /= ( 1 + exp( (1 - betas[k]) * bA(i) ) );
             }
-            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k[k].transpose() * d ))(0) +
-                        ((betas[k] - betas[k+1]) * (x_k[k].transpose() * dA))(0)  ) * part_w;
+            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k.transpose() * d ))(0) +
+                        ((betas[k] - betas[k+1]) * (x_k.transpose() * dA))(0)  ) * part_w;
         }
 
         // cout << "Importance weight for run " << r << ": " << w_r << endl;
@@ -1084,6 +1083,7 @@ double RBM::normalizationConstant_AISestimation() {
     for (int j=0; j<xSize; j++) {
         ZA *= 1 + exp(dA(j));
     }
+    // cout << "Normalization constant of auxiliar RBM: " << ZA << endl;
 
     double ratio_estimation = 0;
     for (auto wr: weights) {
@@ -1095,14 +1095,19 @@ double RBM::normalizationConstant_AISestimation() {
     for (auto wr: weights) {
         variance += (ratio_estimation - wr)*(ratio_estimation - wr);
     }
-    variance /= n_runs;
+    variance /= n_runs;     // Empirical variance of wr
+    variance /= n_runs;     // Approximated variance of the ratio estimation
 
-    cout << "Ratio estimations: " << ratio_estimation << endl;
-    cout << "Variance: " << variance << endl;
+    double Z = ratio_estimation * ZA;
+    double sdZ = sqrt(variance) * ZA;
 
-    return ratio_estimation * ZA;
+    cout << "Ratio: " << ratio_estimation << " +- " << variance << endl;
+    cout << "Z^: " << Z << " +- " << sdZ << endl;
+    cout << "ln( Z^ +- s ) = [" << log(Z - sdZ) << ", " << log(Z + sdZ) << "]" << endl;
+
+    return Z;
 }
-
+*********************/
 
 // Saving methods
 void RBM::save(string filename) {

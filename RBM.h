@@ -66,8 +66,8 @@ class RBM {
                                   vector<VectorXd> vecs);
 
     // Energy methods
-    double energy(); // TODO
-    double freeEnergy(); // FIXME: Should give parameters?
+    double energy();
+    double freeEnergy();
 
     double partialZ(int n);
     double partialZ_effX(int n);
