@@ -1,5 +1,5 @@
 /*
- *  Script to train RBMs with complete graphs. Hardcodes NLL calculation
+ *  Script to train RBMs with complete graphs on BAS dataset. Hardcodes NLL calculation
  *  Author: Amanda
  *
  */

@@ -241,63 +241,59 @@ void testSaveLoad() {
 }
 
 void checkNormConstantEstimation(){
-    Data bas(DataDistribution::BAS, 3);
+    // Data bas(DataDistribution::BAS, 2);
+    // RBM model(4, 4);
+    // model.setRandomSeed(0);
+    // model.trainSetup(SampleType::CD, 1, 1000, 5, 0.01, false);
+    // model.fit(bas);
+    // model.printVariables();
 
-    RBM model(9, 9);
-
-    model.setRandomSeed(0);
-    model.trainSetup(SampleType::CD, 1, 100, 5, 0.01, false);
-    model.fit(bas);
+    RBM model;
+    model.load("Training Outputs/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
 
     double exact = log( model.normalizationConstant_effX() );
     cout << "Exact value: " << exact << endl;
+    cout << endl;
 
-    for (int i=0; i<10; i++) {
-        model.setRandomSeed(262 + 10*i);
-        double estimated = log( model.normalizationConstant_AISestimation() );
+    for (int i=0; i<20; i++) {
+        model.setRandomSeed(2000 + 3*i);
+        double estimated = log( model.normalizationConstant_MCestimation(10000) );
         cout << "Estimated value: " << estimated << endl;
     }
 }
 
 
 int main(int argc, char **argv) {
+    Data mnist("Datasets/bin_mnist-train.data");
+    mnist = mnist.separateTrainTestSets(1.0/(6*10)).at(0);
 
-    // checkNormConstantEstimation();
+    cout << "Using " << mnist.get_number_of_samples() << " samples." << endl;
 
-    int basSize = 4;
-    int size = basSize*basSize;
+    int size = mnist.get_sample_size();
 
-    Data bas(DataDistribution::BAS, basSize);
+    int k = 10;
+    int iter = 100;
+    int b_size = 10;
+    double l_rate = 0.01;
+    double p = 1;
+    unsigned seed = 0;
 
-    RBM model(size, size);
-    model.setRandomSeed(0);
-    model.trainSetup(SampleType::CD, 1, 2500, 5, 0.01, false);
-    model.fit(bas);
-    model.printVariables();
-    model.save("Training Outputs/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
 
-    //Data mnist("Datasets/bin_mnist-train.data");
-    //// mnist = mnist.separateTrainTestSets(1/12).at(0);
-    //
-    //int size = mnist.get_sample_size();
-    //
-    //int k = 10;
-    //int iter = 1;
-    //int b_size = 600;
-    //double l_rate = 0.01;
-    //double p = 1;
-    //unsigned seed = 100;
-    //
-    //
-    //// Traditional RBM
-    //RBM model(size, 500, false);
-    //
-    //model.setRandomSeed(seed);
-    //model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
-    //model.fit(mnist);
-    //model.printVariables();
-    //
-    //
+    // Traditional RBM
+    RBM model(size, 500, false);
+    // model.setRandomSeed(seed);
+    // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
+    // model.fit(mnist);
+    // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
+    model.load("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
+
+    for (int r=0; r<=10; r++) {
+        long double estimated = log( model.normalizationConstant_MCestimation(1000) );
+        cout << "Estimated value: " << estimated << endl;
+    }
+
+
+
     //// // SGD connectivity optimization
     //// RBM sgd(size, 500, true);
     ////

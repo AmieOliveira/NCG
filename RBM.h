@@ -5,6 +5,8 @@
 #ifndef RBM_H
 #define RBM_H
 
+#define MAXSIZE_EXACTPROBABILITY 25
+
 // Libraries
 #include <fstream>
 #include <random>
@@ -166,7 +168,8 @@ public:
 
     double normalizationConstant();
     double normalizationConstant_effX();
-    double normalizationConstant_AISestimation();
+    long double normalizationConstant_MCestimation(int n_samples);
+    long double normalizationConstant_AISestimation();
 
     // Saving methods
     void save(string filename);

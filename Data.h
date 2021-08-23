@@ -17,11 +17,6 @@
 using namespace Eigen;
 using namespace std;
 
-// IDEIA: Posso criar um DataGenerator, para gerar dados de BAS,
-//        por exemplo, mas de outras distribuições tb. Ai serviria
-//        como input para Data (ou Data criaria um DataGenerator
-//        se eu criasse com um construtor específico...)
-
 enum DataDistribution {
     BAS,    // Bars and Stripes, from A. Fischer, C. Igel "Training restricted Boltzmann machines: An introduction"
 };
@@ -48,7 +43,6 @@ class Data {
     void fill_bas(int n, vector<int> state);
 public:
     // Constructors
-    //Data(char* data_path);
     Data(MatrixXd mat);
     Data(DataDistribution distr, int size);
     Data(DataDistribution distr, int size, int nSamples);

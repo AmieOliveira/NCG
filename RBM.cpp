@@ -535,6 +535,11 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
     calcNLL = NLL;          // flag to calculate NLL over iterations (or not)
     freqNLL = period;         // Rate of NLL calculation
 
+    if ( calcNLL && (xSize > MAXSIZE_EXACTPROBABILITY) ) {
+        printWarning("Training set to calculate NLL, but dimensions are too big. "
+                     "An approximation will be made instead");
+    }
+
     startWeights();
     // TODO: Adicionar outras inicializações como parâmetro opcional??
 }
@@ -565,10 +570,9 @@ void RBM::fit(Data trainData){
     }
 
     for (int it = 0; it < n_iter; ++it) {
-        cout << "Iteration " << it+1 << " of " << n_iter << endl;
+        // cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
-        // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
-        //if (it != 0) trainData.shuffleOrder();
+        // TODO: Shuffle (se não for a primeira iteracao
         actualSize = b_size;
 
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
@@ -614,12 +618,9 @@ void RBM::fit(Data trainData){
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
 
-            //cout << "New W:" << endl << W << endl;
-            //cout << "New b:" << b.transpose() << endl;
-            //cout << "New d:" << d.transpose() << endl;
-
-            // TODO: Test further
-            //   Add possibility of printing NLL throughout training
+            // cout << "New W:" << endl << W << endl;
+            // cout << "New b:" << b.transpose() << endl;
+            // cout << "New d:" << d.transpose() << endl;
 
             //for (auto x0: batch) {
             //    cout << "x0 = " << x0.transpose() << endl;
@@ -627,8 +628,6 @@ void RBM::fit(Data trainData){
             //    cout << "xk = " << xk.transpose() << endl;
             //}
         }
-
-        //cout << "Done iteration " << it+1 << endl;
 
         if (calcNLL) {
             if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
@@ -839,10 +838,6 @@ void RBM::optimizer_SGD(Data trainData) {
 
 // Evaluation methods
 double RBM::negativeLogLikelihood(Data data) {
-    // TODO: Raise warning if dimensions are too big
-    //   This is often intractable, I might want to not
-    //   allow the calculation
-
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot calculate NLL without initializing RBM!";
@@ -852,7 +847,7 @@ double RBM::negativeLogLikelihood(Data data) {
 
     //cout << "Calculating NLL" << endl;
 
-    double total = 0;
+    long double total = 0;
     int N = data.get_number_of_samples();
 
     for (int idx = 0; idx < N; ++idx) {
@@ -862,9 +857,16 @@ double RBM::negativeLogLikelihood(Data data) {
     total = total/N;
 
     //cout << "Partial: " << total << endl;
-
-    //total += log( normalizationConstant() );
-    total += log( normalizationConstant_effX() );
+    if (xSize > MAXSIZE_EXACTPROBABILITY) {
+        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
+            printWarning("NLL provided is an approximation, since the RBM is too big for exact calculation");
+        }
+        total += log( normalizationConstant_MCestimation( 1000 ) );
+        // TODO: Change number of samples (make adaptable?)
+    } else {
+        //total += log( normalizationConstant() );
+        total += log( normalizationConstant_effX() );
+    }
     return total;
 }
 
@@ -926,9 +928,8 @@ double RBM::partialZ(int n) {
 
 double RBM::normalizationConstant_effX() {
     // TODO: Warning for intractable calculation?
-    // I am already putting in the NLL. Can this be used solo?
+
     double ret = partialZ_effX(xSize);
-    //cout << "Normalization constant: " << ret << endl;
     return ret;
 }
 double RBM::partialZ_effX(int n) {
@@ -942,6 +943,27 @@ double RBM::partialZ_effX(int n) {
 
     return ret;
 }
+
+
+long double RBM::normalizationConstant_MCestimation(int n_samples) {
+    // Estimates the normalization constant (partition function) of the RBM
+    // NOTE: I am hardcoding one step between samples. (teorema ergódigo)
+
+    long double soma = 0;
+    for (int s=0; s < n_samples; s++) {
+        h = sample_h();
+        x = sample_x();
+
+        soma += exp(freeEnergy());
+
+        // cout << "Sampled x: " << x.transpose() << ", free energy of " << freeEnergy() << endl;
+        // cout << "Partial result: " << soma << endl;
+    }
+    // cout << "Normalization constant: " << pow(2, xSize) * n_samples / soma << endl;
+
+    return pow(2, xSize) * n_samples / soma;
+}
+
 
 /*********************
 double RBM::normalizationConstant_AISestimation() {

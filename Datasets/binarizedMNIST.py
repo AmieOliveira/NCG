@@ -1,6 +1,6 @@
-# Pegar citaçãoes no site!
+# References on tensorflow website:
 # https://www.tensorflow.org/datasets/catalog/mnist
-# https://www.tensorflow.org/datasets/catalog/binarized_mnist   # Não tem os rótulos, e não segue mesma ordem do anterior
+# https://www.tensorflow.org/datasets/catalog/binarized_mnist
 
 """
     Script for binarization of MNIST dataset
@@ -22,7 +22,7 @@ print(info)
 # fig = tfds.show_examples(ds, info, rows=5, cols=4)
 # plt.show()
 
-seed(684)   # Apenas fixei uma semente para ter um resultado reprodutível
+seed(684)   # Fixed seed for reproducibility
 limite = 255.0
 figsToPrint = []
 outfile = f"bin_{dataset}-{split}.data"
