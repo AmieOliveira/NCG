@@ -10,6 +10,7 @@ Data::Data(MatrixXd mat) {
     _size = mat.rows();
     _n = mat.cols();
     hasSeed = false;
+    hasLabels = false;
 
     //cout << _data << endl;
     //cout << "sample size: " << _size << endl;
@@ -47,6 +48,7 @@ void Data::createData(DataDistribution distr, int size) {
             _size = size*size;
             _n = pow(2, size + 1);
             _data = MatrixXd::Zero(_size,_n);
+            hasLabels = false;
 
             vector<int> state(size, 0);
             _idx = 0;
@@ -100,6 +102,7 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
             _size = size*size;
             _n = nSamples;
             _data = MatrixXd::Zero(_size,_n);
+            hasLabels = false;
 
             bool orientation;
             int state;
@@ -126,6 +129,74 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
             printError(errorMessage);
             throw runtime_error(errorMessage);
     }
+}
+
+Data::Data(string filename) {
+    // Constructor to get data set from a DATA file
+    hasSeed = false;
+    hasLabels = false;
+
+    fstream datafile;
+    datafile.open(filename.c_str(), ios::in);
+
+    string line;
+    string name;
+
+    int idx = 0;
+    while (getline(datafile, line)) {
+         // cout << line << endl;
+
+         if (line == "") break;
+         else if (line.substr(0, 5) == "Name:") { name = line.substr(6); }
+         else if (line.substr(0, 19) == "Number of examples:") {
+            _n = atoi(line.substr(20).c_str());
+         }
+         else if (line.substr(0, 13) == "Example size:") {
+            _size = atoi(line.substr(14).c_str());
+         }
+         else if (line == "Has labels: Yes") {
+            hasLabels = true;
+         }
+
+         idx++;
+    }
+    stringstream msg;
+    msg << "Dataset name is '" << name << "'. Has " << _n
+        << " samples of size " << _size << ".";
+    printInfo( msg.str() );
+
+    _data = MatrixXd::Zero(_size,_n);
+    if (hasLabels) {
+        _labels = MatrixXi::Zero(1,_n);
+    }
+
+    // Filling data information
+    int i, j;
+    j = 0;
+
+    while (getline(datafile, line)) {
+        if (hasLabels) {
+            if (line.substr(0, 6) == "Label:") {
+               _labels(0, j) = atoi(line.substr(7).c_str());
+            } else {
+                stringstream ss(line);
+                for (i = 0; i < _size; i++) {
+                    ss >> _data(i, j);
+                }
+                j++;
+            }
+        } else {
+            stringstream ss(line);
+            for (i = 0; i < _size; i++) {
+                ss >> _data(i, j);
+            }
+            j++;
+        }
+    }
+
+    // cout << "LABELS:\n" << _labels.block(0,0,1,10) << endl;
+    // cout << "DATA:\n" << _data.block(0,0,_size,10) << endl;
+
 }
 
 // Random auxiliars

@@ -38,6 +38,9 @@ echo -e "Executable\t\t= ${basePath}/${baseId}.exe" >> $file
 echo -e "Universe\t\t= vanilla" >> $file
 echo -e "should_transfer_files\t= IF_NEEDED" >> $file
 echo -e "when_to_transfer_output\t= ON_EXIT" >> $file
+if [ $baseID = mnist ]; then
+	echo -e "transfer_input_files\t= /home/users/amandacno/ConnectivityPatterns/Datasets/bin_mnist-train.data" >> $file
+fi
 echo -e "\n" >> $file
 
 

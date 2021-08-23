@@ -5,6 +5,8 @@
 #ifndef RBM_H
 #define RBM_H
 
+#define MAXSIZE_EXACTPROBABILITY 25
+
 // Libraries
 #include <fstream>
 #include <random>
@@ -66,11 +68,9 @@ class RBM {
                                   vector<VectorXd> vecs);
 
     // Energy methods
-    double energy(); // TODO
-    double freeEnergy(); // FIXME: Should give parameters?
+    double energy();
+    double freeEnergy();
 
-    double normalizationConstant();
-    double normalizationConstant_effX();
     double partialZ(int n);
     double partialZ_effX(int n);
 
@@ -137,6 +137,8 @@ public:
     int setConnectivity(MatrixXd mat);
     void startConnectivity(double p);   // With p probability of any given edge existing
 
+    MatrixXd getConnectivityWeights();
+
     // Random generator functions
     void setRandomSeed(unsigned seed);
 
@@ -163,6 +165,15 @@ public:
     // Evaluation methods
     double negativeLogLikelihood(Data data);
     vector<double> getTrainingHistory();
+
+    double normalizationConstant();
+    double normalizationConstant_effX();
+    long double normalizationConstant_MCestimation(int n_samples);
+    long double normalizationConstant_AISestimation();
+
+    // Saving methods
+    void save(string filename);
+    void load(string filename);
 
     // Test Functions
     void printVariables();

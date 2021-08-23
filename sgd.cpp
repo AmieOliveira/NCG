@@ -1,5 +1,5 @@
 /*
- *  Script to train RBMs with online connectivity optimization through SGD method. Hardcodes NLL calculation
+ *  Script to train RBMs with online connectivity optimization through SGD method on BAS dataset. Hardcodes NLL calculation
  *  Author: Amanda
  *
  */

@@ -5,6 +5,9 @@
 #ifndef DATA_H
 #define DATA_H
 
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
 #include <random>
 #include <vector>
 #include <cmath>
@@ -13,11 +16,6 @@
 
 using namespace Eigen;
 using namespace std;
-
-// IDEIA: Posso criar um DataGenerator, para gerar dados de BAS,
-//        por exemplo, mas de outras distribuições tb. Ai serviria
-//        como input para Data (ou Data criaria um DataGenerator
-//        se eu criasse com um construtor específico...)
 
 enum DataDistribution {
     BAS,    // Bars and Stripes, from A. Fischer, C. Igel "Training restricted Boltzmann machines: An introduction"
@@ -28,6 +26,8 @@ class Data {
     int _size;          // Size of a data sample
     int _n;             // Number of samples
     MatrixXd _data;     // Data
+    MatrixXi _labels;   // Data labels, when they exist
+    bool hasLabels;
 
     // Random number variables
     bool hasSeed;
@@ -43,12 +43,12 @@ class Data {
     void fill_bas(int n, vector<int> state);
 public:
     // Constructors
-    //Data(char* data_path);
     Data(MatrixXd mat);
     Data(DataDistribution distr, int size);
     Data(DataDistribution distr, int size, int nSamples);
     Data(unsigned seed,
          DataDistribution distr, int size, int nSamples);
+    Data(string filename);
 
     // Random auxiliars
     void setRandomSeed(unsigned seed);

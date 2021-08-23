@@ -1,6 +1,7 @@
 /*
  *  Script to train RBMs with graphs in which each unit has v neighbors.
- *      Hardcodes number of hidden units (H=X). Hardcodes NLL calculation
+ *      Hardcodes number of hidden units (H=X). Trains on BAS dataset.
+ *      Hardcodes NLL calculation
  *  Author: Amanda
  *
  */

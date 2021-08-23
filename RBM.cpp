@@ -327,6 +327,10 @@ void RBM::startConnectivity(double p) {
     // cout << "Percentage of connections activated: " << A.sum()/(xSize*hSize) << endl;
 }
 
+MatrixXd RBM::getConnectivityWeights() {
+    return *p_W;
+}
+
 // RBM probabilities
 VectorXd RBM::getProbabilities_x() {
     if (!initialized){
@@ -422,20 +426,6 @@ VectorXd RBM::sample_h() {
     //   and other functions should have performed the necessary
     //   checks
 
-    /*if (!initialized){
-        string errorMessage;
-        errorMessage = "Tried to sample vector that has no dimension!\n\t"
-                       "You need to set the RBM dimensions before "
-                       "sampling values!";
-        printError(errorMessage);
-        throw runtime_error("Tried to sample vector that has no dimension!");
-    }
-    if (!hasSeed){
-        string errorMessage;
-        errorMessage = "Tried to sample vector without random seed!";
-        printError(errorMessage);
-        throw runtime_error(errorMessage);
-    }*/
     //cout << "Sampling h!" << endl;
 
     VectorXd output(hSize);
@@ -460,21 +450,25 @@ VectorXd RBM::sample_h() {
 vector<VectorXd> RBM::sampleXtilde(SampleType sType,
                                    int k, //int b_size,
                                    vector<VectorXd> vecs) {
-    // NOTE: Will not check if has been initialized and/or has seed,
-    //   because this method should be called only as part of the
-    //   RBM training, and that one should already have performed
-    //   the necessary checks
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot sample without RBM dimensions!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Cannot sample from RBM without random seed!\n\t"
+                       "Use 'setRandomSeed' before proceeding";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
 
-    //MatrixXd* p_W;
-    //if (patterns) {
-    //    p_W = &C;
-    //} else {
-    //    p_W = &W;
-    //}
     vector<VectorXd> ret;
 
     switch (sType) {
         case SampleType::CD:
+        // case SampleType::PCD:
             //cout << "Beginning Contrastive Divergence!" << endl;
             for (vector<VectorXd>::iterator x_0 = vecs.begin();
                  x_0 != vecs.end();
@@ -498,7 +492,6 @@ vector<VectorXd> RBM::sampleXtilde(SampleType sType,
             throw runtime_error(errorMessage);
 
         // TODO: Outros tipos de treinamento
-        // case SampleType::PCD:
     }
     return ret;
 }
@@ -542,6 +535,11 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
     calcNLL = NLL;          // flag to calculate NLL over iterations (or not)
     freqNLL = period;         // Rate of NLL calculation
 
+    if ( calcNLL && (xSize > MAXSIZE_EXACTPROBABILITY) ) {
+        printWarning("Training set to calculate NLL, but dimensions are too big. "
+                     "An approximation will be made instead");
+    }
+
     startWeights();
     // TODO: Adicionar outras inicializações como parâmetro opcional??
 }
@@ -572,10 +570,9 @@ void RBM::fit(Data trainData){
     }
 
     for (int it = 0; it < n_iter; ++it) {
-        //cout << "Iteration " << it+1 << " of " << n_iter << endl;
+        // cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
-        // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
-        //if (it != 0) trainData.shuffleOrder();
+        // TODO: Shuffle (se não for a primeira iteracao
         actualSize = b_size;
 
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
@@ -621,12 +618,9 @@ void RBM::fit(Data trainData){
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
 
-            //cout << "New W:" << endl << W << endl;
-            //cout << "New b:" << b.transpose() << endl;
-            //cout << "New d:" << d.transpose() << endl;
-
-            // TODO: Test further
-            //   Add possibility of printing NLL throughout training
+            // cout << "New W:" << endl << W << endl;
+            // cout << "New b:" << b.transpose() << endl;
+            // cout << "New d:" << d.transpose() << endl;
 
             //for (auto x0: batch) {
             //    cout << "x0 = " << x0.transpose() << endl;
@@ -634,8 +628,6 @@ void RBM::fit(Data trainData){
             //    cout << "xk = " << xk.transpose() << endl;
             //}
         }
-
-        //cout << "Done iteration " << it+1 << endl;
 
         if (calcNLL) {
             if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
@@ -759,6 +751,8 @@ void RBM::optimizer_SGD(Data trainData) {
         // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
         //if (it != 0) trainData.shuffleOrder();
 
+        cout << "Iteration " << it+1 << " of " << n_iter << endl;
+
         actualSize = b_size;
 
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
@@ -844,10 +838,6 @@ void RBM::optimizer_SGD(Data trainData) {
 
 // Evaluation methods
 double RBM::negativeLogLikelihood(Data data) {
-    // TODO: Raise warning if dimensions are too big
-    //   This is often intractable, I might want to not
-    //   allow the calculation
-
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot calculate NLL without initializing RBM!";
@@ -857,7 +847,7 @@ double RBM::negativeLogLikelihood(Data data) {
 
     //cout << "Calculating NLL" << endl;
 
-    double total = 0;
+    long double total = 0;
     int N = data.get_number_of_samples();
 
     for (int idx = 0; idx < N; ++idx) {
@@ -867,9 +857,16 @@ double RBM::negativeLogLikelihood(Data data) {
     total = total/N;
 
     //cout << "Partial: " << total << endl;
-
-    //total += log( normalizationConstant() );
-    total += log( normalizationConstant_effX() );
+    if (xSize > MAXSIZE_EXACTPROBABILITY) {
+        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
+            printWarning("NLL provided is an approximation, since the RBM is too big for exact calculation");
+        }
+        total += log( normalizationConstant_MCestimation( 1000 ) );
+        // TODO: Change number of samples (make adaptable?)
+    } else {
+        //total += log( normalizationConstant() );
+        total += log( normalizationConstant_effX() );
+    }
     return total;
 }
 
@@ -931,9 +928,8 @@ double RBM::partialZ(int n) {
 
 double RBM::normalizationConstant_effX() {
     // TODO: Warning for intractable calculation?
-    // I am already putting in the NLL. Can this be used solo?
+
     double ret = partialZ_effX(xSize);
-    //cout << "Normalization constant: " << ret << endl;
     return ret;
 }
 double RBM::partialZ_effX(int n) {
@@ -946,6 +942,272 @@ double RBM::partialZ_effX(int n) {
     ret += partialZ_effX(n-1);
 
     return ret;
+}
+
+
+long double RBM::normalizationConstant_MCestimation(int n_samples) {
+    // Estimates the normalization constant (partition function) of the RBM
+    // NOTE: I am hardcoding one step between samples. (teorema ergódigo)
+
+    long double soma = 0;
+    for (int s=0; s < n_samples; s++) {
+        h = sample_h();
+        x = sample_x();
+
+        soma += exp(freeEnergy());
+
+        // cout << "Sampled x: " << x.transpose() << ", free energy of " << freeEnergy() << endl;
+        // cout << "Partial result: " << soma << endl;
+    }
+    // cout << "Normalization constant: " << pow(2, xSize) * n_samples / soma << endl;
+
+    return pow(2, xSize) * n_samples / soma;
+}
+
+
+/*********************
+double RBM::normalizationConstant_AISestimation() {
+    // Reference: Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
+
+    // FIXME: Estimation has unidentified bug
+
+    // TODO: In theory I'd give some other RBM, with tuned d biases
+    //        So far, the prior RBM has all weights and biases null
+    // Reference "An Infinite Restricted Boltzmann Machine" uses same visible biases as model
+    RBM prior(xSize, hSize);
+    prior.setRandomSeed(generator());
+    // NOTE: Code implemented assuming RBM has same shape as current one (but does not assume zero biases)
+    // prior.setVisibleBiases(d);
+
+    // FIXME: These are preliminary parameters, should change them
+    int n_runs = 10;
+    int n_betas = 10000;
+    int transitionRepeat = 1;
+    double betas[n_betas];
+
+    for (int k=0; k < n_betas; k++) {
+        betas[k] = double(k)/(n_betas - 1);
+        // cout << "Beta_" << k << ": " << betas[k] << endl;
+    }
+
+    // Importance weights
+    vector<double> weights;
+
+    VectorXd x_k;
+
+    RowVectorXd va_B;  // va_A;
+    VectorXd hA(hSize);
+    VectorXd dA, bA;
+    double prob, moeda, part_w, w_r;
+
+    bA = prior.getHiddenBiases();
+    dA = prior.getVisibleBiases();
+    // WA = prior.getConnectivityWeights();
+
+    for (int r=0; r < n_runs; r++) {
+        // Do an AIS run
+        x_k = prior.sample_x();  // NOTE: Since weights are null, x does not depend on h, and I only need this step
+
+        x = x_k;
+        prior.setVisibleUnits( x_k );
+
+        // First importance weight ratio
+        part_w = 1;
+        va_B = ((*p_W) * x_k) + b;
+        // va_A = 0;  // va_A = WA * x_k;
+
+        for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
+            part_w *= ( 1 + exp( (1 - betas[1])*bA(i) ) );
+            part_w *= ( 1 + exp( betas[1]*va_B(i) ) );
+            // part_w *= ( 1 + exp( (1 - betas[1])*(va_A(i) + bA(i)) ) );
+            part_w /= ( 1 + exp( betas[0]*va_B(i) ) );
+            part_w /= ( 1 + exp( (1 - betas[0])*bA(i) ) );
+            // part_w /= ( 1 + exp( (1 - betas[0])*(va_A(i) + bA(i)) ) );
+        }
+
+        w_r = exp( ( (betas[1] - betas[0]) * (x_k.transpose() * d )(0) ) +
+                   ( (betas[0] - betas[1]) * (x_k.transpose() * dA)(0) )  ) * part_w;
+
+        for (int k = 1; k < n_betas; k++) {
+            // Sample x_k from x_{k-1}
+            // FIXME: If I keep the RBM with some or all biases null, I can optimize calculations here
+
+            int tr = 0;
+            do {
+                // Part 1: Sample h
+                va_B = (*p_W) * x;
+                // va_A = 0;  // WA * prior.getVisibleUnits();
+
+                for (int i=0; i<hSize; i++){
+                    prob = 1.0/( 1 + exp( - betas[k] * ( b(i) + va_B(i) ) ) );
+                    moeda = (*p_dis)(generator);
+
+                    if (moeda < prob)
+                        h(i) = 1;
+                    else
+                        h(i) = 0;
+
+                    prob = 1.0/( 1 + exp( - (1 - betas[k]) * bA(i) ) );
+                    moeda = (*p_dis)(generator);
+
+                    if (moeda < prob)
+                        hA(i) = 1;
+                    else
+                        hA(i) = 0;
+                }
+                prior.setHiddenUnits(hA);  // Acho que não é necessário deixar isso
+                // FIXME: Preciso de hA para alguma coisa? Parece que posso retirar dos calculos!
+
+                // Part 2: Sample x
+                va_B = h.transpose() * (*p_W);
+                // va_A = 0;  // hA.transpose() * WA;
+
+                for (int j=0; j<xSize; j++){
+                    prob = 1.0/( 1 + exp( -( betas[k]*( d(j) + va_B(j) ) + (1-betas[k])*( dA(j) ) ) ) );
+                    moeda = (*p_dis)(generator);
+
+                    if (moeda < prob)
+                        x_k(j) = 1;
+                    else
+                        x_k(j) = 0;
+                }
+
+                x = x_k;
+                prior.setVisibleUnits( x_k );
+
+                tr++;
+            } while (tr < transitionRepeat);
+
+            // Calculate current ratio for the importance weight
+            part_w = 1;
+            va_B = ((*p_W) * x_k) + b;
+            // va_A = 0;  // WA * x_k;
+
+            for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
+                part_w *= ( 1 + exp( betas[k+1] * va_B(i) ) );
+                part_w *= ( 1 + exp( (1 - betas[k+1]) * bA(i) ) );
+                part_w /= ( 1 + exp( betas[k] * va_B(i) ) );
+                part_w /= ( 1 + exp( (1 - betas[k]) * bA(i) ) );
+            }
+            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k.transpose() * d ))(0) +
+                        ((betas[k] - betas[k+1]) * (x_k.transpose() * dA))(0)  ) * part_w;
+        }
+
+        // cout << "Importance weight for run " << r << ": " << w_r << endl;
+
+        weights.push_back(w_r);
+    }
+
+    double ZA = 1;
+    for (int i=0; i<hSize; i++) {
+        ZA *= 1 + exp(bA(i));
+    }
+    for (int j=0; j<xSize; j++) {
+        ZA *= 1 + exp(dA(j));
+    }
+    // cout << "Normalization constant of auxiliar RBM: " << ZA << endl;
+
+    double ratio_estimation = 0;
+    for (auto wr: weights) {
+        ratio_estimation += wr;
+    }
+    ratio_estimation /= n_runs;
+
+    double variance = 0;
+    for (auto wr: weights) {
+        variance += (ratio_estimation - wr)*(ratio_estimation - wr);
+    }
+    variance /= n_runs;     // Empirical variance of wr
+    variance /= n_runs;     // Approximated variance of the ratio estimation
+
+    double Z = ratio_estimation * ZA;
+    double sdZ = sqrt(variance) * ZA;
+
+    cout << "Ratio: " << ratio_estimation << " +- " << variance << endl;
+    cout << "Z^: " << Z << " +- " << sdZ << endl;
+    cout << "ln( Z^ +- s ) = [" << log(Z - sdZ) << ", " << log(Z + sdZ) << "]" << endl;
+
+    return Z;
+}
+*********************/
+
+// Saving methods
+void RBM::save(string filename) {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot train without RBM dimensions!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+
+    ofstream output;
+    output.open(filename);
+
+    output << "# RBM parameters" << endl;
+    output << "# Contains sizes (X and H), weights and biases (visible, then hidden). "
+           << "Does not save connectivity separated" << endl;
+
+    if (!isTrained) {
+        printWarning("Saving RBM that has not been trained, you may want to reconsider this.");
+    } else {
+        output << "# CD-" << k_steps << ", learning rate " << l_rate << ". " << n_iter
+               << " iterations (epochs), batches of " << b_size << endl;
+    }
+
+    output << xSize << " " << hSize << endl;
+    output << (*p_W) << endl;
+    output << d.transpose() << endl;
+    output << b.transpose() << endl;
+
+    printInfo("Saved RBM into '" + filename + "'");
+}
+
+void RBM::load(string filename) {
+    // NOTE: Note that loading an RBM reinitializes it, so previous configurations may be lost
+    initialized = true;
+    patterns = false;    // In the way it is loading, that is the case
+    calcNLL = false;
+
+    fstream input;
+    input.open(filename.c_str(), ios::in);
+
+    string line;
+
+    int idx = 0;
+    while (getline(input, line)) {
+        if (line.substr(0,1) != "#") break;
+    }
+
+    stringstream ss(line);
+
+    int X, H;
+    ss >> X;
+    ss >> H;
+
+    initializer(X, H);
+
+    for (int i = 0; i < hSize; i++) {
+        getline(input, line);
+        ss.clear();
+        ss.str(line);
+
+        for (int j = 0; j < xSize; j++) ss >> W(i,j);
+    }
+
+    getline(input, line);
+    ss.clear();
+    ss.str(line);
+
+    for (int j = 0; j < xSize; j++) ss >> d(j);
+
+    getline(input, line);
+    ss.clear();
+    ss.str(line);
+
+    for (int i = 0; i < hSize; i++) ss >> b(i);
+
+    printInfo("Loaded RBM from '" + filename + "'");
 }
 
 
