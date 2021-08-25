@@ -3,13 +3,13 @@
 # Executable to complete sub files. Must be edited for each use
 
 
-filename=mnist_test
+filename=complete-mnist
 baseId=mnist
 
-K_VAL=(1 10) # (1 2 5 10 20 100)
+K_VAL=(1 2 5 10 20 100)
 # BAS_Size=4
-ITER=1000
-REPEAT=2
+ITER=50
+REPEAT=5
 # V_VAL=(14 12 10 8 6 4)
 # V_TYPE=l
 # V_TYPE=s
@@ -17,9 +17,11 @@ REPEAT=2
 LR_VAL=(0.01)
 # P_VAL=(1 0.75 0.5 0.25)
 
+trainType=complete
+
 H=500
 BATCH=10
-F_NLL=10
+F_NLL=5
 
 basePath=$PWD
 file=result/${baseId}/${filename}.sub
@@ -60,14 +62,16 @@ do
 		# 	echo -e "Queue $REPEAT" >> $file
 		# 	echo -e "" >> $file
 		# done
-		echo -e "Arguments\t\t= \"\$(Step) . \$(Step) complete 0 $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
+		echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType 0 $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
 		echo -e "Log\t\t\t= ${basePath}/log/${baseId}.log" >> $file
-		echo -e "Error\t\t\t= ${basePath}/error/${baseId}_complete_CD-${k}_lr${lr}_\$(Step).err" >> $file
-		echo -e "Output\t\t\t= ${basePath}/out/${baseId}_complete_CD-${k}_lr${lr}_\$(Step).out" >> $file
-		echo -e "transfer_output_files\t= ${baseId}_complete_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).rbm,nll_${baseId}_complete_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv" >> $file
+		echo -e "Error\t\t\t= ${basePath}/error/${baseId}_${trainType}_CD-${k}_lr${lr}_\$(Step).err" >> $file
+		echo -e "Output\t\t\t= ${basePath}/out/${baseId}_${trainType}_CD-${k}_lr${lr}_\$(Step).out" >> $file
+		echo -e "transfer_output_files\t= ${baseId}_${trainType}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).rbm,nll_${baseId}_${trainType}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv" >> $file
 		
 		echo -e "Queue $REPEAT" >> $file
 		echo -e "" >> $file
 	done
 done
+
+echo "File created"
 
