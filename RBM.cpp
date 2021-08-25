@@ -502,15 +502,21 @@ void RBM::trainSetup() {
     trainSetup(false);
 }
 void RBM::trainSetup(bool NLL) {
-    trainSetup(CD, 1, 1000, 5, 0.1, NLL);
+    trainSetup(CD, 1, 1000, 5, 0.01, NLL, 1, false);
 }
 void RBM::trainSetup(SampleType sampleType, int k, int iterations,
                      int batchSize, double learnRate, bool NLL) {
-    trainSetup(sampleType, k, iterations, batchSize, learnRate, NLL, 1);
+    trainSetup(sampleType, k, iterations, batchSize, learnRate, NLL, 1, false);
 }
 
 void RBM::trainSetup(SampleType sampleType, int k, int iterations,
                      int batchSize, double learnRate, bool NLL, int period) {
+    trainSetup(sampleType, k, iterations, batchSize, learnRate, NLL, period, false);
+}
+
+void RBM::trainSetup(SampleType sampleType, int k, int iterations,
+                     int batchSize, double learnRate, bool NLL,
+                     int period, bool doShuffle) {
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot train without RBM dimensions!";
@@ -533,7 +539,8 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
     b_size = batchSize;     // batch size
     l_rate = learnRate;     // learning rate
     calcNLL = NLL;          // flag to calculate NLL over iterations (or not)
-    freqNLL = period;         // Rate of NLL calculation
+    freqNLL = period;       // Rate of NLL calculation
+    shuffle = doShuffle;    // flag to shuffle data order through iterations
 
     if ( calcNLL && (xSize > MAXSIZE_EXACTPROBABILITY) ) {
         printWarning("Training set to calculate NLL, but dimensions are too big. "
@@ -553,6 +560,7 @@ void RBM::fit(Data trainData){
         printError(errorMessage);
         throw runtime_error(errorMessage);
     }
+    if (shuffle) { trainData.setRandomSeed(generator()); }
 
     printInfo("------- TRAINING DATA -------");
     // TODO: Print training setup?
@@ -572,7 +580,10 @@ void RBM::fit(Data trainData){
     for (int it = 0; it < n_iter; ++it) {
         // cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
-        // TODO: Shuffle (se não for a primeira iteracao
+        if ( (it > 0) && shuffle ) {
+            trainData.shuffle();
+        }
+
         actualSize = b_size;
 
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
@@ -861,6 +872,12 @@ double RBM::negativeLogLikelihood(Data data) {
         if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
             printWarning("NLL provided is an approximation, since the RBM is too big for exact calculation");
         }
+        if (!hasSeed){
+            string errorMessage;
+            errorMessage = "Cannot estimate NLL without random seed!";
+            printError(errorMessage);
+            throw runtime_error(errorMessage);
+        }
         total += log( normalizationConstant_MCestimation( 1000 ) );
         // TODO: Change number of samples (make adaptable?)
     } else {
@@ -956,7 +973,6 @@ long double RBM::normalizationConstant_MCestimation(int n_samples) {
 
         soma += exp(freeEnergy());
 
-        // cout << "Sampled x: " << x.transpose() << ", free energy of " << freeEnergy() << endl;
         // cout << "Partial result: " << soma << endl;
     }
     // cout << "Normalization constant: " << pow(2, xSize) * n_samples / soma << endl;

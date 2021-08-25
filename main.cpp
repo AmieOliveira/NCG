@@ -262,37 +262,58 @@ void checkNormConstantEstimation(){
     }
 }
 
+void testDataShuffle() {
+    Data bas(DataDistribution::BAS, 2);
+    int size = bas.get_number_of_samples();
+
+    cout << "Original samples:" << endl;
+    for (int i; i < size; i++) {
+        cout << bas.get_sample(i).transpose() << endl;
+    }
+
+    bas.shuffle(7335);
+
+    cout << "Shuffled samples:" << endl;
+    for (int i; i < size; i++) {
+        cout << bas.get_sample(i).transpose() << endl;
+    }
+}
+
 
 int main(int argc, char **argv) {
-    Data mnist("Datasets/bin_mnist-train.data");
-    mnist = mnist.separateTrainTestSets(1.0/(6*10)).at(0);
 
-    cout << "Using " << mnist.get_number_of_samples() << " samples." << endl;
-
-    int size = mnist.get_sample_size();
+    // Data mnist("Datasets/bin_mnist-train.data");
+    // mnist = mnist.separateTrainTestSets(1.0/(6*10)).at(0);
+    // cout << "Using " << mnist.get_number_of_samples() << " samples." << endl;
+    //
+    // int size = mnist.get_sample_size();
 
     int k = 10;
-    int iter = 100;
+    int iter = 2;
     int b_size = 10;
     double l_rate = 0.01;
     double p = 1;
-    unsigned seed = 0;
+    unsigned seed = 8924;  // 6302
+    bool shuffleData = true;
 
 
     // Traditional RBM
-    RBM model(size, 500, false);
+    // RBM model(size, 500, false);
     // model.setRandomSeed(seed);
-    // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false);
+    // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
     // model.fit(mnist);
-    // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
+    // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
+
+    RBM model;
+    model.setRandomSeed(seed);
     model.load("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
 
     for (int r=0; r<=10; r++) {
-        long double estimated = log( model.normalizationConstant_MCestimation(1000) );
+        long double estimated = log( model.normalizationConstant_MCestimation(100000) );
         cout << "Estimated value: " << estimated << endl;
     }
 
-
+    // MatrixXd connectivity = square_convolution(36, 20);
 
     //// // SGD connectivity optimization
     //// RBM sgd(size, 500, true);

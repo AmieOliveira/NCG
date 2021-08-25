@@ -83,6 +83,7 @@ class RBM {
     bool calcNLL;           // flag to calculate NLL over iterations (or not)
     int freqNLL;            // Rate of NLL calculation (1 calculus every freqNLL iterations)
     vector<double> history; // NLL
+    bool shuffle;           // flag to shuffle data order through iterations
 
     // Training's optimization variables
     Heuristic opt_type;     // Connectivity optimization method
@@ -153,6 +154,9 @@ public:
                     int batchSize, double learnRate, bool NLL);
     void trainSetup(SampleType sampleType, int k, int iterations,
                     int batchSize, double learnRate, bool NLL, int period);
+    void trainSetup(SampleType sampleType, int k, int iterations,
+                    int batchSize, double learnRate, bool NLL,
+                    int period, bool doShuffle);
 
     void fit(Data trainData);
 
@@ -166,6 +170,7 @@ public:
     double negativeLogLikelihood(Data data);
     vector<double> getTrainingHistory();
 
+    // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);

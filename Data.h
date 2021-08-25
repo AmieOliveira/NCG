@@ -41,6 +41,11 @@ class Data {
     // Support data creation attributes and methods
     int _idx;
     void fill_bas(int n, vector<int> state);
+
+    // Manipulating the data
+    void _shuffle();
+    int _randomSample(int i);
+
 public:
     // Constructors
     Data(MatrixXd mat);
@@ -63,6 +68,10 @@ public:
     vector<VectorXd> get_batch(int idx, int size);
     vector<Data> separateTrainTestSets(double trainPercentage);
     // Ideia inicial. Depois posso adicionar k-fold...
+
+    // Manipulating the data
+    void shuffle();
+    void shuffle(unsigned seed);
 };
 
 

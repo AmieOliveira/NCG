@@ -250,3 +250,41 @@ vector<Data> Data::separateTrainTestSets(double trainPercentage) {
 
     return datasets;
 }
+
+
+// Manipulating the data
+int Data::_randomSample(int i) {
+    return int((*p_dis)(generator)*i);
+}
+
+void Data::_shuffle() {
+    // Function generates a data permutation
+
+    PermutationMatrix<Dynamic,Dynamic> perm(_n);
+    perm.setIdentity();
+
+    // Shuffling extracted from std::random_shuffle template
+    // http://www.cplusplus.com/reference/algorithm/random_shuffle/
+    auto first = perm.indices().data();
+    for (int i = _n-1; i > 0; --i) {
+        swap(first[i], first[ _randomSample(i+1) ]);
+    }
+
+    _data = _data * perm;
+    if ( hasLabels ) _labels = _labels * perm;
+}
+
+void Data::shuffle() {
+    if ( !hasSeed ) {
+        random_device rd;
+        generator.seed(rd());
+        p_dis = new uniform_real_distribution<double>(0.0, 1.0);
+        hasSeed = true;
+    }
+    _shuffle();
+}
+
+void Data::shuffle(unsigned seed) {
+    setRandomSeed(seed);
+    _shuffle();
+}
