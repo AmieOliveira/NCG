@@ -375,6 +375,53 @@ Eigen::MatrixXd Mixer::mix_neighbors(Eigen::MatrixXd regPattern, int iter) {
 
 }
 
+Eigen::MatrixXd square_convolution(int X, int H) {
+    // Generates a convolutional connecitivty matrix
+    // Assumes that the input figure is a square
+
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(H, X);
+
+    int side = sqrt(X);
+    int rest = H;
+
+    int h = 0;
+
+    do {
+        int n = int(sqrt(rest));
+        int s = side - n + 1;
+
+        cout << "n = " << n << endl;
+        cout << "s = " << s << endl;
+
+        for (int row=0; row < n; row++) {
+            for (int col=0; col < n; col++) {
+                for (int i=0; i<s; i++) {
+                    for (int j=0; j<s; j++) {
+                        // Activate neuron (row+i, col+j) for hidden neuron h
+                        ret( h, (row+i)*side + (col+j) ) = 1;
+                    }
+                }
+                h++;
+            }
+        }
+
+        rest = rest - n*n;
+    } while (rest >= 4);
+
+    if (rest > 0) {
+        for (int idx=0; idx<rest; idx++) {
+            for (int j=0; j<X; j++) {
+                ret( h, j ) = 1;
+            }
+            h++;
+        }
+    }
+
+    // cout << "Connectivity matrix: " << endl << ret << endl;
+    return ret;
+}
+
+
 // TODO: Mixing when the pattern is not regular
 //       (will have to sample h_i according to degrees...)
 

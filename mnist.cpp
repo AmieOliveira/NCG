@@ -78,9 +78,9 @@ int main(int argc, char **argv) {
     msg << "Setting RBM type as: " << trainType;
     printInfo(msg.str());
 
-    int trainParam = 0;
+    float trainParam = 0;
     if (argc > 5) {
-        trainParam = atoi(argv[5]);
+        trainParam = atof(argv[5]);
     }
     msg.str("");
     msg << "Setting RBM training parameter as: " << trainParam;
@@ -142,6 +142,7 @@ int main(int argc, char **argv) {
 
     // Data and RBM creation
     Data mnist("Datasets/bin_mnist-train.data");
+    mnist = mnist.separateTrainTestSets(1.0/(6*20)).at(0);
     int X = mnist.get_sample_size();
 
     RBM model(X, H);
@@ -150,10 +151,12 @@ int main(int argc, char **argv) {
     // Output files' base name
     stringstream filebase;
     filebase << "mnist_" << trainType;
-    if (trainParam != 0) { filebase << trainParam; }
+    if (trainParam != 0) { filebase << "-" << trainParam; }
     filebase << "_H" << H << "_CD-" << k << "_lr" << l_rate << "_mBatch" << b_size << "_iter" << iter;
     if (seed != fileIDX) { filebase << "_seed" << seed; }
     filebase << "_run" << fileIDX;
+
+    string rbm_fname, nll_fname, connect_fname;
 
     // Training
     bool doShuffle = true;  // Is there a reason I'd wish it not to be true?
@@ -166,6 +169,40 @@ int main(int argc, char **argv) {
             model.fit(mnist);
             break;
 
+        case sgd:
+            if ( trainParam <= 0 ) {
+                printError("Invalid training parameter");
+                cerr << "Training parameter should be a number in (0,1], was given " << trainParam << endl;
+                exit(1);
+            }
+            if ( trainParam > 1 ) {
+                printWarning("Invalid training parameter, setting it to 1 instead");
+                trainParam = 1;
+            }
+            msg.str("");
+            msg << "Training connectivity with SGD (p=" << trainParam << ")";
+            printInfo(msg.str());
+
+            connect_fname = filePath + "connectivity_" + filebase.str() + ".csv";
+
+            model.connectivity(true);
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
+            model.optSetup(Heuristic::SGD, connect_fname, trainParam);
+
+            model.fit_connectivity(mnist);
+
+            break;
+        case conv:
+            printInfo("Training RBM with convolutional connectivity");
+
+            model.connectivity(true);
+            model.setConnectivity(square_convolution( X, H ));
+            cout << "Connectivity matrix:" << endl << model.getConnectivity() << endl;
+
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
+            model.fit(mnist);
+            break;
+
         default:
             printError("Training type not recognized. Aborting operation.");
             cerr << "Training type '" << trainType << "' not implemented. Check what types are available" << endl;
@@ -174,8 +211,8 @@ int main(int argc, char **argv) {
     vector<double> h = model.getTrainingHistory();
 
     // Outputs
-    string rbm_fname = filePath + filebase.str() + ".rbm";
-    string nll_fname = filePath + "nll_" + filebase.str() + ".csv";
+    rbm_fname = filePath + filebase.str() + ".rbm";
+    nll_fname = filePath + "nll_" + filebase.str() + ".csv";
 
     model.save(rbm_fname);
 

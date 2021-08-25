@@ -170,6 +170,7 @@ public:
     double negativeLogLikelihood(Data data);
     vector<double> getTrainingHistory();
 
+    // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);

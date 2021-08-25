@@ -42,6 +42,8 @@ Eigen::MatrixXd bas_connect_2(int basSize);
 Eigen::MatrixXd bas_connect_3(int basSize);
 Eigen::MatrixXd bas_connect_4(int basSize);
 
+Eigen::MatrixXd square_convolution(int X, int H);
+
 // Helper functions
 int wraparound(int x, int lim);
 

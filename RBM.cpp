@@ -872,6 +872,12 @@ double RBM::negativeLogLikelihood(Data data) {
         if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
             printWarning("NLL provided is an approximation, since the RBM is too big for exact calculation");
         }
+        if (!hasSeed){
+            string errorMessage;
+            errorMessage = "Cannot estimate NLL without random seed!";
+            printError(errorMessage);
+            throw runtime_error(errorMessage);
+        }
         total += log( normalizationConstant_MCestimation( 1000 ) );
         // TODO: Change number of samples (make adaptable?)
     } else {
@@ -967,7 +973,6 @@ long double RBM::normalizationConstant_MCestimation(int n_samples) {
 
         soma += exp(freeEnergy());
 
-        // cout << "Sampled x: " << x.transpose() << ", free energy of " << freeEnergy() << endl;
         // cout << "Partial result: " << soma << endl;
     }
     // cout << "Normalization constant: " << pow(2, xSize) * n_samples / soma << endl;
