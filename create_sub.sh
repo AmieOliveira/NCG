@@ -3,7 +3,7 @@
 # Executable to complete sub files. Must be edited for each use
 
 
-filename=complete-mnist
+filename=conv-mnist
 baseId=mnist
 
 K_VAL=(1 2 5 10 20 100)
@@ -17,7 +17,8 @@ REPEAT=5
 LR_VAL=(0.01)
 # P_VAL=(1 0.75 0.5 0.25)
 
-trainType=complete
+trainType=convolution
+trainParam=0
 
 H=500
 BATCH=10
@@ -62,7 +63,7 @@ do
 		# 	echo -e "Queue $REPEAT" >> $file
 		# 	echo -e "" >> $file
 		# done
-		echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType 0 $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
+		echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType $trainParam $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
 		echo -e "Log\t\t\t= ${basePath}/log/${baseId}.log" >> $file
 		echo -e "Error\t\t\t= ${basePath}/error/${baseId}_${trainType}_CD-${k}_lr${lr}_\$(Step).err" >> $file
 		echo -e "Output\t\t\t= ${basePath}/out/${baseId}_${trainType}_CD-${k}_lr${lr}_\$(Step).out" >> $file
