@@ -142,7 +142,6 @@ int main(int argc, char **argv) {
 
     // Data and RBM creation
     Data mnist("Datasets/bin_mnist-train.data");
-    mnist = mnist.separateTrainTestSets(1.0/(6*20)).at(0);
     int X = mnist.get_sample_size();
 
     RBM model(X, H);
