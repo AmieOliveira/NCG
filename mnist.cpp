@@ -156,11 +156,13 @@ int main(int argc, char **argv) {
     filebase << "_run" << fileIDX;
 
     // Training
+    bool doShuffle = true;  // Is there a reason I'd wish it not to be true?
+
     switch ( resolveOption(trainType) ) {
         case complete:
             printInfo("Training complete RBM");
             // model.connectivity(false);
-            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
             model.fit(mnist);
             break;
 
