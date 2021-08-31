@@ -39,6 +39,7 @@ file=result/${baseId}/${filename}.sub
 
 echo -e "###############################\n# ${baseId} opt NLL eval\n###############################\n" >> $file
 echo -e "Executable\t\t= ${basePath}/${baseId}.exe" >> $file
+echo -e "initialdir\t\t= ${basePath}/result/${baseId}" >> $file
 echo -e "Universe\t\t= vanilla" >> $file
 echo -e "should_transfer_files\t= IF_NEEDED" >> $file
 echo -e "when_to_transfer_output\t= ON_EXIT" >> $file
