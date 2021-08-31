@@ -285,10 +285,10 @@ void testDataShuffle() {
 
 int main(int argc, char **argv) {
 
-    // Data mnist("Datasets/bin_mnist-train.data");
+    Data mnist("Datasets/bin_mnist-train.data", true);
     // mnist = mnist.separateTrainTestSets(1.0/(6*10)).at(0);
-    // cout << "Using " << mnist.get_number_of_samples() << " samples." << endl;
-    //
+    cout << "Using " << mnist.get_number_of_samples() << " samples." << endl;
+
     // int size = mnist.get_sample_size();
 
     int k = 10;
@@ -299,24 +299,29 @@ int main(int argc, char **argv) {
     unsigned seed = 8924;  // 6302
     bool shuffleData = true;
 
+    cout << "Sample 0: " << mnist.get_sample(0).transpose() << ", label = " << mnist.get_sample_label(0) << endl;
+    mnist.joinLabels(true);
 
-    // Traditional RBM
+    cout << "Full sample: " << mnist.get_sample(0).transpose() << endl;
+
+
+    // // Traditional RBM
     // RBM model(size, 500, false);
     // model.setRandomSeed(seed);
     // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
     // model.fit(mnist);
     // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
 
-    RBM model;
-    model.load("Training Outputs/Teste MNIST/mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
-    model.setRandomSeed(seed);
-
-    model.sampleXH();   // Just to mix a bit the x and h units
-
-    for (int r=0; r<10; r++) {
-        long double estimated = log( model.normalizationConstant_MCestimation(100) );
-        cout << "Estimated value: " << estimated << endl;
-    }
+    // RBM model;
+    // model.load("Training Outputs/Teste MNIST/mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
+    // model.setRandomSeed(seed);
+//
+    // model.sampleXH();   // Just to mix a bit the x and h units
+//
+    // for (int r=0; r<10; r++) {
+    //     long double estimated = log( model.normalizationConstant_MCestimation(100) );
+    //     cout << "Estimated value: " << estimated << endl;
+    // }
 
     // MatrixXd connectivity = square_convolution(36, 20);
 

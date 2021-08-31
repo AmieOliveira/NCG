@@ -27,16 +27,20 @@ class Data {
     int _n;             // Number of samples
     MatrixXd _data;     // Data
     MatrixXi _labels;   // Data labels, when they exist
-    bool hasLabels;
+    bool hasLabels;     // True if Data has the dataset labels
+    int _nLabels;       // Number of different labels (needs to have labels)
+    bool giveLabels;    // True if one wishes to get both data and labels
+                        //   together as a single "data" (needs to have labels)
 
     // Random number variables
     bool hasSeed;
     mt19937 generator;
     uniform_real_distribution<double>* p_dis;
 
-    // Create data (to be called during initialization
+    // Methods to be called during initialization
     void createData(DataDistribution distr, int size);
     void createData(DataDistribution distr, int size, int nSamples);
+    void loadData(string filename, bool labels);
 
     // Support data creation attributes and methods
     int _idx;
@@ -54,6 +58,7 @@ public:
     Data(unsigned seed,
          DataDistribution distr, int size, int nSamples);
     Data(string filename);
+    Data(string filename, bool labels);
 
     // Random auxiliars
     void setRandomSeed(unsigned seed);
@@ -62,11 +67,18 @@ public:
     double marginal_relativeFrequence(int jdx);
     int get_number_of_samples();
     int get_sample_size();
+    int get_number_of_labels();
+
+    void joinLabels(bool join);
 
     // Sampling
     VectorXd get_sample(int idx);
     vector<VectorXd> get_batch(int idx, int size);
     vector<Data> separateTrainTestSets(double trainPercentage);
+
+    int get_sample_label(int idx);
+    vector<int> get_batch_label(int idx, int size);
+
     // Ideia inicial. Depois posso adicionar k-fold...
 
     // Manipulating the data

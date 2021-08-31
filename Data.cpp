@@ -132,9 +132,19 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
 }
 
 Data::Data(string filename) {
+    loadData(filename, false);
+}
+
+Data::Data(string filename, bool labels) {
+    loadData(filename, labels);
+}
+
+void Data::loadData(string filename, bool labels) {
     // Constructor to get data set from a DATA file
     hasSeed = false;
     hasLabels = false;
+    giveLabels = false;
+    _nLabels = 0;
 
     fstream datafile;
     datafile.open(filename.c_str(), ios::in);
@@ -144,21 +154,22 @@ Data::Data(string filename) {
 
     int idx = 0;
     while (getline(datafile, line)) {
-         // cout << line << endl;
+        // cout << line << endl;
 
-         if (line == "") break;
-         else if (line.substr(0, 5) == "Name:") { name = line.substr(6); }
-         else if (line.substr(0, 19) == "Number of examples:") {
+        if (line == "") break;
+        else if (line.substr(0, 5) == "Name:") { name = line.substr(6); }
+        else if (line.substr(0, 19) == "Number of examples:") {
             _n = atoi(line.substr(20).c_str());
-         }
-         else if (line.substr(0, 13) == "Example size:") {
+        }
+        else if (line.substr(0, 13) == "Example size:") {
             _size = atoi(line.substr(14).c_str());
-         }
-         else if (line == "Has labels: Yes") {
+        } if (line == "Has labels: Yes") {
             hasLabels = true;
-         }
+        } else if (line.substr(0, 17) == "Number of labels:") {
+            if (labels) { _nLabels = atoi(line.substr(18).c_str()); }
+        }
 
-         idx++;
+        idx++;
     }
     stringstream msg;
     msg << "Dataset name is '" << name << "'. Has " << _n
@@ -166,7 +177,7 @@ Data::Data(string filename) {
     printInfo( msg.str() );
 
     _data = MatrixXd::Zero(_size,_n);
-    if (hasLabels) {
+    if (hasLabels && labels) {
         _labels = MatrixXi::Zero(1,_n);
     }
 
@@ -177,7 +188,7 @@ Data::Data(string filename) {
     while (getline(datafile, line)) {
         if (hasLabels) {
             if (line.substr(0, 6) == "Label:") {
-               _labels(0, j) = atoi(line.substr(7).c_str());
+               if (labels) { _labels(0, j) = atoi(line.substr(7).c_str()); }
             } else {
                 stringstream ss(line);
                 for (i = 0; i < _size; i++) {
@@ -193,6 +204,18 @@ Data::Data(string filename) {
             j++;
         }
     }
+
+    if ( !labels ) hasLabels = false;
+
+    if ( hasLabels && (_nLabels == 0) ) {
+        printWarning("Data set is said to have labels, but no number of labels is "
+                     "specified. Input file should be rectified");
+        _nLabels = _labels.maxCoeff() + 1;
+    }
+
+    cout << "Data extracted";
+    if (hasLabels) { cout << " with labels"; }
+    cout << endl;
 
     // cout << "LABELS:\n" << _labels.block(0,0,1,10) << endl;
     // cout << "DATA:\n" << _data.block(0,0,_size,10) << endl;
@@ -220,9 +243,40 @@ int Data::get_sample_size() {
     return _size;
 }
 
+int Data::get_number_of_labels() {
+    if (hasLabels) { return _nLabels; }
+    printError("Requested number of labels, but Data set has no labels");
+    return 0;
+}
+
+void Data::joinLabels(bool join) {
+    if (hasLabels) { giveLabels = join; }
+    else { printError("Cannot output label values if data set has no labels"); }
+}
+
+
 // Sampling
 VectorXd Data::get_sample(int idx) {
+    if (hasLabels && giveLabels) {
+        VectorXd lab(_nLabels);
+        lab = VectorXd::Zero(_nLabels);
+        lab(_labels(idx)) = 1;
+
+        VectorXd ret(_size+_nLabels);
+        ret << _data.col(idx), lab;
+
+        return ret;
+    }
     return _data.col(idx);
+}
+
+int Data::get_sample_label(int idx) {
+    if (hasLabels) { return _labels(idx); }
+    else {
+        printError("Data set has no labels");
+        cerr << "Requested a label sample, when data has no labels" << endl;
+        exit(1);
+    }
 }
 
 vector<VectorXd> Data::get_batch(int idx, int size) {
@@ -240,6 +294,9 @@ vector<Data> Data::separateTrainTestSets(double trainPercentage) {
     //      and the other with the test set.
     // I am separating by the order the data already has, but
     //      variations could be added later (according to necessity)
+
+    // FIXME: Tenho que resolver a questão dos labels!
+
     double limit = int(trainPercentage*_n);
 
     Data trainData(_data.block(0,0,_size,limit));
