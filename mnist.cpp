@@ -143,6 +143,11 @@ int main(int argc, char **argv) {
     // Data and RBM creation
     Data mnist("Datasets/bin_mnist-train.data");
     int X = mnist.get_sample_size();
+    if (X == 0){
+        printError("Could not find correct file, please check the file path");
+        cerr << "No input file found" << endl;
+        exit(1);
+    }
 
     RBM model(X, H);
     model.setRandomSeed(seed);
