@@ -249,13 +249,16 @@ void checkNormConstantEstimation(){
     // model.printVariables();
 
     RBM model;
-    model.load("Training Outputs/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
+    model.load("Training Outputs/Teste MNIST/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
+
+    model.setRandomSeed(6324);
+    model.sampleXH();   // Just to mix a bit the x and h units
 
     double exact = log( model.normalizationConstant_effX() );
     cout << "Exact value: " << exact << endl;
     cout << endl;
 
-    for (int i=0; i<20; i++) {
+    for (int i=0; i<10; i++) {
         model.setRandomSeed(2000 + 3*i);
         double estimated = log( model.normalizationConstant_MCestimation(10000) );
         cout << "Estimated value: " << estimated << endl;
@@ -305,11 +308,13 @@ int main(int argc, char **argv) {
     // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
 
     RBM model;
+    model.load("Training Outputs/Teste MNIST/mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
     model.setRandomSeed(seed);
-    model.load("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter100_seed0.rbm");
 
-    for (int r=0; r<=10; r++) {
-        long double estimated = log( model.normalizationConstant_MCestimation(100000) );
+    model.sampleXH();   // Just to mix a bit the x and h units
+
+    for (int r=0; r<10; r++) {
+        long double estimated = log( model.normalizationConstant_MCestimation(100) );
         cout << "Estimated value: " << estimated << endl;
     }
 

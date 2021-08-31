@@ -1244,6 +1244,15 @@ void RBM::printVariables() {
 
 
 void RBM::sampleXH() {
+    if ( !initialized ) {
+        printError("Cannot sample from non initialized RBM");
+        exit(1);
+    }
+    if ( !hasSeed ) {
+        printError("Cannot sample without random seed");
+        cerr << "Please set RBM random seed before trying to sample from it" << endl;
+        exit(1);
+    }
     VectorXd vec = sample_x();
     cout << "x sampled: " << vec.transpose() << endl;
     vec = sample_h();
