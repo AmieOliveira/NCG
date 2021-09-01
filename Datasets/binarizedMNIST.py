@@ -34,6 +34,7 @@ f.write(f"Number of examples: {info.splits[split].num_examples}\n")
 f.write(f"Example size: {info.features['image'].shape[0]*info.features['image'].shape[1]*info.features['image'].shape[2]}\n")
 f.write(f"Is 2D image: Yes\n")
 f.write(f"Has labels: Yes\n")
+f.write(f"Number of labels: 10")
 f.write("\n")
 
 idx = 0
