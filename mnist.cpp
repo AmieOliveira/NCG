@@ -199,6 +199,12 @@ int main(int argc, char **argv) {
         case conv:
             printInfo("Training RBM with convolutional connectivity");
 
+            int side = int(sqrt(H));
+            H = side*side;
+            msg.str("");
+            msg << "Since we use convolutional connectivity, changed number of hidden units to " << H;
+            printWarning(msg);
+
             model.connectivity(true);
             model.setConnectivity(square_convolution( X, H ));
             cout << "Connectivity matrix:" << endl << model.getConnectivity() << endl;

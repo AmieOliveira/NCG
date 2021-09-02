@@ -589,12 +589,9 @@ void RBM::fit(Data trainData){
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
             //cout << "Batch " << bIdx+1 << endl;
 
+            // FIXME
             batch = trainData.get_batch(bIdx, b_size);
             sampled = sampleXtilde(stype, k_steps, batch);
-
-            W_gradient = MatrixXd::Zero(hSize, xSize);
-            b_gradient = VectorXd::Zero(hSize);
-            d_gradient = VectorXd::Zero(xSize);
 
             for (int s = 0; s < batch.size(); ++s) {
                 //cout << "x0 = " << batch.at(s).transpose() << endl;
@@ -603,9 +600,16 @@ void RBM::fit(Data trainData){
                 x = batch.at(s);
                 h_hat = getProbabilities_h(); // Note that x must be set before!
                 //cout << "h^ de xt: " << h_hat.transpose() << endl;
-                W_gradient += h_hat*x.transpose();
-                b_gradient += h_hat;
-                d_gradient += x;
+
+                if (s == 0) {
+                    W_gradient = h_hat*x.transpose();
+                    b_gradient = h_hat;
+                    d_gradient = x;
+                } else {
+                    W_gradient += h_hat*x.transpose();
+                    b_gradient += h_hat;
+                    d_gradient += x;
+                }
 
                 x = sampled.at(s);
                 h_hat = getProbabilities_h(); // Note that x must be set before!
@@ -768,12 +772,9 @@ void RBM::optimizer_SGD(Data trainData) {
 
         for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
 
+            // FIXME
             batch = trainData.get_batch(bIdx, b_size);
             sampled = sampleXtilde(stype, k_steps, batch);
-
-            W_gradient = MatrixXd::Zero(hSize, xSize);
-            b_gradient = VectorXd::Zero(hSize);
-            d_gradient = VectorXd::Zero(xSize);
 
             A_gradient = MatrixXd::Zero(hSize, xSize);
 
@@ -781,10 +782,18 @@ void RBM::optimizer_SGD(Data trainData) {
 
                 x = batch.at(s);
                 h_hat = getProbabilities_h();
-                W_gradient += h_hat*x.transpose();
-                b_gradient += h_hat;
-                d_gradient += x;
-                A_gradient += W.cwiseProduct( h_hat*x.transpose() );
+
+                if (s == 0) {
+                    W_gradient = h_hat*x.transpose();
+                    b_gradient = h_hat;
+                    d_gradient = x;
+                    A_gradient = W.cwiseProduct( h_hat*x.transpose() );
+                } else {
+                    W_gradient += h_hat*x.transpose();
+                    b_gradient += h_hat;
+                    d_gradient += x;
+                    A_gradient += W.cwiseProduct( h_hat*x.transpose() );
+                }
 
                 x = sampled.at(s);
                 h_hat = getProbabilities_h();
