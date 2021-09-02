@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
     outdata << "# NLL through RBM training for MNIST data set with connectivity pattern of type " << trainType;
     if (trainParam != 0) { outdata << " (parameter " << trainParam << ")"; }
     outdata << endl;
-    outdata << "CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
+    outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
 
     outdata << ",NLL" << endl;
