@@ -3,10 +3,10 @@
 # Executable to complete sub files. Must be edited for each use
 
 
-filename=sgd-mnist
+filename=complete-mnistLabels
 baseId=mnist
 
-K_VAL=(1 5 10)
+K_VAL=(1)
 #(1 2 5 10 20 100)
 # BAS_Size=4
 ITER=20
@@ -18,12 +18,13 @@ REPEAT=5
 LR_VAL=(0.01)
 # P_VAL=(1 0.75 0.5 0.25)
 
-trainType=sgd
-trainParam=1
+trainType=complete
+trainParam=0
 
 H=500
 BATCH=50
 F_NLL=1
+LABELS=1
 
 basePath=$PWD
 file=result/${baseId}/${filename}.sub
@@ -41,10 +42,11 @@ echo -e "###############################\n# ${baseId} opt NLL eval\n############
 echo -e "Executable\t\t= ${basePath}/${baseId}.exe" >> $file
 echo -e "initialdir\t\t= ${basePath}/result/${baseId}" >> $file
 echo -e "Universe\t\t= vanilla" >> $file
-echo -e "should_transfer_files\t= IF_NEEDED" >> $file
+echo -e "should_transfer_files\t= YES" >> $file
 echo -e "when_to_transfer_output\t= ON_EXIT" >> $file
 
-echo -e "transfer_input_files\t= /home/users/amandacno/ConnectivityPatterns/Datasets/bin_mnist-train.data" >> $file
+echo -e "transfer_input_files\t= ${basePath}/result/${baseId},${basePath}/Datasets/bin_mnist-train.data" >> $file
+echo -e "transfer_input_remaps\t= ${basePath}/Datasets/bin_mnist-train.data = bin_mnist-train.data" >> $file
 
 echo -e "\n" >> $file
 
@@ -56,18 +58,18 @@ do
 	do
 		# for p in ${P_VAL[@]}
 		# do
-		 	echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType $trainParam $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
-                	echo -e "Log\t\t\t= ${basePath}/log/${baseId}.log" >> $file
-                	echo -e "Error\t\t\t= ${basePath}/error/${baseId}_${trainType}-${trainParam}_CD-${k}_lr${lr}_\$(Step).err" >> $file
-                	echo -e "Output\t\t\t= ${basePath}/out/${baseId}_${trainType}-${trainParam}_CD-${k}_lr${lr}_\$(Step).out" >> $file
-                	echo -e "transfer_output_files\t= ${baseId}_${trainType}-${trainParam}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).rbm,nll_${baseId}_${trainType}-${trainParam}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv,connectivity_${baseId}_${trainType}-${trainParam}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv" >> $file
+		#  	echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType $trainParam $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
+                #	echo -e "Log\t\t\t= ${basePath}/log/${baseId}.log" >> $file
+                #	echo -e "Error\t\t\t= ${basePath}/error/${baseId}_${trainType}-${trainParam}_CD-${k}_lr${lr}_\$(Step).err" >> $file
+                #	echo -e "Output\t\t\t= ${basePath}/out/${baseId}_${trainType}-${trainParam}_CD-${k}_lr${lr}_\$(Step).out" >> $file
+                #	echo -e "transfer_output_files\t= ${baseId}_${trainType}-${trainParam}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).rbm,nll_${baseId}_${trainType}-${trainParam}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv,connectivity_${baseId}_${trainType}-${trainParam}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv" >> $file
 
 
-		# echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType $trainParam $k $ITER $H $BATCH $lr $F_NLL\"" >> $file
-		# echo -e "Log\t\t\t= ${basePath}/log/${baseId}.log" >> $file
-		# echo -e "Error\t\t\t= ${basePath}/error/${baseId}_${trainType}_CD-${k}_lr${lr}_\$(Step).err" >> $file
-		# echo -e "Output\t\t\t= ${basePath}/out/${baseId}_${trainType}_CD-${k}_lr${lr}_\$(Step).out" >> $file
-		# echo -e "transfer_output_files\t= ${baseId}_${trainType}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).rbm,nll_${baseId}_${trainType}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_run\$(Step).csv" >> $file
+		echo -e "Arguments\t\t= \"\$(Step) . \$(Step) $trainType $trainParam $k $ITER $H $BATCH $lr $F_NLL $LABELS\"" >> $file
+		echo -e "Log\t\t\t= ${basePath}/log/${baseId}.log" >> $file
+		echo -e "Error\t\t\t= ${basePath}/error/${baseId}_${trainType}_CD-${k}_lr${lr}_LABELS_\$(Step).err" >> $file
+		echo -e "Output\t\t\t= ${basePath}/out/${baseId}_${trainType}_CD-${k}_lr${lr}_LABELS_\$(Step).out" >> $file
+		echo -e "transfer_output_files\t= ${baseId}_${trainType}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_withLabels_run\$(Step).rbm,nll_${baseId}_${trainType}_H${H}_CD-${k}_lr${lr}_mBatch${BATCH}_iter${ITER}_withLabels_run\$(Step).csv" >> $file
 		
 		
 		echo -e "Queue $REPEAT" >> $file
