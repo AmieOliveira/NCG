@@ -390,8 +390,8 @@ Eigen::MatrixXd square_convolution(int X, int H) {
         int n = int(sqrt(rest));
         int s = side - n + 1;
 
-        cout << "n = " << n << endl;
-        cout << "s = " << s << endl;
+        // cout << "n = " << n << endl;
+        // cout << "s = " << s << endl;
 
         for (int row=0; row < n; row++) {
             for (int col=0; col < n; col++) {

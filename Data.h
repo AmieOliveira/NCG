@@ -23,14 +23,15 @@ enum DataDistribution {
 
 class Data {
     // Data variables
-    int _size;          // Size of a data sample
-    int _n;             // Number of samples
-    MatrixXd _data;     // Data
-    MatrixXi _labels;   // Data labels, when they exist
-    bool hasLabels;     // True if Data has the dataset labels
-    int _nLabels;       // Number of different labels (needs to have labels)
-    bool giveLabels;    // True if one wishes to get both data and labels
-                        //   together as a single "data" (needs to have labels)
+    int _size;                  // Size of a data sample
+    int _n;                     // Number of samples
+    vector<VectorXd> _data;     // Data
+    vector<int> _labels;        // Data labels, when they exist
+    vector<int> _indexMap;      // Mapping of data indexes
+    bool hasLabels;             // True if Data has the dataset labels
+    int _nLabels;               // Number of different labels (needs to have labels)
+    bool giveLabels;            // True if one wishes to get both data and labels
+                                //   together as a single "data" (needs to have labels)
 
     // Random number variables
     bool hasSeed;
@@ -42,8 +43,7 @@ class Data {
     void createData(DataDistribution distr, int size, int nSamples);
     void loadData(string filename, bool labels);
 
-    // Support data creation attributes and methods
-    int _idx;
+    // Support data creation methods
     void fill_bas(int n, vector<int> state);
 
     // Manipulating the data
@@ -53,6 +53,7 @@ class Data {
 public:
     // Constructors
     Data(MatrixXd mat);
+    Data(vector<VectorXd> vec);
     Data(DataDistribution distr, int size);
     Data(DataDistribution distr, int size, int nSamples);
     Data(unsigned seed,
@@ -72,11 +73,10 @@ public:
     void joinLabels(bool join);
 
     // Sampling
-    VectorXd get_sample(int idx);
-    vector<VectorXd> get_batch(int idx, int size);
+    VectorXd& get_sample(int idx);
     vector<Data> separateTrainTestSets(double trainPercentage);
 
-    int get_sample_label(int idx);
+    int& get_sample_label(int idx);
     vector<int> get_batch_label(int idx, int size);
 
     // Ideia inicial. Depois posso adicionar k-fold...
@@ -84,6 +84,8 @@ public:
     // Manipulating the data
     void shuffle();
     void shuffle(unsigned seed);
+
+    void printData();
 };
 
 

@@ -61,11 +61,16 @@ class RBM {
     mt19937 generator;
     uniform_real_distribution<double>* p_dis;
 
-    VectorXd sample_x();
-    VectorXd sample_h();
+    void sample_x(); //!
+    void sample_h(); //!
 
-    vector<VectorXd> sampleXtilde(SampleType sType, int k, //int b_size,
-                                  vector<VectorXd> vecs);
+    void sample_x(VectorXd & h_vec); // ! Uses h_vec instead of h
+    void sample_h(VectorXd & x_vec); // ! Uses x_vec instead of x
+
+    VectorXd sample_xout();
+    VectorXd sample_hout();
+
+    void sampleXtilde(SampleType sType, int k); // !
 
     // Energy methods
     double energy();
@@ -94,7 +99,7 @@ class RBM {
 
 
     // Training methods
-    void optimizer_SGD(Data trainData);
+    void optimizer_SGD(Data & trainData);
 
     // Helper function
     string printConnectivity_linear();
@@ -158,23 +163,23 @@ public:
                     int batchSize, double learnRate, bool NLL,
                     int period, bool doShuffle);
 
-    void fit(Data trainData);
+    void fit(Data & trainData);
 
     void optSetup();
     void optSetup(Heuristic method, double p);
     void optSetup(Heuristic method, string connFileName, double p);
 
-    void fit_connectivity(Data trainData);
+    void fit_connectivity(Data & trainData);
 
     // Evaluation methods
-    double negativeLogLikelihood(Data data);
+    double negativeLogLikelihood(Data & data);
     vector<double> getTrainingHistory();
 
     // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);
-    long double normalizationConstant_AISestimation();
+    // long double normalizationConstant_AISestimation();
 
     // Saving methods
     void save(string filename);

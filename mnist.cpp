@@ -9,7 +9,7 @@
 
  // TODO: Implement SGD and fixed pattern options
 
- #include "RBM.h"
+#include "RBM.h"
 #include "basics.h"
 
 #include <fstream>
@@ -139,9 +139,18 @@ int main(int argc, char **argv) {
     msg << "Setting frequence of NLL calculation: " << f_nll;
     printInfo(msg.str());
 
+    bool useLabels = false;
+    if (argc > 12) {
+        if (string(argv[12]) == "label") useLabels = true;
+        if (atoi(argv[12]) == 1) useLabels = true;
+    }
+    if (useLabels) printInfo("RBM will be trained for classification!");
+
 
     // Data and RBM creation
-    Data mnist("Datasets/bin_mnist-train.data");
+    Data mnist("Datasets/bin_mnist-train.data", useLabels);
+    mnist.joinLabels(useLabels);
+
     int X = mnist.get_sample_size();
     if (X == 0){
         printError("Could not find correct file, please check the file path");
@@ -157,6 +166,7 @@ int main(int argc, char **argv) {
     filebase << "mnist_" << trainType;
     if (trainParam != 0) { filebase << "-" << trainParam; }
     filebase << "_H" << H << "_CD-" << k << "_lr" << l_rate << "_mBatch" << b_size << "_iter" << iter;
+    if (useLabels) { filebase << "_withLabels" << seed; }
     if (seed != fileIDX) { filebase << "_seed" << seed; }
     filebase << "_run" << fileIDX;
 
@@ -198,6 +208,14 @@ int main(int argc, char **argv) {
             break;
         case conv:
             printInfo("Training RBM with convolutional connectivity");
+
+            int side;
+
+            side = int(sqrt(H));
+            H = side*side;
+            msg.str("");
+            msg << "Since we use convolutional connectivity, changed number of hidden units to " << H;
+            printWarning(msg.str());
 
             model.connectivity(true);
             model.setConnectivity(square_convolution( X, H ));
