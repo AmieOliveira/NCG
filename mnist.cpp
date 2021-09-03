@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 
 
     // Data and RBM creation
-    Data mnist("Datasets/bin_mnist-train.data", useLabels);
+    Data mnist("bin_mnist-train.data", useLabels);
     mnist.joinLabels(useLabels);
 
     int X = mnist.get_sample_size();
