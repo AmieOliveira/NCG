@@ -166,6 +166,7 @@ int main(int argc, char **argv) {
     filebase << "mnist_" << trainType;
     if (trainParam != 0) { filebase << "-" << trainParam; }
     filebase << "_H" << H << "_CD-" << k << "_lr" << l_rate << "_mBatch" << b_size << "_iter" << iter;
+    if (useLabels) { filebase << "_withLabels" << seed; }
     if (seed != fileIDX) { filebase << "_seed" << seed; }
     filebase << "_run" << fileIDX;
 
