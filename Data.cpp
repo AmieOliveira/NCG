@@ -280,6 +280,7 @@ int Data::get_number_of_samples() {
 }
 
 int Data::get_sample_size() {
+    if (giveLabels) return _size + _nLabels;
     return _size;
 }
 
