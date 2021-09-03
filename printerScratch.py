@@ -18,7 +18,7 @@ k = 1
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
-lim_iter = 20
+lim_iter = 1000
 errorType = None        # None, "std", "quartile"
 # repeat = 25
 # p_vals = [1, 0.75, 0.5, 0.25]
@@ -76,17 +76,17 @@ fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 # plt.title("NLL evolution through RBM training")
 
 # ---------
-filename = f"Training Outputs/Teste MNIST/nll_mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.csv"
+filename = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
 df = pd.read_csv(filename, comment="#", index_col=0)
 df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": "Complete connectivity"})
-df.plot(ax=ax, linewidth=1, alpha=0.8)
-filename = f"Training Outputs/Teste MNIST/nll_mnist_convolution_H500_CD-1_lr0.01_mBatch50_iter20_run0.csv"
+df = df.iloc[0:lim_iter+1]
+df = df.rename(columns={f"CD-{k}": "Old code NLL mean"})
+df["Old code NLL mean"].plot(ax=ax, linewidth=1, alpha=0.8)
+filename = f"test_nll_novo_treino.csv"
 df = pd.read_csv(filename, comment="#", index_col=0)
 df = df.astype(float)
-df = df.iloc[0:lim_iter]
-df = df.rename(columns={"NLL": "Convolutional connectivity"})
+df = df.iloc[0:lim_iter+1]
+df = df.rename(columns={"NLL": "Optimized code"})
 df.plot(ax=ax, linewidth=1, alpha=0.8)
 
 plt.title(f"NLL evolution through RBM training for CD-{k}")
@@ -398,12 +398,13 @@ plt.grid(color="gray", linestyle=":", linewidth=.2)
 # plt.xlim(-10, lim_iter+10)
 plt.legend()
 
-# # Lower limit of NLL
-# nSamples = 2**(basSize+1)
-# limitante = - log(1.0/nSamples)
-# plt.plot([0, lim_iter], [limitante, limitante], "r--")
+# Lower limit of NLL
+nSamples = 2**(basSize+1)
+limitante = - log(1.0/nSamples)
+plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
-plt.savefig(f"Plots/Teste MNIST/nll_mnist_compl-conv_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}.pdf", transparent=True)
+plt.savefig(f"test_nll_novo.pdf", transparent=True)
+# plt.savefig(f"Plots/Teste MNIST/nll_mnist_compl-conv_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}.pdf", transparent=True)
 # plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
 # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
 # plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors

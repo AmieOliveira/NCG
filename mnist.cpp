@@ -9,7 +9,7 @@
 
  // TODO: Implement SGD and fixed pattern options
 
- #include "RBM.h"
+#include "RBM.h"
 #include "basics.h"
 
 #include <fstream>

@@ -6,15 +6,32 @@
 
 // Constructors
 Data::Data(MatrixXd mat) {
-    _data = mat;
     _size = mat.rows();
     _n = mat.cols();
     hasSeed = false;
     hasLabels = false;
 
-    //cout << _data << endl;
-    //cout << "sample size: " << _size << endl;
-    //cout << _n << " samples" << endl;
+    for (int i=0; i<_n; i++) {
+        _data.push_back(mat.col(i));
+        _indexMap.push_back(i);
+    }
+}
+
+Data::Data(vector<VectorXd> vec) {
+    _size = vec.at(0).size();
+    _n = vec.size();
+    hasSeed = false;
+    hasLabels = false;
+
+    _data = vec;
+
+    for (int i=0; i<_n; i++) {
+        _indexMap.push_back(i);
+    }
+
+    // for (auto s: _data) { cout << "Sample: " << s.transpose() << endl; }
+    // cout << "sample size: " << _size << endl;
+    // cout << _n << " samples" << endl;
 }
 
 Data::Data(DataDistribution distr, int size) {
@@ -47,13 +64,15 @@ void Data::createData(DataDistribution distr, int size) {
         {
             _size = size*size;
             _n = pow(2, size + 1);
-            _data = MatrixXd::Zero(_size,_n);
             hasLabels = false;
 
             vector<int> state(size, 0);
-            _idx = 0;
 
             fill_bas(size, state);
+
+            for (int i=0; i<_n; i++) {
+                _indexMap.push_back(i);
+            }
 
             break;
         }
@@ -68,24 +87,24 @@ void Data::createData(DataDistribution distr, int size) {
 
 void Data::fill_bas(int n, vector<int> state) {
     if (n == 0) {
-        if ( all_of( state.begin(), state.end(), [](int i){return (i==0);} ) ) {
-            // Skips this samples, it's already zeros
-            _idx = _idx + 2;
-            return;
-        }
+        VectorXd horizontal(_size), vertical(_size);
 
         int s = state.size();
         for (int i = 0; i < s; i++) {
             for (int j = 0; j < s; j++) {
                 // Horizontal
-                _data(s*i + j, _idx) = state.at(i);
+                horizontal(s*i + j) = state.at(i);
 
                 // Vertical
-                _data(s*j + i, _idx+1) = state.at(i);
+                vertical(s*j + i) = state.at(i);
             }
         }
 
-        _idx = _idx + 2;
+        _data.push_back(horizontal);
+        _data.push_back(vertical);
+
+
+
         return;
     }
 
@@ -97,31 +116,39 @@ void Data::fill_bas(int n, vector<int> state) {
 void Data::createData(DataDistribution distr, int size, int nSamples) {
     printInfo("Starting Data creation");
 
+    VectorXd aux(_size);
+
     switch (distr) {
         case DataDistribution::BAS:
             _size = size*size;
             _n = nSamples;
-            _data = MatrixXd::Zero(_size,_n);
             hasLabels = false;
 
             bool orientation;
             int state;
+            int sIdx;
 
+            sIdx = 0;
             for (int s = 0; s < _n; ++s) {
                 orientation = ( (*p_dis)(generator) < 0.5 );
+
+                aux = VectorXd::Zero(_size);
 
                 for (int i = 0; i < size; ++i) {
                     state = int( (*p_dis)(generator) < 0.5 );
 
                     for (int j = 0; j < size; ++j) {
                         if (orientation) {  // Horizontal
-                            _data(size * i + j, s) = state;
+                            aux(size * i + j) = state;
                         }
                         else {  // Vertical
-                            _data(size * j + i, s) = state;
+                            aux(size * j + i) = state;
                         }
                     }
                 }
+                _data.push_back(aux);
+                _indexMap.push_back( sIdx );
+                sIdx++;
             }
             break;
         default:
@@ -152,7 +179,6 @@ void Data::loadData(string filename, bool labels) {
     string line;
     string name;
 
-    int idx = 0;
     while (getline(datafile, line)) {
         // cout << line << endl;
 
@@ -168,58 +194,61 @@ void Data::loadData(string filename, bool labels) {
         } else if (line.substr(0, 17) == "Number of labels:") {
             if (labels) { _nLabels = atoi(line.substr(18).c_str()); }
         }
-
-        idx++;
     }
     stringstream msg;
     msg << "Dataset name is '" << name << "'. Has " << _n
         << " samples of size " << _size << ".";
     printInfo( msg.str() );
 
-    _data = MatrixXd::Zero(_size,_n);
-    if (hasLabels && labels) {
-        _labels = MatrixXi::Zero(1,_n);
+    bool noNLabels = false;
+    if ( labels && hasLabels && (_nLabels == 0) ) {
+        printWarning("Data set is said to have labels, but no number of labels is "
+                     "specified. Input file should be rectified");
+        noNLabels = true;
     }
 
+    VectorXd aux(_size);
+
     // Filling data information
-    int i, j;
-    j = 0;
+    int i, j=0;
 
     while (getline(datafile, line)) {
         if (hasLabels) {
             if (line.substr(0, 6) == "Label:") {
-               if (labels) { _labels(0, j) = atoi(line.substr(7).c_str()); }
+                if (labels) {
+                    _labels.push_back( atoi(line.substr(7).c_str()) );
+                    if (noNLabels) {
+                        if ( _labels.back() > _nLabels ) { _nLabels = _labels.back(); }
+                    }
+                }
             } else {
                 stringstream ss(line);
                 for (i = 0; i < _size; i++) {
-                    ss >> _data(i, j);
+                    ss >> aux(i);
                 }
+                _data.push_back( aux );
+                _indexMap.push_back( j );
                 j++;
             }
         } else {
             stringstream ss(line);
             for (i = 0; i < _size; i++) {
-                ss >> _data(i, j);
+                ss >> aux(i);
             }
+            _data.push_back( aux );
+            _indexMap.push_back( j );
             j++;
         }
     }
 
     if ( !labels ) hasLabels = false;
 
-    if ( hasLabels && (_nLabels == 0) ) {
-        printWarning("Data set is said to have labels, but no number of labels is "
-                     "specified. Input file should be rectified");
-        _nLabels = _labels.maxCoeff() + 1;
-    }
-
     cout << "Data extracted";
     if (hasLabels) { cout << " with labels"; }
     cout << endl;
 
-    // cout << "LABELS:\n" << _labels.block(0,0,1,10) << endl;
-    // cout << "DATA:\n" << _data.block(0,0,_size,10) << endl;
-
+    // if (hasLabels) cout << "LABELS:\n" << _labels.at(0) << ", " << _labels.at(1) << endl;
+    // cout << "DATA:\n" << _data.at(0).transpose() << endl << endl << _data.at(1).transpose() << endl;
 }
 
 // Random auxiliars
@@ -231,8 +260,19 @@ void Data::setRandomSeed(unsigned int seed) {
 
 // Data statistics
 double Data::marginal_relativeFrequence(int jdx) {
-    // Can also compute as "_data.row(jdx).sum()/_n"
-    return _data.row(jdx).mean();
+    if (jdx >= _size) {
+        printError("Tried to calculate statistics for an inexistent data feature");
+        cerr << "Data sample has only " << _size << " feature, and therefore one cannot compute "
+             << "statistics for " << jdx << "-th feature" << endl;
+        exit(1);
+    }
+
+    double sum = 0;
+    for (int s=0; s<_n; s++) {
+        sum += _data.at(s)(jdx);
+    }
+
+    return sum/_n;
 }
 
 int Data::get_number_of_samples() {
@@ -256,37 +296,26 @@ void Data::joinLabels(bool join) {
 
 
 // Sampling
-VectorXd Data::get_sample(int idx) {
+VectorXd & Data::get_sample(int idx) {
     if (hasLabels && giveLabels) {
-        VectorXd lab(_nLabels);
-        lab = VectorXd::Zero(_nLabels);
-        lab(_labels(idx)) = 1;
+        VectorXd lab = VectorXd::Zero(_nLabels);
+        lab( _labels.at( _indexMap.at(idx) ) ) = 1;
 
-        VectorXd ret(_size+_nLabels);
-        ret << _data.col(idx), lab;
+        static VectorXd ret(_size+_nLabels);
+        ret << _data.at( _indexMap.at(idx) ), lab;
 
         return ret;
     }
-    return _data.col(idx);
+    return _data.at( _indexMap.at(idx) );
 }
 
-int Data::get_sample_label(int idx) {
-    if (hasLabels) { return _labels(idx); }
+int & Data::get_sample_label(int idx) {
+    if (hasLabels) { return _labels.at( _indexMap.at(idx) ); }
     else {
         printError("Data set has no labels");
         cerr << "Requested a label sample, when data has no labels" << endl;
         exit(1);
     }
-}
-
-vector<VectorXd> Data::get_batch(int idx, int size) {
-    int init = idx*size;
-    vector<VectorXd> batch;
-    for (int k = init; k < init+size; ++k) {
-        if (k >= _n) break;
-        batch.push_back(_data.col(k));
-    }
-    return batch;
 }
 
 vector<Data> Data::separateTrainTestSets(double trainPercentage) {
@@ -299,8 +328,8 @@ vector<Data> Data::separateTrainTestSets(double trainPercentage) {
 
     double limit = int(trainPercentage*_n);
 
-    Data trainData(_data.block(0,0,_size,limit));
-    Data testData(_data.block(0,limit,_size,_n-limit));
+    Data trainData( std::vector<VectorXd>(_data.begin(),_data.begin()+limit) );
+    Data testData( std::vector<VectorXd>(_data.begin()+limit,_data.end()) );
     vector<Data> datasets;
     datasets.push_back(trainData);
     datasets.push_back(testData);
@@ -315,20 +344,13 @@ int Data::_randomSample(int i) {
 }
 
 void Data::_shuffle() {
-    // Function generates a data permutation
-
-    PermutationMatrix<Dynamic,Dynamic> perm(_n);
-    perm.setIdentity();
-
+    // Function generates a data permutation through the shuffling of the index mapping
     // Shuffling extracted from std::random_shuffle template
     // http://www.cplusplus.com/reference/algorithm/random_shuffle/
-    auto first = perm.indices().data();
+    auto first = _indexMap.begin();
     for (int i = _n-1; i > 0; --i) {
         swap(first[i], first[ _randomSample(i+1) ]);
     }
-
-    _data = _data * perm;
-    if ( hasLabels ) _labels = _labels * perm;
 }
 
 void Data::shuffle() {
@@ -344,4 +366,12 @@ void Data::shuffle() {
 void Data::shuffle(unsigned seed) {
     setRandomSeed(seed);
     _shuffle();
+}
+
+void Data::printData() {
+    printInfo("Data samples");
+
+    for (auto s: _data) {
+        cout << s.transpose() << endl;
+    }
 }
