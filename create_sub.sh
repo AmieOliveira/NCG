@@ -3,7 +3,7 @@
 # Executable to complete sub files. Must be edited for each use
 
 
-filename=complete-mnistLabels
+filename=conv-mnistLabels
 baseId=mnist
 
 K_VAL=(1)
@@ -18,7 +18,7 @@ REPEAT=5
 LR_VAL=(0.01)
 # P_VAL=(1 0.75 0.5 0.25)
 
-trainType=complete
+trainType=convolution
 trainParam=0
 
 H=500
@@ -46,7 +46,7 @@ echo -e "should_transfer_files\t= YES" >> $file
 echo -e "when_to_transfer_output\t= ON_EXIT" >> $file
 
 echo -e "transfer_input_files\t= ${basePath}/result/${baseId},${basePath}/Datasets/bin_mnist-train.data" >> $file
-echo -e "transfer_input_remaps\t= ${basePath}/Datasets/bin_mnist-train.data = bin_mnist-train.data" >> $file
+echo -e "transfer_output_remaps\t= \"${basePath}/Datasets/bin_mnist-train.data = bin_mnist-train.data\"" >> $file
 
 echo -e "\n" >> $file
 
