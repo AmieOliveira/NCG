@@ -5,24 +5,24 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from math import log
 
-basSize = 4
+# basSize = 4
 
-# comparison = "p"  # "inicializacaoA_"
+comparison = "compConvSGD1"  # "inicializacaoA_"
 # "neighTypes", "neighbors10-14_BAScon2-4_complete"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-# k_vals = [100, 20, 10, 5, 2, 1]
-k = 1
+k_vals = [1]  # [100, 20, 10, 5, 2, 1]
+# k = 1
 # neighbors = [14, 12, 10]   # 16 [14, 12, 10, 8, 6, 4]
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
-lim_iter = 1000
-errorType = None        # None, "std", "quartile"
-# repeat = 25
+lim_iter = 20
+errorType = "quartile"        # None, "std", "quartile"
+repeat = 5
 # p_vals = [1, 0.75, 0.5, 0.25]
-# p = 1
+p = 1
 seed = 0
 lRate = 0.01
 bSize = 50
@@ -75,23 +75,6 @@ fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 #
 # plt.title("NLL evolution through RBM training")
 
-# ---------
-filename = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
-df = pd.read_csv(filename, comment="#", index_col=0)
-df = df.astype(float)
-df = df.iloc[0:lim_iter+1]
-df = df.rename(columns={f"CD-{k}": "Old code NLL mean"})
-df["Old code NLL mean"].plot(ax=ax, linewidth=1, alpha=0.8)
-filename = f"test_nll_novo_treino.csv"
-df = pd.read_csv(filename, comment="#", index_col=0)
-df = df.astype(float)
-df = df.iloc[0:lim_iter+1]
-df = df.rename(columns={"NLL": "Optimized code"})
-df.plot(ax=ax, linewidth=1, alpha=0.8)
-
-plt.title(f"NLL evolution through RBM training for CD-{k}")
-# ---------
-
 # # LL plot ---------
 # filename = f"Training Outputs/meanNll_bas4_complete-lRate01-25rep.csv"
 # df = pd.read_csv(filename, comment="#", index_col=0)
@@ -111,53 +94,6 @@ plt.title(f"NLL evolution through RBM training for CD-{k}")
 # # plt.xlim(-10, lim_iter+10)
 # plt.ylim(-350, -100)
 # plt.savefig("Plots/meanNll_25rep_bas4_complete-lRate01_LL-short.pdf", transparent=True)
-# # ---------
-
-# # Mean: CD-k solo ---------
-# filename = f"Training Outputs/meanNll_bas4_BAScon-25iter.csv"
-# # f"Training Outputs/meanNll_bas4_neighbors-25iter.csv"
-#
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# cols = []
-# lIdx = 3 + sizeNum[k] + 1
-# for c in df.columns:
-#     if c[:lIdx] == f"CD-{k},":
-#         cols += [c]
-# df[cols].plot(ax=ax, linewidth=1, alpha=0.8)
-# plt.title(f"NLL evolution for CD-{k}")
-# # ---------
-
-# # Mean BAScon: Version solo solo, all CD-k ---------
-# filename = f"Training Outputs/meanNll_bas4_BAScon-25iter.csv"
-# # f"Training Outputs/meanNll_bas4_neighbors-25iter.csv"
-#
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# cols = []
-# lIdx = 2
-# for c in df.columns:
-#     if c[-lIdx:] == f"v{identifier}":
-#         cols += [c]
-# df[cols].plot(ax=ax, linewidth=1, alpha=0.8)
-# plt.title(f"NLL evolution for Specialist v{identifier}")
-# # ---------
-
-# # Random neighbors test ---------
-# filename = f"Training Outputs/nll_progress_mixing100_neighbors{neighbors}_k5_repeat25.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df["4 random neighbors"] = df.mean(axis=1)
-# df["4 random neighbors"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# filename = "Training Outputs/meanNll_bas4_neighbors.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter]
-# df[f"{neighbors} neighbors"] = df[f"CD-{k}, {neighbors} neighbors"]
-# df[f"{neighbors} neighbors"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# plt.title(f"NLL evolution for CD-{k}")
 # # ---------
 
 # # Get all CD-k for a comparison ---------
@@ -266,10 +202,10 @@ plt.title(f"NLL evolution through RBM training for CD-{k}")
 #     plt.grid(color="gray", linestyle=":", linewidth=.2)
 #     plt.legend(prop={'size': 6})
 #
-#     # Lower limit of NLL
-#     nSamples = 2**(basSize+1)
-#     limitante = - log(1.0/nSamples)
-#     plt.plot([0, lim_iter], [limitante, limitante], "r--")
+#     # # Lower limit of NLL
+#     # nSamples = 2**(basSize+1)
+#     # limitante = - log(1.0/nSamples)
+#     # plt.plot([0, lim_iter], [limitante, limitante], "r--")
 #
 #     # plt.ylim(5, 8)
 #     # plt.xlim(2000, 10000)
@@ -282,7 +218,6 @@ plt.title(f"NLL evolution through RBM training for CD-{k}")
 #     # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_neighbors_spiral-{repeat}rep{errorPrint}.pdf", transparent=True)
 #     # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_BAScon-{repeat}rep{errorPrint}.pdf", transparent=True)
 # # ---------
-
 
 # # NLL error plot ---------
 # filename = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
@@ -392,19 +327,114 @@ plt.title(f"NLL evolution through RBM training for CD-{k}")
 #                 transparent=True)
 # # ---------
 
-plt.xlabel("Iteration")
-plt.ylabel("Average NLL")
-plt.grid(color="gray", linestyle=":", linewidth=.2)
-# plt.xlim(-10, lim_iter+10)
-plt.legend()
+# # ---------
+# filename = f"Training Outputs/meanNll_bas4_complete-25rep.csv"
+# df = pd.read_csv(filename, comment="#", index_col=0)
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter+1]
+# df = df.rename(columns={f"CD-{k}": "Old code NLL mean"})
+# df["Old code NLL mean"].plot(ax=ax, linewidth=1, alpha=0.8)
+# filename = f"test_nll_novo_treino.csv"
+# df = pd.read_csv(filename, comment="#", index_col=0)
+# df = df.astype(float)
+# df = df.iloc[0:lim_iter+1]
+# df = df.rename(columns={"NLL": "Optimized code"})
+# df.plot(ax=ax, linewidth=1, alpha=0.8)
+#
+# plt.title(f"NLL evolution through RBM training for CD-{k}")
+# ---------
 
-# Lower limit of NLL
-nSamples = 2**(basSize+1)
-limitante = - log(1.0/nSamples)
-plt.plot([0, lim_iter], [limitante, limitante], "r--")
+# MNIST: Get all CD-k for a comparison ---------
+linwdth = 1  # .5
+shadalph = .3
+colormap = 'tab20'
+cmsize = 20.0
 
-plt.savefig(f"test_nll_novo.pdf", transparent=True)
+cmap = cm.get_cmap(colormap)
+
+filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.01_mBatch50-5rep.csv"
+dfC = pd.read_csv(filenameC, comment="#", index_col=0)
+dfC = dfC.astype(float)
+dfC = dfC.iloc[0:lim_iter+1]
+
+filenameS = "Training Outputs/meanNLL_mnist_convolution_H500_lr0.01_mBatch50-5rep.csv"
+dfS = pd.read_csv(filenameS, comment="#", index_col=0)
+dfS = dfS.astype(float)
+dfS = dfS.iloc[0:lim_iter+1]
+
+filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.01_mBatch50-5rep.csv"
+dfO = pd.read_csv(filenameO, comment="#", index_col=0)
+dfO = dfO.astype(float)
+dfO = dfO.iloc[0:lim_iter+1]
+
+for k in k_vals:
+    fig, ax = plt.subplots(1, figsize=figSize[plotSize])
+
+    dfC = dfC.rename(columns={f"CD-{k}": f"CD-{k}, Complete"})
+    dfC[f"CD-{k}, Complete"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+
+    dfS = dfS.rename(columns={f"CD-{k}": f"CD-{k}, Convolution"})
+    dfS[f"CD-{k}, Convolution"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+
+    dfO[f"CD-{k}, p = {p}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+
+    if errorType == "std":
+        ind = dfC.index
+
+        errorC = dfC[f"CD-{k} std"].to_numpy()
+        meanC = dfC[f"CD-{k}, Complete"].to_numpy()
+        ax.fill_between(ind, meanC - errorC, meanC + errorC, alpha=shadalph)
+
+        errorS = dfS[f"CD-{k} std"].to_numpy()
+        meanS = dfS[f"CD-{k}, Convolution"].to_numpy()
+        ax.fill_between(ind, meanS - errorS, meanS + errorS, alpha=shadalph)
+
+        errorO = dfO[f"CD-{k}, p = {p} - std"].to_numpy()
+        meanO = dfO[f"CD-{k}, p = {p}"].to_numpy()
+        ax.fill_between(ind, meanO - errorO, meanO + errorO, alpha=shadalph)
+
+    elif errorType == "quartile":
+        ind = dfC.index
+
+        errorPlus = dfC[f"CD-{k} q3"].to_numpy()
+        errorMinus = dfC[f"CD-{k} q1"].to_numpy()
+        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+
+        errorPlus = dfS[f"CD-{k} q3"].to_numpy()
+        errorMinus = dfS[f"CD-{k} q1"].to_numpy()
+        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+
+        errorPlus = dfO[f"CD-{k}, p = {p} - q3"].to_numpy()
+        errorMinus = dfO[f"CD-{k}, p = {p} - q1"].to_numpy()
+        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+
+
+    plt.title(f"NLL evolution for CD-{k}")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Average NLL")
+    plt.grid(color="gray", linestyle=":", linewidth=.2)
+    plt.legend(prop={'size': 6})
+
+    errorPrint = f"-{errorType}Err" if errorType else ""
+    sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
+
+    plt.savefig(f"Plots/meanNLL_mnist_CD-{k}_comparison-{comparison}_H{H}_lr{lRate}_mBatch{bSize}"
+                f"-{repeat}rep{errorPrint}{sizeAppend}.pdf", transparent=True)
+# ---------
+
+# plt.xlabel("Iteration")
+# plt.ylabel("Average NLL")
+# plt.grid(color="gray", linestyle=":", linewidth=.2)
+# # plt.xlim(-10, lim_iter+10)
+# plt.legend()
+#
+# # Lower limit of NLL
+# nSamples = 2**(basSize+1)
+# limitante = - log(1.0/nSamples)
+# plt.plot([0, lim_iter], [limitante, limitante], "r--")
+#
 # plt.savefig(f"Plots/Teste MNIST/nll_mnist_compl-conv_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}.pdf", transparent=True)
-# plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
-# plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
-# plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
+# # plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
+# # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
+# # plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
