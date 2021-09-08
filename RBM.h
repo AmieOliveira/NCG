@@ -71,6 +71,7 @@ class RBM {
     VectorXd sample_hout();
 
     void sampleXtilde(SampleType sType, int k); // !
+    void sampleXtilde(SampleType sType, int k, VectorXd & x_vec); // !
 
     // Energy methods
     double energy();
