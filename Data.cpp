@@ -243,9 +243,9 @@ void Data::loadData(string filename, bool labels) {
 
     if ( !labels ) hasLabels = false;
 
-    cout << "Data extracted";
-    if (hasLabels) { cout << " with labels"; }
-    cout << endl;
+    // cout << "Data extracted";
+    // if (hasLabels) { cout << " with labels"; }
+    // cout << endl;
 
     // if (hasLabels) cout << "LABELS:\n" << _labels.at(0) << ", " << _labels.at(1) << endl;
     // cout << "DATA:\n" << _data.at(0).transpose() << endl << endl << _data.at(1).transpose() << endl;
@@ -291,7 +291,7 @@ int Data::get_number_of_labels() {
 }
 
 void Data::joinLabels(bool join) {
-    if (hasLabels) { giveLabels = join; }
+    if (hasLabels || !join) { giveLabels = join; }
     else { printError("Cannot output label values if data set has no labels"); }
 }
 

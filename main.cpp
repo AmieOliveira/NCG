@@ -285,11 +285,13 @@ void testDataShuffle() {
 
 int main(int argc, char **argv) {
 
-    Data mnist("Datasets/bin_mnist-train.data", false);
-    // mnist = mnist.separateTrainTestSets(1.0/(6*10)).at(0);
-    cout << "Using " << mnist.get_number_of_samples() << " samples." << endl;
+    Data mnistTrain("Datasets/bin_mnist-train.data", false);
+    cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
 
-    int size = mnist.get_sample_size();
+    Data mnistTest("Datasets/bin_mnist-test.data", false);
+    cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
+
+    int size = mnistTrain.get_sample_size();
 
     int k = 10;
     int iter = 2;
@@ -302,32 +304,101 @@ int main(int argc, char **argv) {
     // Traditional RBM
     RBM model(size, 500, false);
     model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
-    model.fit(mnist);
-    model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
+    // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
+    // model.fit(mnistTrain);
+    // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
 
-    //// Output vector
-    //VectorXd nll(10);
+
+    int repeat = 5;
+
+    // Auxiliar variables
+    VectorXd nll(repeat);
+    VectorXd nllTest(repeat);
+    double meanTrain, meanTest, sumTrain, sumTest;
+
+    // // RBM model complete
+    // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
+    // model.setRandomSeed(seed);
     //
-    //// // RBM model complete
-    //// model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
-    //// model.setRandomSeed(seed);
-    ////
-    //// for (int r=0; r<10; r++) {
-    ////     nll(r) = model.negativeLogLikelihood(mnist);
-    ////     cout << "Estimated value: " << nll(r) << endl;
-    //// }
-    //// cout << "\t Complete: Mean of " << nll.mean() << endl;
-    //
-    //// RBM model convolutional
-    //model.load("Training Outputs/Teste MNIST/mnist_convolution_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
-    //model.setRandomSeed(seed);
-    //
-    //for (int r=0; r<10; r++) {
-    //    nll(r) = model.negativeLogLikelihood(mnist);
-    //    cout << "Estimated value: " << nll(r) << endl;
-    //}
-    //cout << "\t Convolution: Mean of " << nll.mean() << endl;
+    // for (int r=0; r<repeat; r++) {
+    //     nll(r) = model.negativeLogLikelihood(mnist);
+    //     cout << "Estimated value: " << nll(r) << endl;
+    // }
+    // cout << "\t Complete: Mean of " << nll.mean() << endl;
+
+    // RBM model Complete
+    model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run4.rbm");
+    model.setRandomSeed(seed);
+
+    for (int r=0; r<repeat; r++) {
+        nll(r) = model.negativeLogLikelihood(mnistTrain);
+        nllTest(r) = model.negativeLogLikelihood(mnistTest);
+        cout << "Estimated value: " << nll(r) << " for train set and " << nllTest(r) << " for test set" << endl;
+    }
+
+    meanTrain = nll.mean();
+    meanTest = nllTest.mean();
+    cout << "\t Complete (run 4): Train mean of " << meanTrain << " and test mean of " << meanTest << endl;
+
+    sumTrain = 0;
+    sumTest = 0;
+    for (int r=0; r<repeat; r++) {
+        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+        sumTest += (nllTest(r) - meanTest)*(nllTest(r) - meanTest);
+    }
+    sumTrain = sqrt(sumTrain/repeat);
+    sumTest = sqrt(sumTest/repeat);
+    cout << "\t Complete (run 4): Train standard deviation of " << sumTrain << " and test one of " << sumTest << endl;
+
+
+    // RBM model Convolutional
+    model.load("Training Outputs/Teste MNIST/mnist_convolution_H500_CD-1_lr0.01_mBatch50_iter20_run4.rbm");
+    model.setRandomSeed(seed);
+
+    for (int r=0; r<repeat; r++) {
+        nll(r) = model.negativeLogLikelihood(mnistTrain);
+        nllTest(r) = model.negativeLogLikelihood(mnistTest);
+        cout << "Estimated value: " << nll(r) << " for train set and " << nllTest(r) << " for test set" << endl;
+    }
+
+    meanTrain = nll.mean();
+    meanTest = nllTest.mean();
+    cout << "\t Convolution (run 4): Train mean of " << meanTrain << " and test mean of " << meanTest << endl;
+
+    sumTrain = 0;
+    sumTest = 0;
+    for (int r=0; r<repeat; r++) {
+        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+        sumTest += (nllTest(r) - meanTest)*(nllTest(r) - meanTest);
+    }
+    sumTrain = sqrt(sumTrain/repeat);
+    sumTest = sqrt(sumTest/repeat);
+    cout << "\t Convolution (run 4): Train standard deviation of " << sumTrain << " and test one of " << sumTest << endl;
+
+
+    // RBM model SGD
+    model.load("Training Outputs/Teste MNIST/mnist_sgd-1_H500_CD-1_lr0.01_mBatch50_iter20_run4.rbm");
+    model.setRandomSeed(seed);
+
+    for (int r=0; r<repeat; r++) {
+        nll(r) = model.negativeLogLikelihood(mnistTrain);
+        nllTest(r) = model.negativeLogLikelihood(mnistTest);
+        cout << "Estimated value: " << nll(r) << " for train set and " << nllTest(r) << " for test set" << endl;
+    }
+
+    meanTrain = nll.mean();
+    meanTest = nllTest.mean();
+    cout << "\t SGD (run 4): Train mean of " << meanTrain << " and test mean of " << meanTest << endl;
+
+    sumTrain = 0;
+    sumTest = 0;
+    for (int r=0; r<repeat; r++) {
+        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+        sumTest += (nllTest(r) - meanTest)*(nllTest(r) - meanTest);
+    }
+    sumTrain = sqrt(sumTrain/repeat);
+    sumTest = sqrt(sumTest/repeat);
+    cout << "\t SGD (run 4): Train standard deviation of " << sumTrain << " and test one of " << sumTest << endl;
 
     return 0;
 }

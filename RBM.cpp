@@ -44,6 +44,9 @@ void RBM::initializer(int X, int H) {
         p_W = &C;
     }
     else p_W = &W;
+
+    auxH = VectorXd::Zero(H);
+    auxX = RowVectorXd::Zero(X);
 }
 
 // Connectivity (de)ativation
@@ -343,10 +346,10 @@ VectorXd RBM::getProbabilities_x() {
     }
 
     VectorXd output(xSize);
-    RowVectorXd vAux = h.transpose()*(*p_W);
+    auxX = h.transpose() * (*p_W);
 
     for (int j=0; j<xSize; j++){
-        output(j) = 1.0/( 1 + exp( - d(j) -  vAux(j) ) );
+        output(j) = 1.0/( 1 + exp( - d(j) -  auxX(j) ) );
     }
 
     return output;
@@ -362,13 +365,46 @@ VectorXd RBM::getProbabilities_h() {
     }
 
     VectorXd output(hSize);
-    VectorXd vAux = (*p_W)*x;
+    auxH = (*p_W)*x;
 
     for (int i=0; i<hSize; i++){
-        output(i) = 1.0/( 1 + exp( - b(i) -  vAux(i) ) );
+        output(i) = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
     }
 
     return output;
+}
+
+void RBM::getProbabilities_h(VectorXd & output) {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Tried to sample vector that has no dimension!\n\t"
+                       "You need to set the RBM dimensions before "
+                       "sampling values!";
+        printError(errorMessage);
+        throw runtime_error("Tried to sample vector that has no dimension!");
+    }
+
+    auxH = (*p_W) * x;
+
+    for (int i=0; i<hSize; i++){
+        output(i) = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+    }
+}
+void RBM::getProbabilities_h(VectorXd & output, VectorXd & x_vec) {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Tried to sample vector that has no dimension!\n\t"
+                       "You need to set the RBM dimensions before "
+                       "sampling values!";
+        printError(errorMessage);
+        throw runtime_error("Tried to sample vector that has no dimension!");
+    }
+
+    auxH = (*p_W) * x_vec;
+
+    for (int i=0; i<hSize; i++){
+        output(i) = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+    }
 }
 
 
@@ -388,12 +424,12 @@ void RBM::sample_x() {
 
     //cout << "Sampling x!" << endl;
 
-    RowVectorXd vAux = h.transpose()*(*p_W);
+    auxX = h.transpose()*(*p_W);
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int j=0; j<xSize; j++){
-        prob = 1.0/( 1 + exp( - d(j) -  vAux(j) ) );
+        prob = 1.0/( 1 + exp( - d(j) -  auxX(j) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -412,12 +448,12 @@ void RBM::sample_x(VectorXd & h_vec) {
 
     //cout << "Sampling x!" << endl;
 
-    RowVectorXd vAux = h_vec.transpose()*(*p_W);
+    auxX = h_vec.transpose()*(*p_W);
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int j=0; j<xSize; j++){
-        prob = 1.0/( 1 + exp( - d(j) -  vAux(j) ) );
+        prob = 1.0/( 1 + exp( - d(j) -  auxX(j) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -437,12 +473,12 @@ VectorXd RBM::sample_xout() {
     //cout << "Sampling x!" << endl;
 
     VectorXd out(xSize);
-    RowVectorXd vAux = h.transpose()*(*p_W);
+    auxX = h.transpose()*(*p_W);
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int j=0; j<xSize; j++){
-        prob = 1.0/( 1 + exp( - d(j) -  vAux(j) ) );
+        prob = 1.0/( 1 + exp( - d(j) -  auxX(j) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -463,12 +499,12 @@ void RBM::sample_h() {
 
     //cout << "Sampling h!" << endl;
 
-    VectorXd vAux = (*p_W)*x;
+    auxH = (*p_W)*x;
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
-        prob = 1.0/( 1 + exp( - b(i) -  vAux(i) ) );
+        prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -487,12 +523,12 @@ void RBM::sample_h(VectorXd & x_vec) {
 
     //cout << "Sampling h!" << endl;
 
-    VectorXd vAux = (*p_W)*x_vec;
+    auxH = (*p_W)*x_vec;
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
-        prob = 1.0/( 1 + exp( - b(i) -  vAux(i) ) );
+        prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -512,12 +548,12 @@ VectorXd RBM::sample_hout() {
     //cout << "Sampling h!" << endl;
 
     VectorXd out(hSize);
-    VectorXd vAux = (*p_W)*x;
+    auxH = (*p_W)*x;
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
-        prob = 1.0/( 1 + exp( - b(i) -  vAux(i) ) );
+        prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -556,6 +592,45 @@ void RBM::sampleXtilde( SampleType sType, int k ) {
                 sample_x();
 
                 //cout << "x^" << t+1 << " = " << x.transpose() << endl;
+            }
+            break;
+
+        default:
+            string errorMessage = "Sample type not implemented";
+            printError(errorMessage);
+            throw runtime_error(errorMessage);
+
+        // TODO: Outros tipos de treinamento
+    }
+}
+
+void RBM::sampleXtilde( SampleType sType, int k, VectorXd & x_vec ) {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot sample without RBM dimensions!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+    if (!hasSeed){
+        string errorMessage;
+        errorMessage = "Cannot sample from RBM without random seed!\n\t"
+                       "Use 'setRandomSeed' before proceeding";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    switch (sType) {
+        case SampleType::CD:
+        // case SampleType::PCD:
+            //cout << "Beginning Contrastive Divergence!" << endl;
+            //cout << "x0 = " << x.transpose() << endl;
+
+            sample_h(x_vec);
+            sample_x();
+
+            for (int t=1; t<k; t++){
+                sample_h();
+                sample_x();
             }
             break;
 
@@ -638,7 +713,6 @@ void RBM::fit(Data & trainData){
     // TODO: Print training setup?
 
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
-    vector<VectorXd> batch, sampled;
     MatrixXd W_gradient(hSize, xSize);
     VectorXd b_gradient(hSize), d_gradient(xSize);
     VectorXd h_hat(hSize);
@@ -649,7 +723,9 @@ void RBM::fit(Data & trainData){
         history.push_back(negativeLogLikelihood(trainData)); // Before training
     }
 
-    for (int it = 0; it < n_iter; ++it) {
+    int it, bIdx, s;
+
+    for (it = 0; it < n_iter; ++it) {
         // cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         if ( (it > 0) && shuffle ) {
@@ -658,29 +734,28 @@ void RBM::fit(Data & trainData){
 
         actualSize = b_size;
 
-        for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
+        for (bIdx = 0; bIdx < n_batches; ++bIdx) {
             //cout << "Batch " << bIdx+1 << endl;
 
-            for (int s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
+            for (s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
 
-                x = trainData.get_sample(s);
-                //VectorXd & ref = trainData.get_sample(s);
-                h_hat = getProbabilities_h();
+                VectorXd & xt = trainData.get_sample(s);
+                getProbabilities_h(h_hat, xt);
 
                 if (s == 0) {
-                    W_gradient = h_hat * x.transpose();
+                    W_gradient = h_hat * xt.transpose();
                     b_gradient = h_hat;
-                    d_gradient = x;
+                    d_gradient = xt;
                 } else {
-                    W_gradient += h_hat * x.transpose();
+                    W_gradient += h_hat * xt.transpose();
                     b_gradient += h_hat;
-                    d_gradient += x;
+                    d_gradient += xt;
                 }
 
-                sampleXtilde(stype, k_steps); // Changes x value
-                h_hat = getProbabilities_h();
-                //cout << "h^ de x~: " << h_hat.transpose() << endl;
+                sampleXtilde(stype, k_steps, xt); // Changes x value
+                getProbabilities_h(h_hat);
+
                 W_gradient -= h_hat*x.transpose();
                 b_gradient -= h_hat;
                 d_gradient -= x;
@@ -781,13 +856,15 @@ void RBM::optimizer_SGD(Data & trainData) {
     printInfo("------- TRAINING DATA: Optimizing A -------");
 
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
-    vector<VectorXd> batch, sampled;
     MatrixXd W_gradient(hSize, xSize);
     VectorXd b_gradient(hSize), d_gradient(xSize);
     MatrixXd A_gradient(hSize, xSize);
+    MatrixXd matAux(hSize, xSize);
     VectorXd h_hat(hSize);
     int actualSize;
     double nll_val;
+
+    if (shuffle) { trainData.setRandomSeed(generator()); }
 
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
@@ -815,40 +892,47 @@ void RBM::optimizer_SGD(Data & trainData) {
     output << "# A initialized with p = " << a_prob << endl;
     output << "0," << printConnectivity_linear() << endl;
 
-    for (int it = 0; it < n_iter; ++it) {
-        // TODO: pra mim faz sentido dar shuffle, mas isso é mesmo uma boa?
-        //if (it != 0) trainData.shuffleOrder();
+    int it, bIdx, s;
 
-        cout << "Iteration " << it+1 << " of " << n_iter << endl;
+    for (it = 0; it < n_iter; ++it) {
+        // cout << "Iteration " << it+1 << " of " << n_iter << endl;
+
+        if ( (it > 0) && shuffle ) {
+            trainData.shuffle();
+        }
 
         actualSize = b_size;
 
-        for (int bIdx = 0; bIdx < n_batches; ++bIdx) {
+        for (bIdx = 0; bIdx < n_batches; ++bIdx) {
 
-            for (int s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
+            for (s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
 
-                x = trainData.get_sample(s);
-                h_hat = getProbabilities_h();
+                VectorXd & xt = trainData.get_sample(s);
+                getProbabilities_h(h_hat, xt);
+
+                matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
 
                 if (s == 0) {
-                    W_gradient = h_hat*x.transpose();
+                    W_gradient = matAux;
                     b_gradient = h_hat;
-                    d_gradient = x;
-                    A_gradient = W.cwiseProduct( h_hat*x.transpose() );
+                    d_gradient = xt;
+                    A_gradient = W.cwiseProduct( matAux );
                 } else {
-                    W_gradient += h_hat*x.transpose();
+                    W_gradient += matAux;
                     b_gradient += h_hat;
-                    d_gradient += x;
-                    A_gradient += W.cwiseProduct( h_hat*x.transpose() );
+                    d_gradient += xt;
+                    A_gradient += W.cwiseProduct( matAux );
                 }
 
-                sampleXtilde(stype, k_steps);  // Changes x value
-                h_hat = getProbabilities_h();
-                W_gradient -= h_hat*x.transpose();
+                sampleXtilde(stype, k_steps, xt);  // Changes x value
+                getProbabilities_h(h_hat);
+                matAux = h_hat * x.transpose();
+
+                W_gradient -= matAux;
                 b_gradient -= h_hat;
                 d_gradient -= x;
-                A_gradient -= W.cwiseProduct( h_hat*x.transpose() );
+                A_gradient -= W.cwiseProduct( matAux );
             }
 
             if (bIdx == n_batches-1) {
@@ -921,8 +1005,7 @@ double RBM::negativeLogLikelihood(Data & data) {
     int N = data.get_number_of_samples();
 
     for (int idx = 0; idx < N; ++idx) {
-        x = data.get_sample(idx);
-        total = total + freeEnergy();
+        total += freeEnergy( data.get_sample(idx) );
     }
     total = total/N;
 
@@ -937,10 +1020,13 @@ double RBM::negativeLogLikelihood(Data & data) {
             printError(errorMessage);
             throw runtime_error(errorMessage);
         }
+
+        int idx = int( N * (*p_dis)(generator) );
+
+        x = data.get_sample(idx);
         total += log( normalizationConstant_MCestimation( 1000 ) );
         // TODO: Change number of samples (make adaptable?)
     } else {
-        //total += log( normalizationConstant() );
         total += log( normalizationConstant_effX() );
     }
     return total;
@@ -972,9 +1058,20 @@ double RBM::energy() {
 
 double RBM::freeEnergy() {
     double ret = - x.transpose()*d;
-    VectorXd vAux = (*p_W)*x;
+    auxH = (*p_W) * x;
     for (int i = 0; i < hSize; ++i) {
-        ret -= log( 1 + exp( vAux(i) + b(i) ) );
+        ret -= log( 1 + exp( auxH(i) + b(i) ) );
+    }
+    //cout << "Free energy: " << ret << endl;
+
+    return ret;
+}
+
+double RBM::freeEnergy(VectorXd & x_vec) {
+    double ret = - x_vec.transpose()*d;
+    auxH = (*p_W) * x_vec;
+    for (int i = 0; i < hSize; ++i) {
+        ret -= log( 1 + exp( auxH(i) + b(i) ) );
     }
     //cout << "Free energy: " << ret << endl;
 
