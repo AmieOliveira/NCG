@@ -75,6 +75,7 @@ class RBM {
     // Energy methods
     double energy();
     double freeEnergy();
+    double freeEnergy(VectorXd & x_vec);
 
     double partialZ(int n);
     double partialZ_effX(int n);
@@ -89,6 +90,9 @@ class RBM {
     int freqNLL;            // Rate of NLL calculation (1 calculus every freqNLL iterations)
     vector<double> history; // NLL
     bool shuffle;           // flag to shuffle data order through iterations
+
+    VectorXd auxH;    // Auxiliar vectors to diminish data allocation through training
+    RowVectorXd auxX;
 
     // Training's optimization variables
     Heuristic opt_type;     // Connectivity optimization method
@@ -152,6 +156,9 @@ public:
     VectorXd getProbabilities_x();
     VectorXd getProbabilities_h();
 
+    void getProbabilities_h(VectorXd & output);  // !
+    void getProbabilities_h(VectorXd & output, VectorXd & x_vec);  // !
+
     // Training methods
     void trainSetup();
     void trainSetup(bool NLL);
@@ -180,6 +187,8 @@ public:
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);
     // long double normalizationConstant_AISestimation();
+
+    int predict(VectorXd & sample);
 
     // Saving methods
     void save(string filename);

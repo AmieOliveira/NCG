@@ -24,7 +24,9 @@ parser.add_argument("--iter", type=int, default=None,
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
 basSize = 4
-lRate = 0.05
+lRate = 0.01
+bSize = 50
+H = 500
 
 p_val = [1, 0.75, 0.5, 0.25]
 k_val = [100, 20, 10, 5, 2, 1]
@@ -37,12 +39,21 @@ k_val = [100, 20, 10, 5, 2, 1]
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    if f"bas{basSize}_" not in args.input:
-        print("ERROR: Specified BAS size does not match")
+    dataType = ""
+
+    if f"bas{basSize}_" in args.input:
+        dataType = f"bas{basSize}"
+    elif "_mnist_" in args.input:
+        dataType = "mnist"
+
+    if not dataType:
+        print("ERROR: Data type not ascertained. Maybe specified BAS size does not match?")
         exit(1)
-    if f"lr{lRate}-" not in args.input:
+
+    if f"lr{lRate}" not in args.input:
         print("ERROR: Specified learning rate does not match")
         exit(1)
+    # TODO: Checks para os outros parâmetros
 
     df = pd.read_csv(args.input)
     if args.iter:
@@ -71,25 +82,30 @@ if __name__ == "__main__":
 
         fig, ax = plt.subplots(nrows=2, ncols=n_ps, sharex='all', figsize=(n_ps*4, 5))
         fig.suptitle(f"Unit's degree for CD-{k}")
+        ax.flatten()
 
 
         pIdx = 0
         for p in p_val:
             try:
                 dfAux = df.rename(columns={f"Maximum in H, CD-{k}, p = {p}": "Max",
-                                           f"Mean, CD-{k}, p = {p}": "Mean",
+                                           f"Mean in H, CD-{k}, p = {p}": "Mean",
                                            f"Minimum in H, CD-{k}, p = {p}": "Min"})
-                dfAux[f"Max"].plot(ax=ax[0, pIdx])
-                dfAux[f"Mean"].plot(ax=ax[0, pIdx])
-                dfAux[f"Min"].plot(ax=ax[0, pIdx])
+
+                nH = pIdx
+                nX = n_ps + pIdx
+
+                dfAux[f"Max"].plot(ax=ax[nH])
+                dfAux[f"Mean"].plot(ax=ax[nH])
+                dfAux[f"Min"].plot(ax=ax[nH])
                 # , linewidth=.5, linestyle=":", color=cms[pIdx](tones[0])
 
                 dfAux = df.rename(columns={f"Maximum in X, CD-{k}, p = {p}": "Max",
-                                           f"Mean, CD-{k}, p = {p}": "Mean",
+                                           f"Mean in X, CD-{k}, p = {p}": "Mean",
                                            f"Minimum in X, CD-{k}, p = {p}": "Min"})
-                dfAux[f"Max"].plot(ax=ax[1, pIdx])
-                dfAux[f"Mean"].plot(ax=ax[1, pIdx])
-                dfAux[f"Min"].plot(ax=ax[1, pIdx])
+                dfAux[f"Max"].plot(ax=ax[nX])
+                dfAux[f"Mean"].plot(ax=ax[nX])
+                dfAux[f"Min"].plot(ax=ax[nX])
             except KeyError:
                 continue
 
@@ -97,46 +113,50 @@ if __name__ == "__main__":
                 indexes = df.index
                 errorPlus = df[f"Maximum in H, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Maximum in H, CD-{k}, p = {p} - q1"].to_numpy()
-                ax[0, pIdx].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                ax[nH].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
                 errorPlus = df[f"Maximum in X, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Maximum in X, CD-{k}, p = {p} - q1"].to_numpy()
-                ax[1, pIdx].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                ax[nX].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
-                errorPlus = df[f"Mean, CD-{k}, p = {p} - q3"].to_numpy()
-                errorMinus = df[f"Mean, CD-{k}, p = {p} - q1"].to_numpy()
-                ax[0, pIdx].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
-                ax[1, pIdx].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                errorPlus = df[f"Mean in H, CD-{k}, p = {p} - q3"].to_numpy()
+                errorMinus = df[f"Mean in H, CD-{k}, p = {p} - q1"].to_numpy()
+                ax[nH].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                errorPlus = df[f"Mean in X, CD-{k}, p = {p} - q3"].to_numpy()
+                errorMinus = df[f"Mean in X, CD-{k}, p = {p} - q1"].to_numpy()
+                ax[nX].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
                 errorPlus = df[f"Minimum in H, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Minimum in H, CD-{k}, p = {p} - q1"].to_numpy()
-                ax[0, pIdx].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                ax[nH].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
                 errorPlus = df[f"Minimum in X, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Minimum in X, CD-{k}, p = {p} - q1"].to_numpy()
-                ax[1, pIdx].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                ax[nX].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
             elif args.stderr:
                 indexes = df.index
                 error = df[f"Maximum in H, CD-{k}, p = {p} - std"].to_numpy()
                 mean = df[f"Maximum in H, CD-{k}, p = {p}"].to_numpy()
-                ax[0, pIdx].fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                ax[nH].fill_between(indexes, mean - error, mean + error, alpha=0.3)
                 error = df[f"Maximum in X, CD-{k}, p = {p} - std"].to_numpy()
                 mean = df[f"Maximum in X, CD-{k}, p = {p}"].to_numpy()
-                ax[1, pIdx].fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                ax[nX].fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
-                error = df[f"Mean, CD-{k}, p = {p} - std"].to_numpy()
-                mean = df[f"Mean, CD-{k}, p = {p}"].to_numpy()
-                ax[0, pIdx].fill_between(indexes, mean - error, mean + error, alpha=0.3)
-                ax[1, pIdx].fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                error = df[f"Mean in H, CD-{k}, p = {p} - std"].to_numpy()
+                mean = df[f"Mean in H, CD-{k}, p = {p}"].to_numpy()
+                ax[nH].fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                error = df[f"Mean in X, CD-{k}, p = {p} - std"].to_numpy()
+                mean = df[f"Mean in X, CD-{k}, p = {p}"].to_numpy()
+                ax[nX].fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
                 error = df[f"Minimum in H, CD-{k}, p = {p} - std"].to_numpy()
                 mean = df[f"Minimum in H, CD-{k}, p = {p}"].to_numpy()
-                ax[0, pIdx].fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                ax[nH].fill_between(indexes, mean - error, mean + error, alpha=0.3)
                 error = df[f"Minimum in X, CD-{k}, p = {p} - std"].to_numpy()
                 mean = df[f"Minimum in X, CD-{k}, p = {p}"].to_numpy()
-                ax[1, pIdx].fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                ax[nX].fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
-            ax[0, pIdx].set_title(f"p = {p}")
-            ax[1, pIdx].set_xlabel("Iteration")
+            ax[nH].set_title(f"p = {p}")
+            ax[nX].set_xlabel("Iteration")
 
             pIdx += 1
 
@@ -145,17 +165,21 @@ if __name__ == "__main__":
 
         for i in range(2):
             for j in range(n_ps):
-                ax[i, j].grid(color="gray", linestyle=":", linewidth=.2)
-                ax[i, j].legend(prop={'size': 6})  # loc="upper right",
+                n = n_ps*i + j
 
-                ax[i, j].set_ylim(-1, 17)
-                ax[i, j].set_yticks(np.arange(0, 17, step=4), minor=False)
-                ax[i, j].yaxis.set_tick_params(labelbottom=True)
+                ax[n].grid(color="gray", linestyle=":", linewidth=.2)
+                ax[n].legend(prop={'size': 6})  # loc="upper right",
+
+                # ax[i, j].set_ylim(-1, 17)
+                # ax[i, j].set_yticks(np.arange(0, 17, step=4), minor=False)
+                ax[n].yaxis.set_tick_params(labelbottom=True)
                 # ax[i, j].tick_params(left=False)
 
-        ax[0, 0].set_ylabel("Hidden\nMean degree")
-        ax[1, 0].set_ylabel("Visible\nMean degree")
+        ax[0].set_ylabel("Hidden\nMean degree")
+        ax[n_ps].set_ylabel("Visible\nMean degree")
+        
+        plt.tight_layout()
 
-        filename = f"{args.outputpath}/mean_nodeDegree_bas{basSize}_SGD_CD-{k}_lr{lRate}{errorPrint}.pdf"
+        filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_SGD_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}{errorPrint}.pdf"
         print(f"Saving as: {filename}")
         plt.savefig(filename, transparent=True)

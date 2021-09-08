@@ -6,32 +6,39 @@ from math import log
 import numpy as np
 
 
-k_values = [100, 20, 10, 5, 2, 1]
+k_values = [1]  # [100, 20, 10, 5, 2, 1]
 v_values = [16, 14, 12, 10, 8, 6, 4]
 versions = [2, 3, 4]  # [1, 2]
-p_val = [1, 0.75, 0.5, 0.25]
+p_val = [1]  # [1, 0.75, 0.5, 0.25]
 
 size = "default"  # "default", "wide"
-lim_iter = int(20e3)
-plotType = "SGD"  # "complete", "neighbors", "BAScon", "SGD"
+lim_iter = int(20)
+plotType = "sgd"
+# "complete", "neighbors", "BAScon", "SGD" for BAS
+# "complete", "convolution", "sgd" for MNIST
 neighType = "line"
 errorType = None  # None, "std", "quartile"
-repeat = 25
+repeat = 5
 
 periodoNLL = 1
 
-dataType = "bas"
+dataType = "mnist"  # "bas", "mnist"
 dataSize = 4
 lRate = 0.01
-basename = f"meanNll_{dataType}{dataSize}"
-inputPath = f"result/{plotType}"
+bSize = 50
+hiddenUnits = 500
+
+basename = f"{dataType}{dataSize}" if dataType == "bas" else dataType
+inputPath = "result/mnist"  # f"result/{plotType}"
 outputPath = inputPath
 
-imputBase = { "complete":   "nll_progress_bas{}_complete_k{}-run{}.csv",
-              "neighbors":  "nll_progress_bas{}_neighbors{}_{}_k{}-run{}.csv",
-              "BAScon":     "nll_progress_bas{}_BASconV{}_k{}-run{}.csv",
-              "SGD":        ["nll_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv",
-                             "connectivity_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv"] }
+inputBaseBAS = {"complete": "nll_progress_bas{}_complete_k{}-run{}.csv",
+                 "neighbors":  "nll_progress_bas{}_neighbors{}_{}_k{}-run{}.csv",
+                 "BAScon":     "nll_progress_bas{}_BASconV{}_k{}-run{}.csv",
+                 "SGD":        ["nll_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv",
+                                "connectivity_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv"]}
+inputBaseMNIST = ["nll_mnist_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",
+                  "connectivity_mnist_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv"]
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
 
@@ -44,12 +51,19 @@ indexes = np.array(list(range(0, lim_iter + 1, periodoNLL)))  # NOTE: THIS IS HA
 
 
 def read_degree_stats(name):
-    totsize = dataSize**2
+    Xsize = 0
+    Hsize = 0
+    if dataType == "bas":
+        Xsize = dataSize**2
+        Hsize = Xsize
+    elif dataType == "mnist":
+        Xsize = 784  # 28*28
+        Hsize = hiddenUnits
 
     tmpdf = pd.read_csv(name, comment="#", index_col=0, header=None)
     tmpdf = tmpdf.astype(int)
     arr = tmpdf.to_numpy()
-    arr = np.reshape(arr, (arr.shape[0], totsize, totsize))
+    arr = np.reshape(arr, (arr.shape[0], Hsize, Xsize))
 
     iterations = len(tmpdf.index)
 
@@ -62,12 +76,12 @@ def read_degree_stats(name):
     gx_min = np.zeros(iterations)
 
     for i in range(iterations):
-        gh = [sum(arr[i, r, :]) for r in range(totsize)]
+        gh = [sum(arr[i, r, :]) for r in range(Hsize)]
         gh_med[i] = sum(gh)/len(gh)
         gh_min[i] = min(gh)
         gh_max[i] = max(gh)
 
-        gx = [sum(arr[i, :, c]) for c in range(totsize)]
+        gx = [sum(arr[i, :, c]) for c in range(Xsize)]
         gx_med[i] = sum(gx)/len(gx)
         gx_min[i] = min(gx)
         gx_max[i] = max(gx)
@@ -76,17 +90,22 @@ def read_degree_stats(name):
 
 
 
-if plotType == "complete":
+if plotType in ["complete", "convolution"]:
+    # NOTE: Convolution is for MNIST only (for BAS use BAScon v3)
     for k in k_values:
         dfList = []
 
         for r in range(repeat):
-            try:
-                filename = inputPath + "/" + imputBase[plotType].format(dataSize, k, r)
+            if dataType == "bas":
+                try:
+                    filename = inputPath + "/" + inputBaseBAS[plotType].format(dataSize, k, r)
+                    df = pd.read_csv(filename, comment="#", index_col=0)
+                except FileNotFoundError:
+                    filename = inputPath + "/" + "nll_progress_complete_k{}-run{}.csv".format(k, r)
+                    df = pd.read_csv(filename, comment="#")  # index_col=0
+            elif dataType == "mnist":
+                filename = inputPath + "/" + inputBaseMNIST[0].format(plotType, hiddenUnits, k, lRate, bSize, lim_iter, r)
                 df = pd.read_csv(filename, comment="#", index_col=0)
-            except FileNotFoundError:
-                filename = inputPath + "/" + "nll_progress_complete_k{}-run{}.csv".format(k, r)
-                df = pd.read_csv(filename, comment="#")  # index_col=0
 
             df = df.astype(float)
             df = df.iloc[0:lim_iter + 1]
@@ -117,17 +136,18 @@ if plotType == "complete":
             ax.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
 elif plotType == "neighbors":
+    # NOTE: Only available for BAS so far
     for k in k_values:
         for v in v_values:
             dfList = []
 
             for r in range(repeat):
                 if v == (dataSize * dataSize):
-                    filename = "result/complete/" + imputBase["complete"].format(dataSize, k, r)
+                    filename = "result/complete/" + inputBaseBAS["complete"].format(dataSize, k, r)
                     # filename = "result/complete/nll_progress_complete_k{}-run{}.csv".format(k, r)
                 else:
                     # filename = inputPath + "/nll_progress_bas{}_neighbors{}_k{}-run{}.csv".format(dataSize, v, k, r)
-                    filename = inputPath + "/" + imputBase[plotType].format(dataSize, v, neighType, k, r)
+                    filename = inputPath + "/" + inputBaseBAS[plotType].format(dataSize, v, neighType, k, r)
 
                 # df = pd.read_csv(filename, comment="#")  # index_col=0
                 # if len(df.columns) == 2:
@@ -162,12 +182,15 @@ elif plotType == "neighbors":
                 ax.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
 elif plotType == "BAScon":
+    if dataType != "bas":
+        raise ValueError("Only has BAScon for BAS dataset")
+
     for k in k_values:
         for v in versions:
             dfList = []
 
             for r in range(repeat):
-                filename = inputPath + "/" + imputBase[plotType].format(dataSize, v, k, r)
+                filename = inputPath + "/" + inputBaseBAS[plotType].format(dataSize, v, k, r)
 
                 df = pd.read_csv(filename, comment="#", index_col=0)
                 df = df.astype(float)
@@ -197,45 +220,56 @@ elif plotType == "BAScon":
                 errorMinus = meanDF[f"CD-{k}, Specialist v{v} - q1"].to_numpy()
                 ax.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
-elif plotType == "SGD":
+elif plotType.upper() == "SGD":
     for k in k_values:
         for p in p_val:
             dfListNLL = []
-            degMean = np.zeros(shape=(lim_iter+1, repeat))
+            degMeanH = np.zeros(shape=(lim_iter+1, repeat))
+            degMeanX = np.zeros(shape=(lim_iter+1, repeat))
             degMaxH = np.zeros(shape=(lim_iter+1, repeat))
             degMaxX = np.zeros(shape=(lim_iter+1, repeat))
             degMinH = np.zeros(shape=(lim_iter+1, repeat))
             degMinX = np.zeros(shape=(lim_iter+1, repeat))
 
             for r in range(repeat):
-                filenameNLL = inputPath + "/" + imputBase[plotType][0].format(dataSize, k, lRate, p, r)
+                filenameNLL = ""
+                filenameCon = ""
+
+                if dataType == "bas":
+                    filenameNLL = inputPath + "/" + inputBaseBAS[plotType][0].format(dataSize, k, lRate, p, r)
+                    filenameCon = inputPath + "/" + inputBaseBAS[plotType][1].format(dataSize, k, lRate, p, r)
+                elif dataType == "mnist":
+                    tmp = f"{plotType}-{p}"
+                    filenameNLL = inputPath + "/" + inputBaseMNIST[0].format(tmp, hiddenUnits, k, lRate, bSize, lim_iter, r)
+                    filenameCon = inputPath + "/" + inputBaseMNIST[1].format(tmp, hiddenUnits, k, lRate, bSize, lim_iter, r)
+
                 df = pd.read_csv(filenameNLL, comment="#", index_col=0)
                 df = df.astype(float)
                 df = df.iloc[0:lim_iter + 1]
                 df = df.rename(columns={"NLL": f"iter{r}"})
                 dfListNLL.append(df)
 
-                filenameCon = inputPath + "/" + imputBase[plotType][1].format(dataSize, k, lRate, p, r)
-
                 if (r == 0) and (periodoNLL != 1):
-                    gh_med, gh_max, gh_min, _, gx_max, gx_min = read_degree_stats(filenameCon)
+                    gh_med, gh_max, gh_min, gx_med, gx_max, gx_min = read_degree_stats(filenameCon)
 
                     iterations = len(gh_med.index)
-                    degMean = np.zeros(shape=(iterations, repeat))
+                    degMeanH = np.zeros(shape=(iterations, repeat))
+                    degMeanX = np.zeros(shape=(iterations, repeat))
                     degMaxH = np.zeros(shape=(iterations, repeat))
                     degMaxX = np.zeros(shape=(iterations, repeat))
                     degMinH = np.zeros(shape=(iterations, repeat))
                     degMinX = np.zeros(shape=(iterations, repeat))
 
-                    degMean[:, 0] = gh_med
+                    degMeanH[:, 0] = gh_med
+                    degMeanX[:, 0] = gx_med
                     degMaxH[:, 0] = gh_max
                     degMaxX[:, 0] = gx_max
                     degMinH[:, 0] = gh_min
                     degMinX[:, 0] = gx_min
 
                 else:
-                    degMean[:, r], degMaxH[:, r], degMinH[:, r], \
-                    _, degMaxX[:, r], degMinX[:, r] = read_degree_stats(filenameCon)
+                    degMeanH[:, r], degMaxH[:, r], degMinH[:, r], \
+                    degMeanX[:, r], degMaxX[:, r], degMinX[:, r] = read_degree_stats(filenameCon)
 
             # NLL statistics
             fullDfNLL = pd.concat(dfListNLL, axis=1)
@@ -261,10 +295,15 @@ elif plotType == "SGD":
 
 
             # Connectivity statistics
-            connectivityDF[f"Mean, CD-{k}, p = {p}"] = degMean.mean(axis=1)
-            connectivityDF[f"Mean, CD-{k}, p = {p} - std"] = degMean.std(axis=1)
-            connectivityDF[f"Mean, CD-{k}, p = {p} - q1"] = np.quantile(degMean, q=0.25,axis=1)
-            connectivityDF[f"Mean, CD-{k}, p = {p} - q3"] = np.quantile(degMean, q=0.75,axis=1)
+            connectivityDF[f"Mean in H, CD-{k}, p = {p}"] = degMeanH.mean(axis=1)
+            connectivityDF[f"Mean in H, CD-{k}, p = {p} - std"] = degMeanH.std(axis=1)
+            connectivityDF[f"Mean in H, CD-{k}, p = {p} - q1"] = np.quantile(degMeanH, q=0.25,axis=1)
+            connectivityDF[f"Mean in H, CD-{k}, p = {p} - q3"] = np.quantile(degMeanH, q=0.75,axis=1)
+
+            connectivityDF[f"Mean in X, CD-{k}, p = {p}"] = degMeanX.mean(axis=1)
+            connectivityDF[f"Mean in X, CD-{k}, p = {p} - std"] = degMeanX.std(axis=1)
+            connectivityDF[f"Mean in X, CD-{k}, p = {p} - q1"] = np.quantile(degMeanX, q=0.25,axis=1)
+            connectivityDF[f"Mean in X, CD-{k}, p = {p} - q3"] = np.quantile(degMeanX, q=0.75,axis=1)
 
             connectivityDF[f"Maximum in X, CD-{k}, p = {p}"] = degMaxX.mean(axis=1)
             connectivityDF[f"Maximum in X, CD-{k}, p = {p} - std"] = degMaxX.std(axis=1)
@@ -295,11 +334,6 @@ plt.xlabel("Iteration")
 plt.ylabel("Average NLL")
 plt.grid(color="gray", linestyle=":", linewidth=.2)
 
-# Lower limit of NLL
-nSamples = 2**(dataSize+1)
-limitante = - log(1.0/nSamples)
-# print(f"NLL mínimo possível: {limitante}")
-plt.plot([0, lim_iter], [limitante, limitante], "r--")
 if periodoNLL != 1:
     meanDF.set_index(indexes)
 
@@ -307,10 +341,18 @@ if periodoNLL != 1:
 errorPrint = f"-{errorType}Err" if errorType else ""
 neighPrint = f"_{neighType}" if plotType == "neighbors" else ""
 
-plt.savefig(f"{outputPath}/{basename}_{plotType}{neighPrint}_lr{lRate}-{repeat}rep{errorPrint}.pdf", transparent=True)
+if dataType == "bas":
+    # Lower limit of NLL
+    nSamples = 2**(dataSize+1)
+    limitante = - log(1.0/nSamples)
+    # print(f"NLL mínimo possível: {limitante}")
+    plt.plot([0, lim_iter], [limitante, limitante], "r--")
+
+
+plt.savefig(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}-{repeat}rep{errorPrint}.pdf", transparent=True)
 # plt.show()
 
-meanDF.to_csv(f"{outputPath}/{basename}_{plotType}{neighPrint}_lr{lRate}-{repeat}rep.csv")
+meanDF.to_csv(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}-{repeat}rep.csv")
 
-if plotType == "SGD":
-    connectivityDF.to_csv(f"{outputPath}/meanDeg_{dataType}{dataSize}_{plotType}{neighPrint}_lr{lRate}-{repeat}rep.csv")
+if plotType.upper() == "SGD":
+    connectivityDF.to_csv(f"{outputPath}/meanDeg_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}-{repeat}rep.csv")
