@@ -76,8 +76,8 @@ public:
     VectorXd& get_sample(int idx);
     vector<Data> separateTrainTestSets(double trainPercentage);
 
-    int& get_sample_label(int idx);
-    vector<int> get_batch_label(int idx, int size);
+    int& get_label(int idx);
+    VectorXd get_label_vector(int idx);
 
     // Ideia inicial. Depois posso adicionar k-fold...
 
