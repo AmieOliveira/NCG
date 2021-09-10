@@ -1346,6 +1346,35 @@ VectorXd RBM::complete_pattern(VectorXd & sample, int repeat) {
 }
 
 
+int RBM::predict(VectorXd & sample, int n_labels) {
+    if ( !initialized ) {
+        printError("Cannot predict label without a trained RBM!");
+        exit(1);
+    }
+    // FIXME: Preciso dar n_labels? É dedutível... Mas se eu for usar Data como entrada, vou ter esse valor
+
+    int sampleSize = xSize - n_labels;
+    x << sample, VectorXd::Constant(n_labels, 0.5);
+
+    int maxL;
+    double maxProb = 0;
+
+    auxH = (*p_W)*x + b;
+    for (int i=0; i<hSize; i++){
+        h(i) = 1.0/( 1 + exp( - auxH(i) ) );
+    }
+    auxX = h.transpose() * (*p_W) + d.transpose();
+    for (int j = sampleSize; j < xSize; j++){
+        if ( 1.0/( 1 + exp( - auxX(j) ) ) > maxProb ) {
+            maxProb = 1.0/( 1 + exp( - auxX(j) ) );
+            maxL = j - sampleSize;
+        }
+    }
+
+    return maxL;
+}
+
+
 // Saving methods
 void RBM::save(string filename) {
     if (!initialized){

@@ -292,103 +292,108 @@ void testRBMprediction() {
     model.setRandomSeed(76244);
 
     VectorXd pred;
+    int predLabel;
     int totSamples = 20;
     double accuracy = 0;
 
     for (int idx = 8734; idx < 8734 + totSamples; idx++) {
         cout << "Will predict " << idx+1 << "th sample. Label = " << mnistTrain.get_label(idx) << endl;
-        cout << "\tShould get label: " << mnistTrain.get_label_vector(idx).transpose() << endl;
+        cout << "\tShould get vector: " << mnistTrain.get_label_vector(idx).transpose() << endl;
         pred = model.complete_pattern( mnistTrain.get_sample(idx), 4 );
-        cout << "\tPredicted label:  ";
+        cout << "\tPredicted vector:  ";
         for (int i = mnistTrain.get_sample_size(); i < mnistTrain.get_sample_size() + mnistTrain.get_number_of_labels(); i++)
             cout << " " << pred(i);
         cout << endl;
 
-        // if ( pred == mnistTrain.get_label(idx) ) accuracy++;
+        predLabel = model.predict( mnistTrain.get_sample(idx), mnistTrain.get_number_of_labels() );
+        cout << "Predicted label: " << predLabel << endl;
+        cout << endl;
+
+        if ( predLabel == mnistTrain.get_label(idx) ) accuracy++;
     }
 
-    // cout << endl << "Total accuracy: " << 100*double(accuracy/totSamples) << "%" << endl;
+    cout << endl << "Total accuracy: " << 100 * double(accuracy/totSamples) << "%" << endl;
 }
 
 
 int main(int argc, char **argv) {
-    // testRBMprediction();
+    testRBMprediction();
 
-    Data mnistTrain("Datasets/bin_mnist-train.data", false);
-    cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
-
-    // Data mnistTest("Datasets/bin_mnist-test.data", false);
-    // cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
-
-    int size = mnistTrain.get_sample_size();
-
-    int k = 10;
-    int iter = 2;
-    int b_size = 10;
-    double l_rate = 0.01;
-    double p = 1;
-    unsigned seed = 8924;  // 1382
-    bool shuffleData = true;
-
-    // Traditional RBM
-    RBM model(size, 500, false);
-    model.setRandomSeed(seed);
-    // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
-    // model.fit(mnistTrain);
-    // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
-
-
-    int repeat = 10;
-
-    // Auxiliar variables
-    VectorXd nll(repeat);
-    VectorXd nllTest(repeat);
-    double meanTrain, meanTest, sumTrain, sumTest;
-
-    // // RBM model complete
-    // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
+    // Data mnistTrain("Datasets/bin_mnist-train.data", false);
+    // cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
+//
+    // // Data mnistTest("Datasets/bin_mnist-test.data", false);
+    // // cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
+//
+    // int size = mnistTrain.get_sample_size();
+//
+    // int k = 10;
+    // int iter = 2;
+    // int b_size = 10;
+    // double l_rate = 0.01;
+    // double p = 1;
+    // unsigned seed = 8924;  // 1382
+    // bool shuffleData = true;
+//
+    // // Traditional RBM
+    // RBM model(size, 500, false);
     // model.setRandomSeed(seed);
-    //
+    // // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
+    // // model.fit(mnistTrain);
+    // // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
+//
+//
+    // int repeat = 10;
+//
+    // // Auxiliar variables
+    // VectorXd nll(repeat);
+    // VectorXd nllTest(repeat);
+    // double meanTrain, meanTest, sumTrain, sumTest;
+//
+    // // // RBM model complete
+    // // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
+    // // model.setRandomSeed(seed);
+    // //
+    // // for (int r=0; r<repeat; r++) {
+    // //     nll(r) = model.negativeLogLikelihood(mnist);
+    // //     cout << "Estimated value: " << nll(r) << endl;
+    // // }
+    // // cout << "\t Complete: Mean of " << nll.mean() << endl;
+//
+    // // RBM model Complete
+    // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.1_mBatch50_iter50_run0.rbm");
+    // model.setRandomSeed(seed);
+//
     // for (int r=0; r<repeat; r++) {
-    //     nll(r) = model.negativeLogLikelihood(mnist);
+    //     nll(r) = model.negativeLogLikelihood(mnistTrain);
     //     cout << "Estimated value: " << nll(r) << endl;
     // }
-    // cout << "\t Complete: Mean of " << nll.mean() << endl;
-
-    // RBM model Complete
-    model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.1_mBatch50_iter50_run3.rbm");
-    model.setRandomSeed(seed);
-
-    for (int r=0; r<repeat; r++) {
-        nll(r) = model.negativeLogLikelihood(mnistTrain);
-        cout << "Estimated value: " << nll(r) << endl;
-    }
-
-    meanTrain = nll.mean();
-
-    sumTrain = 0;
-    for (int r=0; r<repeat; r++) {
-        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
-    }
-    cout << "\t Complete: " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
-
-
-    // RBM model Convolutional
-    model.load("Training Outputs/Teste MNIST/mnist_convolution_H484_CD-1_lr0.1_mBatch50_iter50_run3.rbm");
-    model.setRandomSeed(seed);
-
-    for (int r=0; r<repeat; r++) {
-        nll(r) = model.negativeLogLikelihood(mnistTrain);
-        cout << "Estimated value: " << nll(r) << endl;
-    }
-
-    meanTrain = nll.mean();
-
-    sumTrain = 0;
-    for (int r=0; r<repeat; r++) {
-        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
-    }
-    cout << "\t Convolution: " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+//
+    // meanTrain = nll.mean();
+//
+    // sumTrain = 0;
+    // for (int r=0; r<repeat; r++) {
+    //     sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+    // }
+    // cout << "\t Complete RBM: " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+//
+//
+    // // RBM model Convolutional
+    // model.load("Training Outputs/Teste MNIST/mnist_convolution_H484_CD-1_lr0.1_mBatch50_iter50_run0.rbm");
+    // model.setRandomSeed(seed);
+//
+    // for (int r=0; r<repeat; r++) {
+    //     nll(r) = model.negativeLogLikelihood(mnistTrain);
+    //     cout << "Estimated value: " << nll(r) << endl;
+    // }
+//
+    // meanTrain = nll.mean();
+//
+    // sumTrain = 0;
+    // for (int r=0; r<repeat; r++) {
+    //     sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+    // }
+    // cout << "\t Convolutional RBM: " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
 
 
     //// RBM model SGD

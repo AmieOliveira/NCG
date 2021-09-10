@@ -193,6 +193,7 @@ public:
 
     VectorXd complete_pattern(VectorXd & sample, int repeat);
 
+    int predict(VectorXd & sample, int n_labels);
 
     // Saving methods
     void save(string filename);
