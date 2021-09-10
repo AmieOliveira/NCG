@@ -497,8 +497,6 @@ void RBM::sample_h() {
     //   and other functions should have performed the necessary
     //   checks
 
-    //cout << "Sampling h!" << endl;
-
     auxH = (*p_W)*x;
     // NOTE: Não uso getProbabilities porque aproveito o loop
 
@@ -506,7 +504,7 @@ void RBM::sample_h() {
     for (int i=0; i<hSize; i++){
         prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
-        //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
+        // cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
         if (moeda < prob)
             h(i) = 1;
@@ -640,6 +638,22 @@ void RBM::sampleXtilde( SampleType sType, int k, VectorXd & x_vec ) {
             throw runtime_error(errorMessage);
 
         // TODO: Outros tipos de treinamento
+    }
+}
+
+void RBM::sample_x_label(int l_size) {
+    double prob, moeda, aux;
+
+    for (int j = xSize - l_size; j < xSize; j++) {
+        aux = h.transpose() * (*p_W).col(j);
+
+        prob = 1.0/( 1 + exp( - d(j) -  aux ) );
+        moeda = (*p_dis)(generator);
+
+        if (moeda < prob)
+            x(j) = 1;
+        else
+            x(j) = 0;
     }
 }
 
@@ -1024,7 +1038,7 @@ double RBM::negativeLogLikelihood(Data & data) {
         int idx = int( N * (*p_dis)(generator) );
 
         x = data.get_sample(idx);
-        total += log( normalizationConstant_MCestimation( 1000 ) );
+        total += log( normalizationConstant_MCestimation( 500 ) );
         // TODO: Change number of samples (make adaptable?)
     } else {
         total += log( normalizationConstant_effX() );
@@ -1120,18 +1134,22 @@ double RBM::partialZ_effX(int n) {
 
 long double RBM::normalizationConstant_MCestimation(int n_samples) {
     // Estimates the normalization constant (partition function) of the RBM
-    // NOTE: I am hardcoding one step between samples. (teorema ergódigo)
+    int steps = int(log(xSize)); // FIXME: Is it big enough?
+
+    // int check = 0;
 
     long double soma = 0;
     for (int s=0; s < n_samples; s++) {
-        sample_h();
-        sample_x();
+        for (int r=0; r < steps; r++) {
+            sample_h();
+            sample_x();
+        }
 
         soma += exp(freeEnergy());
 
-        // cout << "Partial result: " << soma << endl;
+        // if (exp(freeEnergy()) == 0) check++;
     }
-    // cout << "Normalization constant: " << pow(2, xSize) * n_samples / soma << endl;
+    // cout << "  " << check << " null energy samples" << endl;
 
     return pow(2, xSize) * n_samples / soma;
 }
@@ -1303,6 +1321,31 @@ double RBM::normalizationConstant_AISestimation() {
 }
 *********************/
 
+
+VectorXd RBM::complete_pattern(VectorXd & sample, int repeat) {
+    if ( !initialized ) {
+        printError("Cannot predict label without a trained RBM!");
+        exit(1);
+    }
+    if ( !hasSeed ) {
+        printError("Cannot predict label without random seed!");
+        cerr << "RBM needs random seed to predict labels. Use 'setRandomSeed' before proceeding" << endl;
+        exit(1);
+    }
+
+    int n_units = xSize - sample.size();
+
+    x << sample, VectorXd::Constant(n_units, 0.5);
+
+    for (int r=0; r < repeat; r++) {
+        sample_h();
+        sample_x_label(n_units);
+    }
+
+    return x;
+}
+
+
 // Saving methods
 void RBM::save(string filename) {
     if (!initialized){
@@ -1343,6 +1386,11 @@ void RBM::load(string filename) {
 
     fstream input;
     input.open(filename.c_str(), ios::in);
+    if( !input ) {
+        printError("Could not load RBM!");
+        cerr << "File '" << filename << "' could not be opened" << endl;
+        exit(1);
+    }
 
     string line;
 

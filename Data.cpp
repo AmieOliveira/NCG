@@ -310,11 +310,24 @@ VectorXd & Data::get_sample(int idx) {
     return _data.at( _indexMap.at(idx) );
 }
 
-int & Data::get_sample_label(int idx) {
+int & Data::get_label(int idx) {
     if (hasLabels) { return _labels.at( _indexMap.at(idx) ); }
     else {
         printError("Data set has no labels");
         cerr << "Requested a label sample, when data has no labels" << endl;
+        exit(1);
+    }
+}
+
+VectorXd Data::get_label_vector(int idx) {
+    if (hasLabels) {
+        VectorXd lab = VectorXd::Zero(_nLabels);
+        lab( _labels.at( _indexMap.at(idx) ) ) = 1;
+        return lab;
+    }
+    else {
+        printError("Data set has no labels");
+        cerr << "Requested a label sample (vector format), when data has no labels" << endl;
         exit(1);
     }
 }

@@ -73,6 +73,8 @@ class RBM {
     void sampleXtilde(SampleType sType, int k); // !
     void sampleXtilde(SampleType sType, int k, VectorXd & x_vec); // !
 
+    void sample_x_label(int l_size);
+
     // Energy methods
     double energy();
     double freeEnergy();
@@ -189,7 +191,8 @@ public:
     long double normalizationConstant_MCestimation(int n_samples);
     // long double normalizationConstant_AISestimation();
 
-    int predict(VectorXd & sample);
+    VectorXd complete_pattern(VectorXd & sample, int repeat);
+
 
     // Saving methods
     void save(string filename);
