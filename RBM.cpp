@@ -1038,7 +1038,7 @@ double RBM::negativeLogLikelihood(Data & data) {
         int idx = int( N * (*p_dis)(generator) );
 
         x = data.get_sample(idx);
-        total += log( normalizationConstant_MCestimation( 1000 ) );
+        total += log( normalizationConstant_MCestimation( 500 ) );
         // TODO: Change number of samples (make adaptable?)
     } else {
         total += log( normalizationConstant_effX() );
@@ -1134,18 +1134,22 @@ double RBM::partialZ_effX(int n) {
 
 long double RBM::normalizationConstant_MCestimation(int n_samples) {
     // Estimates the normalization constant (partition function) of the RBM
-    // NOTE: I am hardcoding one step between samples. (teorema ergódigo)
+    int steps = int(log(xSize)); // FIXME: Is it big enough?
+
+    // int check = 0;
 
     long double soma = 0;
     for (int s=0; s < n_samples; s++) {
-        sample_h();
-        sample_x();
+        for (int r=0; r < steps; r++) {
+            sample_h();
+            sample_x();
+        }
 
         soma += exp(freeEnergy());
 
-        // cout << "Partial result: " << soma << endl;
+        // if (exp(freeEnergy()) == 0) check++;
     }
-    // cout << "Normalization constant: " << pow(2, xSize) * n_samples / soma << endl;
+    // cout << "  " << check << " null energy samples" << endl;
 
     return pow(2, xSize) * n_samples / soma;
 }
