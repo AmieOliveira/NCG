@@ -283,9 +283,9 @@ void testDataShuffle() {
 }
 
 void testRBMprediction() {
-    Data mnistTrain("Datasets/bin_mnist-train.data", true);
-    cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
-    mnistTrain.joinLabels(false);
+    Data mnist("Datasets/bin_mnist-test.data", true);  // Data mnist("Datasets/bin_mnist-train.data", true);
+    cout << "Using " << mnist.get_number_of_samples() << " training samples." << endl;
+    mnist.joinLabels(false);
 
     RBM model;
     model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_withLabels_run4.rbm");
@@ -295,38 +295,56 @@ void testRBMprediction() {
     int predLabel;
     int totSamples = 20;
     double accuracy = 0;
+    int init = 0; // 8734;
 
-    for (int idx = 8734; idx < 8734 + totSamples; idx++) {
-        cout << "Will predict " << idx+1 << "th sample. Label = " << mnistTrain.get_label(idx) << endl;
-        cout << "\tShould get vector: " << mnistTrain.get_label_vector(idx).transpose() << endl;
-        pred = model.complete_pattern( mnistTrain.get_sample(idx), 4 );
+    for (int idx = init; idx < init + totSamples; idx++) {
+        cout << "Will predict " << idx+1 << "th sample. Label = " << mnist.get_label(idx) << endl;
+        cout << "\tShould get vector: " << mnist.get_label_vector(idx).transpose() << endl;
+        pred = model.complete_pattern( mnist.get_sample(idx), 4 );
         cout << "\tPredicted vector:  ";
-        for (int i = mnistTrain.get_sample_size(); i < mnistTrain.get_sample_size() + mnistTrain.get_number_of_labels(); i++)
+        for (int i = mnist.get_sample_size(); i < mnist.get_sample_size() + mnist.get_number_of_labels(); i++)
             cout << " " << pred(i);
         cout << endl;
 
-        predLabel = model.predict( mnistTrain.get_sample(idx), mnistTrain.get_number_of_labels() );
+        predLabel = model.predict( mnist.get_sample(idx), mnist.get_number_of_labels() );
         cout << "Predicted label: " << predLabel << endl;
         cout << endl;
 
-        if ( predLabel == mnistTrain.get_label(idx) ) accuracy++;
+        if ( predLabel == mnist.get_label(idx) ) accuracy++;
     }
 
     cout << endl << "Total accuracy: " << 100 * double(accuracy/totSamples) << "%" << endl;
+
+
+    model.classificationStatistics(mnist);
 }
 
 
 int main(int argc, char **argv) {
-    testRBMprediction();
+    Data mnistTrain("Datasets/bin_mnist-train.data", true);
+    cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
 
-    // Data mnistTrain("Datasets/bin_mnist-train.data", false);
-    // cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
-//
-    // // Data mnistTest("Datasets/bin_mnist-test.data", false);
-    // // cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
-//
+    Data mnistTest("Datasets/bin_mnist-test.data", true);
+    cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
+
+    RBM model;
+
+    for (int i=0; i<5; i++) {
+        stringstream fname;
+        fname << "Training Outputs/Teste MNIST/mnist_" << "sgd-1" << "_H500_CD-1_lr0.01_mBatch50_iter20_withLabels_run" << i << ".rbm";
+        model.load(fname.str());
+
+        cout << "FILE: '" << fname.str() << "'" << endl;
+        cout << "TRAIN SET" << endl;
+        model.classificationStatistics(mnistTrain);
+        cout << endl << "TEST SET" << endl;
+        model.classificationStatistics(mnistTest);
+        cout << endl << endl;
+    }
+
+
     // int size = mnistTrain.get_sample_size();
-//
+
     // int k = 10;
     // int iter = 2;
     // int b_size = 10;

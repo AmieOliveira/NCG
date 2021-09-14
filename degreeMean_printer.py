@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 ax[nX].fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
             ax[nH].set_title(f"p = {p}")
-            ax[nX].set_xlabel("Iteration")
+            ax[nX].set_xlabel("Epoch")
 
             pIdx += 1
 
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
         ax[0].set_ylabel("Hidden\nMean degree")
         ax[n_ps].set_ylabel("Visible\nMean degree")
-        
+
         plt.tight_layout()
 
         filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_SGD_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}{errorPrint}.pdf"

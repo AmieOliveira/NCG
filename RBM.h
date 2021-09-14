@@ -75,11 +75,7 @@ class RBM {
 
     void sample_x_label(int l_size);
 
-    // Energy methods
-    double energy();
-    double freeEnergy();
-    double freeEnergy(VectorXd & x_vec);
-
+    // Normalization constant methods
     double partialZ(int n);
     double partialZ_effX(int n);
 
@@ -162,6 +158,11 @@ public:
     void getProbabilities_h(VectorXd & output);  // !
     void getProbabilities_h(VectorXd & output, VectorXd & x_vec);  // !
 
+    // Energy methods
+    double energy();
+    double freeEnergy();
+    double freeEnergy(VectorXd & x_vec);
+
     // Training methods
     void trainSetup();
     void trainSetup(bool NLL);
@@ -194,6 +195,7 @@ public:
     VectorXd complete_pattern(VectorXd & sample, int repeat);
 
     int predict(VectorXd & sample, int n_labels);
+    void classificationStatistics(Data & data);
 
     // Saving methods
     void save(string filename);

@@ -239,6 +239,8 @@ void Data::loadData(string filename, bool labels) {
             _indexMap.push_back( j );
             j++;
         }
+
+        // TODO: Executar check do numero de amostras!! (dar break e soltar um warning se nao bater - ou erro)
     }
 
     if ( !labels ) hasLabels = false;
