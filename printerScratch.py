@@ -21,8 +21,8 @@ k_vals = [1]  # [100, 20, 10, 5, 2, 1]
 lim_iter = 20
 errorType = "quartile"        # None, "std", "quartile"
 repeat = 5
-# p_vals = [1, 0.75, 0.5, 0.25]
-p = 1
+p_vals = [1, 0.5]
+# p = 1
 seed = 0
 lRate = 0.01
 bSize = 50
@@ -352,17 +352,17 @@ cmsize = 20.0
 
 cmap = cm.get_cmap(colormap)
 
-filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.01_mBatch50-5rep.csv"
+filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.1_mBatch50_100iter-5rep.csv"
 dfC = pd.read_csv(filenameC, comment="#", index_col=0)
 dfC = dfC.astype(float)
 dfC = dfC.iloc[0:lim_iter+1]
 
-filenameS = "Training Outputs/meanNLL_mnist_convolution_H500_lr0.01_mBatch50-5rep.csv"
+filenameS = "Training Outputs/meanNLL_mnist_convolution_H500_lr0.1_mBatch50_100iter-5rep.csv"
 dfS = pd.read_csv(filenameS, comment="#", index_col=0)
 dfS = dfS.astype(float)
 dfS = dfS.iloc[0:lim_iter+1]
 
-filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.01_mBatch50-5rep.csv"
+filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.1_mBatch50_100iter-5rep.csv"
 dfO = pd.read_csv(filenameO, comment="#", index_col=0)
 dfO = dfO.astype(float)
 dfO = dfO.iloc[0:lim_iter+1]
@@ -376,7 +376,8 @@ for k in k_vals:
     dfS = dfS.rename(columns={f"CD-{k}": f"CD-{k}, Convolution"})
     dfS[f"CD-{k}, Convolution"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
 
-    dfO[f"CD-{k}, p = {p}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+    for p in p_vals:
+        dfO[f"CD-{k}, p = {p}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
 
     if errorType == "std":
         ind = dfC.index
@@ -389,9 +390,10 @@ for k in k_vals:
         meanS = dfS[f"CD-{k}, Convolution"].to_numpy()
         ax.fill_between(ind, meanS - errorS, meanS + errorS, alpha=shadalph)
 
-        errorO = dfO[f"CD-{k}, p = {p} - std"].to_numpy()
-        meanO = dfO[f"CD-{k}, p = {p}"].to_numpy()
-        ax.fill_between(ind, meanO - errorO, meanO + errorO, alpha=shadalph)
+        for p in p_vals:
+            errorO = dfO[f"CD-{k}, p = {p} - std"].to_numpy()
+            meanO = dfO[f"CD-{k}, p = {p}"].to_numpy()
+            ax.fill_between(ind, meanO - errorO, meanO + errorO, alpha=shadalph)
 
     elif errorType == "quartile":
         ind = dfC.index
@@ -404,9 +406,10 @@ for k in k_vals:
         errorMinus = dfS[f"CD-{k} q1"].to_numpy()
         ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
 
-        errorPlus = dfO[f"CD-{k}, p = {p} - q3"].to_numpy()
-        errorMinus = dfO[f"CD-{k}, p = {p} - q1"].to_numpy()
-        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+        for p in p_vals:
+            errorPlus = dfO[f"CD-{k}, p = {p} - q3"].to_numpy()
+            errorMinus = dfO[f"CD-{k}, p = {p} - q1"].to_numpy()
+            ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
 
 
     plt.title(f"NLL evolution for CD-{k}")

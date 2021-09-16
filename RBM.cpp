@@ -803,7 +803,7 @@ void RBM::fit(Data & trainData){
     }
 
     isTrained = true;
-
+    printInfo("Finished RBM training");
 }
 
 
@@ -833,6 +833,7 @@ void RBM::fit_connectivity(Data & trainData) {
             printError("Not yet implemented!");
             cerr << "Optimization via " << opt_type << " heuristic is not implemented" << endl;
     }
+    printInfo("Finished RBM training");
 }
 
 
@@ -1003,9 +1004,19 @@ void RBM::optimizer_SGD(Data & trainData) {
     isTrained = true;
 }
 
+double RBM::negativeLogLikelihood(Data & data) {
+    if (xSize > MAXSIZE_EXACTPROBABILITY) {
+        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
+            printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
+        }
+        return negativeLogLikelihood(data, ZEstimation::None);
+    } else {
+        return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default?
+    }
+}
 
 // Evaluation methods
-double RBM::negativeLogLikelihood(Data & data) {
+double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot calculate NLL without initializing RBM!";
@@ -1023,26 +1034,46 @@ double RBM::negativeLogLikelihood(Data & data) {
     }
     total = total/N;
 
-    //cout << "Partial: " << total << endl;
-    if (xSize > MAXSIZE_EXACTPROBABILITY) {
-        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
-            printWarning("NLL provided is an approximation, since the RBM is too big for exact calculation");
-        }
-        if (!hasSeed){
-            string errorMessage;
-            errorMessage = "Cannot estimate NLL without random seed!";
-            printError(errorMessage);
-            throw runtime_error(errorMessage);
-        }
+    switch (method) {
+        case None:
+            if (xSize > MAXSIZE_EXACTPROBABILITY) {
+                printWarning("Attempting to calculate exact NLL for a RBM that is too big. Script may never finish.");
+            }
+            total += log( normalizationConstant_effX() );
+            break;
 
-        int idx = int( N * (*p_dis)(generator) );
+        case MC:
+            if (!hasSeed){
+                string errorMessage;
+                errorMessage = "Cannot estimate NLL without random seed!";
+                printError(errorMessage);
+                throw runtime_error(errorMessage);
+            }
+            int idx;
+            idx = int( N * (*p_dis)(generator) );
 
-        x = data.get_sample(idx);
-        total += log( normalizationConstant_MCestimation( 500 ) );
-        // TODO: Change number of samples (make adaptable?)
-    } else {
-        total += log( normalizationConstant_effX() );
+            x = data.get_sample(idx);
+            total += log( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
+            break;
+
+        case AIS:
+            if (!hasSeed){
+                string errorMessage;
+                errorMessage = "Cannot estimate NLL without random seed!";
+                printError(errorMessage);
+                throw runtime_error(errorMessage);
+            }
+            total += log( normalizationConstant_AISestimation( 100 ) );
+            break;
+
+        default:
+            printError("Normalization constant method not implemented!");
+            cerr << "There is no available implementation of method '" << method
+                 << "'. Please choose another one."<< endl;
+            exit(1);
     }
+    //cout << "Partial: " << total << endl;
+
     return total;
 }
 
@@ -1155,24 +1186,20 @@ long double RBM::normalizationConstant_MCestimation(int n_samples) {
 }
 
 
-/*********************
-double RBM::normalizationConstant_AISestimation() {
-    // Reference: Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
+long double RBM::normalizationConstant_AISestimation(int n_runs) {
+    // References:
+    //      - Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
+    //      - Agustinus Kristiadi's Blog, Introduction to Annealed Importance Sampling.
+    //        https://wiseodd.github.io/techblog/2017/12/23/annealed-importance-sampling/
+    // TODO: Optimize function (está implementado como "caixa preta")
 
-    // FIXME: Estimation has unidentified bug
-
-    // TODO: In theory I'd give some other RBM, with tuned d biases
-    //        So far, the prior RBM has all weights and biases null
-    // Reference "An Infinite Restricted Boltzmann Machine" uses same visible biases as model
     RBM prior(xSize, hSize);
     prior.setRandomSeed(generator());
-    // NOTE: Code implemented assuming RBM has same shape as current one (but does not assume zero biases)
-    // prior.setVisibleBiases(d);
+    prior.setVisibleBiases(d);
 
     // FIXME: These are preliminary parameters, should change them
-    int n_runs = 10;
-    int n_betas = 10000;
-    int transitionRepeat = 1;
+    int n_betas = 1000;
+    int transitionRepeat = 50;
     double betas[n_betas];
 
     for (int k=0; k < n_betas; k++) {
@@ -1180,146 +1207,62 @@ double RBM::normalizationConstant_AISestimation() {
         // cout << "Beta_" << k << ": " << betas[k] << endl;
     }
 
-    // Importance weights
-    vector<double> weights;
-
+    // vector<double> weights;
+    double w, sumW;
     VectorXd x_k;
 
-    RowVectorXd va_B;  // va_A;
-    VectorXd hA(hSize);
-    VectorXd dA, bA;
-    double prob, moeda, part_w, w_r;
+    auto f_0 = [&r = prior](VectorXd & x_vec) { return exp(- r.freeEnergy(x_vec)); };
+    auto f_n = [&](VectorXd & x_vec) { return exp(- freeEnergy(x_vec)); };
 
-    bA = prior.getHiddenBiases();
-    dA = prior.getVisibleBiases();
-    // WA = prior.getConnectivityWeights();
+    auto f_j = [&f0 = f_0, &fn = f_n, &b = betas](VectorXd & x_vec, int j) {
+        return pow( f0(x_vec), 1 - b[j] ) * pow( fn(x_vec), b[j] );
+    };
+
+    auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat]
+                (VectorXd & x_vec, int j) {
+        VectorXd x_prime(X);
+
+        for (int t=0; t < tr; t++) {
+            for (int i=0; i < X; i++) {
+                x_prime(i) = x_vec(i) + 2 * (*distr)(gen) - 1;
+                if (x_prime(i) < 0.5) x_prime(i) = 0;
+                else x_prime(i) = 1;
+            }
+
+            if ( (*distr)(gen) < fj(x_prime, j)/fj(x_vec, j) ) x_vec = x_prime;
+        }
+    };
+
+    sumW = 0;
 
     for (int r=0; r < n_runs; r++) {
-        // Do an AIS run
-        x_k = prior.sample_x();  // NOTE: Since weights are null, x does not depend on h, and I only need this step
 
-        x = x_k;
-        prior.setVisibleUnits( x_k );
+        x_k = prior.sample_xout();
+        w = f_j(x_k, 1)/f_j(x_k, 0);
 
-        // First importance weight ratio
-        part_w = 1;
-        va_B = ((*p_W) * x_k) + b;
-        // va_A = 0;  // va_A = WA * x_k;
+        for (int bIdx=1; bIdx < n_betas; bIdx++) {
+            T(x_k, bIdx);
 
-        for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
-            part_w *= ( 1 + exp( (1 - betas[1])*bA(i) ) );
-            part_w *= ( 1 + exp( betas[1]*va_B(i) ) );
-            // part_w *= ( 1 + exp( (1 - betas[1])*(va_A(i) + bA(i)) ) );
-            part_w /= ( 1 + exp( betas[0]*va_B(i) ) );
-            part_w /= ( 1 + exp( (1 - betas[0])*bA(i) ) );
-            // part_w /= ( 1 + exp( (1 - betas[0])*(va_A(i) + bA(i)) ) );
+            w *= f_j(x_k, r+1)/f_j(x_k, r);
         }
 
-        w_r = exp( ( (betas[1] - betas[0]) * (x_k.transpose() * d )(0) ) +
-                   ( (betas[0] - betas[1]) * (x_k.transpose() * dA)(0) )  ) * part_w;
-
-        for (int k = 1; k < n_betas; k++) {
-            // Sample x_k from x_{k-1}
-            // FIXME: If I keep the RBM with some or all biases null, I can optimize calculations here
-
-            int tr = 0;
-            do {
-                // Part 1: Sample h
-                va_B = (*p_W) * x;
-                // va_A = 0;  // WA * prior.getVisibleUnits();
-
-                for (int i=0; i<hSize; i++){
-                    prob = 1.0/( 1 + exp( - betas[k] * ( b(i) + va_B(i) ) ) );
-                    moeda = (*p_dis)(generator);
-
-                    if (moeda < prob)
-                        h(i) = 1;
-                    else
-                        h(i) = 0;
-
-                    prob = 1.0/( 1 + exp( - (1 - betas[k]) * bA(i) ) );
-                    moeda = (*p_dis)(generator);
-
-                    if (moeda < prob)
-                        hA(i) = 1;
-                    else
-                        hA(i) = 0;
-                }
-                prior.setHiddenUnits(hA);  // Acho que não é necessário deixar isso
-                // FIXME: Preciso de hA para alguma coisa? Parece que posso retirar dos calculos!
-
-                // Part 2: Sample x
-                va_B = h.transpose() * (*p_W);
-                // va_A = 0;  // hA.transpose() * WA;
-
-                for (int j=0; j<xSize; j++){
-                    prob = 1.0/( 1 + exp( -( betas[k]*( d(j) + va_B(j) ) + (1-betas[k])*( dA(j) ) ) ) );
-                    moeda = (*p_dis)(generator);
-
-                    if (moeda < prob)
-                        x_k(j) = 1;
-                    else
-                        x_k(j) = 0;
-                }
-
-                x = x_k;
-                prior.setVisibleUnits( x_k );
-
-                tr++;
-            } while (tr < transitionRepeat);
-
-            // Calculate current ratio for the importance weight
-            part_w = 1;
-            va_B = ((*p_W) * x_k) + b;
-            // va_A = 0;  // WA * x_k;
-
-            for (int i=0; i<hSize; i++) { // Somando as 4 parcelas softmax
-                part_w *= ( 1 + exp( betas[k+1] * va_B(i) ) );
-                part_w *= ( 1 + exp( (1 - betas[k+1]) * bA(i) ) );
-                part_w /= ( 1 + exp( betas[k] * va_B(i) ) );
-                part_w /= ( 1 + exp( (1 - betas[k]) * bA(i) ) );
-            }
-            w_r *= exp( ((betas[k+1] - betas[k]) * (x_k.transpose() * d ))(0) +
-                        ((betas[k] - betas[k+1]) * (x_k.transpose() * dA))(0)  ) * part_w;
-        }
-
-        // cout << "Importance weight for run " << r << ": " << w_r << endl;
-
-        weights.push_back(w_r);
+        // weights.push_back(w);
+        sumW += w;
     }
 
-    double ZA = 1;
+    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
+    long double ZA = 1;
     for (int i=0; i<hSize; i++) {
         ZA *= 1 + exp(bA(i));
     }
     for (int j=0; j<xSize; j++) {
         ZA *= 1 + exp(dA(j));
     }
-    // cout << "Normalization constant of auxiliar RBM: " << ZA << endl;
+    // cout << "r^ = " << sumW/n_runs << ", Z_A = " << ZA << endl;
+    // cout << "Z^ = " << ZA * (sumW/n_runs) << endl;
 
-    double ratio_estimation = 0;
-    for (auto wr: weights) {
-        ratio_estimation += wr;
-    }
-    ratio_estimation /= n_runs;
-
-    double variance = 0;
-    for (auto wr: weights) {
-        variance += (ratio_estimation - wr)*(ratio_estimation - wr);
-    }
-    variance /= n_runs;     // Empirical variance of wr
-    variance /= n_runs;     // Approximated variance of the ratio estimation
-
-    double Z = ratio_estimation * ZA;
-    double sdZ = sqrt(variance) * ZA;
-
-    cout << "Ratio: " << ratio_estimation << " +- " << variance << endl;
-    cout << "Z^: " << Z << " +- " << sdZ << endl;
-    cout << "ln( Z^ +- s ) = [" << log(Z - sdZ) << ", " << log(Z + sdZ) << "]" << endl;
-
-    return Z;
+    return ZA * (sumW/n_runs);
 }
-*********************/
 
 
 VectorXd RBM::complete_pattern(VectorXd & sample, int repeat) {
@@ -1343,6 +1286,101 @@ VectorXd RBM::complete_pattern(VectorXd & sample, int repeat) {
     }
 
     return x;
+}
+
+
+int RBM::predict(VectorXd & sample, int n_labels) {
+    if ( !initialized ) {
+        printError("Cannot predict label without a trained RBM!");
+        exit(1);
+    }
+    // FIXME: Preciso dar n_labels? É dedutível... Mas se eu for usar Data como entrada, vou ter esse valor
+
+    int sampleSize = xSize - n_labels;
+    if (sampleSize != sample.size()) {
+        printError("Size of the data given does not match RBM size! (or the specified number of labels is wrong)");
+        exit(1);
+    }
+
+    x << sample, VectorXd::Constant(n_labels, 0.5);
+
+    int maxL;
+    double maxProb = 0;
+
+    auxH = (*p_W)*x + b;
+    for (int i=0; i<hSize; i++){
+        h(i) = 1.0/( 1 + exp( - auxH(i) ) );
+    }
+    auxX = h.transpose() * (*p_W) + d.transpose();
+    for (int j = sampleSize; j < xSize; j++){
+        if ( 1.0/( 1 + exp( - auxX(j) ) ) > maxProb ) {
+            maxProb = 1.0/( 1 + exp( - auxX(j) ) );
+            maxL = j - sampleSize;
+        }
+    }
+
+    return maxL;
+}
+
+void RBM::classificationStatistics(Data & data) {
+    if ( !initialized ) {
+        printError("Cannot predict label without a trained RBM!");
+        exit(1);
+    }
+    data.joinLabels(true);
+    if (data.get_sample_size() != xSize) {
+        printError("Size of the data given does not match RBM size!");
+        exit(1);
+    }
+
+    data.joinLabels(false);
+    int total = data.get_number_of_samples();
+    int labels = data.get_number_of_labels();
+    int sampleSize = data.get_sample_size();  // FIXME: Melhor calcular?
+
+    int results[labels][2];
+    memset( results, 0, sizeof(results) );
+
+    int maxL;
+    double maxProb;
+
+    int correct;
+
+    for (int s = 0; s < total; s++) {
+        // Classify the sample
+        x << data.get_sample(s), VectorXd::Constant(labels, 0.5);
+
+        maxProb = 0;
+
+        auxH = (*p_W)*x + b;
+        for (int i=0; i<hSize; i++){
+            h(i) = 1.0/( 1 + exp( - auxH(i) ) );
+        }
+        auxX = h.transpose() * (*p_W) + d.transpose();
+        for (int j = sampleSize; j < xSize; j++){
+            if ( 1.0/( 1 + exp( - auxX(j) ) ) > maxProb ) {
+                maxProb = 1.0/( 1 + exp( - auxX(j) ) );
+                maxL = j - sampleSize;
+            }
+        }
+
+        correct = data.get_label(s);
+        results[ correct ][ int(correct == maxL) ]++;
+        // cout << "Label = " << correct << ", prediction = " << maxL
+        //      << ". Correct? " << int(correct == maxL) << endl;
+    }
+
+    int rights = 0;
+    double lTotal;
+
+    for (int l=0; l < labels; l++) {
+        lTotal = results[l][1] + results[l][0];
+        cout << "Label " << l << ": " << results[l][1] * 100 / lTotal << "% correct and "
+                         << results[l][0] * 100 / lTotal << "% incorrect (total of "
+                         << lTotal << " samples)" << endl;
+        rights += results[l][1];
+    }
+    cout << "\t Total Accuracy: " << float(rights)*100/total << " %" << endl;
 }
 
 

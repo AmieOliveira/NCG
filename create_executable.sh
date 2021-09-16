@@ -9,7 +9,7 @@ while getopts s:fh flag
 do
     case "${flag}" in
         s) FILE=${OPTARG};;
-        f) OPTIMIZER=O3
+        f) OPTIMIZER=-O3
            echo "Compiling with O3 flag, for faster code"
            ;;
         h) echo "Optional flags:"
@@ -28,12 +28,12 @@ eigenPath=$(<eigenPath)
 
 if [ "$FILE" = "all" ]; then
     echo "Compiling all scripts"
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER main.cpp basics.cpp RBM.cpp Data.cpp -o main.exe
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER completeGraph.cpp basics.cpp RBM.cpp Data.cpp -o complete.exe
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER vNeighborsGraph.cpp basics.cpp RBM.cpp Data.cpp -o neighbors.exe
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER BASconnectGraph.cpp basics.cpp RBM.cpp Data.cpp -o BAScon.exe
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER sgd.cpp basics.cpp RBM.cpp Data.cpp -o SGD.exe
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER mnist.cpp basics.cpp RBM.cpp Data.cpp -o mnist.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER main.cpp basics.cpp RBM.cpp Data.cpp -o main.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER completeGraph.cpp basics.cpp RBM.cpp Data.cpp -o complete.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER vNeighborsGraph.cpp basics.cpp RBM.cpp Data.cpp -o neighbors.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER BASconnectGraph.cpp basics.cpp RBM.cpp Data.cpp -o BAScon.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER sgd.cpp basics.cpp RBM.cpp Data.cpp -o SGD.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER mnist.cpp basics.cpp RBM.cpp Data.cpp -o mnist.exe
 
     if [ -n "$string" ] || [ -n "$string2" ] || [ -n "$string3" ]; then
       string="error"
@@ -66,7 +66,7 @@ else
         fi
     fi
     echo "Compiling $FILE.cpp into $OUT.exe"
-    g++ -std=c++14 -I$eigenPath -$OPTIMIZER "$FILE.cpp" basics.cpp RBM.cpp Data.cpp -o "$OUT.exe"
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER "$FILE.cpp" basics.cpp RBM.cpp Data.cpp -o "$OUT.exe"
 fi
 
 echo "----------> Done!"

@@ -57,8 +57,6 @@ Data::Data(unsigned seed, DataDistribution distr, int size, int nSamples) {
 }
 
 void Data::createData(DataDistribution distr, int size) {
-    printInfo("Starting Data creation");
-
     switch (distr) {
         case DataDistribution::BAS:
         {
@@ -74,6 +72,7 @@ void Data::createData(DataDistribution distr, int size) {
                 _indexMap.push_back(i);
             }
 
+            printInfo("BAS dataset was created");
             break;
         }
         default:
@@ -239,6 +238,8 @@ void Data::loadData(string filename, bool labels) {
             _indexMap.push_back( j );
             j++;
         }
+
+        // TODO: Executar check do numero de amostras!! (dar break e soltar um warning se nao bater - ou erro)
     }
 
     if ( !labels ) hasLabels = false;

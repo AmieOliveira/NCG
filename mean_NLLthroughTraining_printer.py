@@ -6,13 +6,13 @@ from math import log
 import numpy as np
 
 
-k_values = [1]  # [100, 20, 10, 5, 2, 1]
+k_values = [10, 1]  # [100, 20, 10, 5, 2, 1]
 v_values = [16, 14, 12, 10, 8, 6, 4]
 versions = [2, 3, 4]  # [1, 2]
-p_val = [1]  # [1, 0.75, 0.5, 0.25]
+p_val = [1, 0.5]  # [1, 0.75, 0.5, 0.25]
 
 size = "default"  # "default", "wide"
-lim_iter = int(20)
+lim_iter = int(100)
 plotType = "sgd"
 # "complete", "neighbors", "BAScon", "SGD" for BAS
 # "complete", "convolution", "sgd" for MNIST
@@ -24,7 +24,7 @@ periodoNLL = 1
 
 dataType = "mnist"  # "bas", "mnist"
 dataSize = 4
-lRate = 0.01
+lRate = 0.1
 bSize = 50
 hiddenUnits = 500
 
@@ -252,7 +252,7 @@ elif plotType.upper() == "SGD":
                 if (r == 0) and (periodoNLL != 1):
                     gh_med, gh_max, gh_min, gx_med, gx_max, gx_min = read_degree_stats(filenameCon)
 
-                    iterations = len(gh_med.index)
+                    iterations = len(gh_med)
                     degMeanH = np.zeros(shape=(iterations, repeat))
                     degMeanX = np.zeros(shape=(iterations, repeat))
                     degMaxH = np.zeros(shape=(iterations, repeat))
@@ -325,12 +325,12 @@ elif plotType.upper() == "SGD":
             connectivityDF[f"Minimum in H, CD-{k}, p = {p} - q1"] = np.quantile(degMinH, q=0.25,axis=1)
             connectivityDF[f"Minimum in H, CD-{k}, p = {p} - q3"] = np.quantile(degMinH, q=0.75,axis=1)
 
-    connectivityDF.set_index(indexes, inplace=True)
+    # connectivityDF.set_index(indexes, inplace=True)  # TODO: Need to fix training to only output at certain intervals
 
 
 plt.legend()
 plt.title("NLL evolution through RBM training")
-plt.xlabel("Iteration")
+plt.xlabel("Epoch")
 plt.ylabel("Average NLL")
 plt.grid(color="gray", linestyle=":", linewidth=.2)
 
@@ -349,10 +349,10 @@ if dataType == "bas":
     plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
 
-plt.savefig(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}-{repeat}rep{errorPrint}.pdf", transparent=True)
+plt.savefig(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}_iter{lim_iter}-{repeat}rep{errorPrint}.pdf", transparent=True)
 # plt.show()
 
-meanDF.to_csv(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}-{repeat}rep.csv")
+meanDF.to_csv(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}_iter{lim_iter}-{repeat}rep.csv")
 
 if plotType.upper() == "SGD":
-    connectivityDF.to_csv(f"{outputPath}/meanDeg_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}-{repeat}rep.csv")
+    connectivityDF.to_csv(f"{outputPath}/meanDeg_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}_iter{lim_iter}-{repeat}rep.csv")

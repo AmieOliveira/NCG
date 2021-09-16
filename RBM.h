@@ -31,6 +31,12 @@ enum Heuristic {
     // SA_SGD
 };
 
+enum ZEstimation {  // Normalization constant estimation methods
+    None,   // No estimation (exact value). Only available for small RBMs
+    MC,
+    AIS,
+};
+
 class RBM {
     // Flags
     bool initialized;   // True if RBM has dimensions
@@ -75,11 +81,7 @@ class RBM {
 
     void sample_x_label(int l_size);
 
-    // Energy methods
-    double energy();
-    double freeEnergy();
-    double freeEnergy(VectorXd & x_vec);
-
+    // Normalization constant methods
     double partialZ(int n);
     double partialZ_effX(int n);
 
@@ -162,6 +164,11 @@ public:
     void getProbabilities_h(VectorXd & output);  // !
     void getProbabilities_h(VectorXd & output, VectorXd & x_vec);  // !
 
+    // Energy methods
+    double energy();
+    double freeEnergy();
+    double freeEnergy(VectorXd & x_vec);
+
     // Training methods
     void trainSetup();
     void trainSetup(bool NLL);
@@ -183,16 +190,19 @@ public:
 
     // Evaluation methods
     double negativeLogLikelihood(Data & data);
+    double negativeLogLikelihood(Data & data, ZEstimation method);
     vector<double> getTrainingHistory();
 
     // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);
-    // long double normalizationConstant_AISestimation();
+    long double normalizationConstant_AISestimation(int n_runs);
 
     VectorXd complete_pattern(VectorXd & sample, int repeat);
 
+    int predict(VectorXd & sample, int n_labels);
+    void classificationStatistics(Data & data);
 
     // Saving methods
     void save(string filename);
