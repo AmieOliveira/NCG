@@ -24,7 +24,7 @@ parser.add_argument("--iter", type=int, default=None,
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
 basSize = 4
-lRate = 0.01
+lRate = 0.1
 bSize = 50
 H = 500
 
