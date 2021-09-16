@@ -803,7 +803,7 @@ void RBM::fit(Data & trainData){
     }
 
     isTrained = true;
-
+    printInfo("Finished RBM training");
 }
 
 
@@ -833,6 +833,7 @@ void RBM::fit_connectivity(Data & trainData) {
             printError("Not yet implemented!");
             cerr << "Optimization via " << opt_type << " heuristic is not implemented" << endl;
     }
+    printInfo("Finished RBM training");
 }
 
 
@@ -1003,9 +1004,19 @@ void RBM::optimizer_SGD(Data & trainData) {
     isTrained = true;
 }
 
+double RBM::negativeLogLikelihood(Data & data) {
+    if (xSize > MAXSIZE_EXACTPROBABILITY) {
+        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
+            printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
+        }
+        return negativeLogLikelihood(data, ZEstimation::None);
+    } else {
+        return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default?
+    }
+}
 
 // Evaluation methods
-double RBM::negativeLogLikelihood(Data & data) {
+double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
     if (!initialized){
         string errorMessage;
         errorMessage = "Cannot calculate NLL without initializing RBM!";
@@ -1023,26 +1034,46 @@ double RBM::negativeLogLikelihood(Data & data) {
     }
     total = total/N;
 
-    //cout << "Partial: " << total << endl;
-    if (xSize > MAXSIZE_EXACTPROBABILITY) {
-        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
-            printWarning("NLL provided is an approximation, since the RBM is too big for exact calculation");
-        }
-        if (!hasSeed){
-            string errorMessage;
-            errorMessage = "Cannot estimate NLL without random seed!";
-            printError(errorMessage);
-            throw runtime_error(errorMessage);
-        }
+    switch (method) {
+        case None:
+            if (xSize > MAXSIZE_EXACTPROBABILITY) {
+                printWarning("Attempting to calculate exact NLL for a RBM that is too big. Script may never finish.");
+            }
+            total += log( normalizationConstant_effX() );
+            break;
 
-        int idx = int( N * (*p_dis)(generator) );
+        case MC:
+            if (!hasSeed){
+                string errorMessage;
+                errorMessage = "Cannot estimate NLL without random seed!";
+                printError(errorMessage);
+                throw runtime_error(errorMessage);
+            }
+            int idx;
+            idx = int( N * (*p_dis)(generator) );
 
-        x = data.get_sample(idx);
-        total += log( normalizationConstant_MCestimation( 500 ) );
-        // TODO: Change number of samples (make adaptable?)
-    } else {
-        total += log( normalizationConstant_effX() );
+            x = data.get_sample(idx);
+            total += log( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
+            break;
+
+        case AIS:
+            if (!hasSeed){
+                string errorMessage;
+                errorMessage = "Cannot estimate NLL without random seed!";
+                printError(errorMessage);
+                throw runtime_error(errorMessage);
+            }
+            total += log( normalizationConstant_AISestimation( 100 ) );
+            break;
+
+        default:
+            printError("Normalization constant method not implemented!");
+            cerr << "There is no available implementation of method '" << method
+                 << "'. Please choose another one."<< endl;
+            exit(1);
     }
+    //cout << "Partial: " << total << endl;
+
     return total;
 }
 
@@ -1152,6 +1183,85 @@ long double RBM::normalizationConstant_MCestimation(int n_samples) {
     // cout << "  " << check << " null energy samples" << endl;
 
     return pow(2, xSize) * n_samples / soma;
+}
+
+
+long double RBM::normalizationConstant_AISestimation(int n_runs) {
+    // References:
+    //      - Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
+    //      - Agustinus Kristiadi's Blog, Introduction to Annealed Importance Sampling.
+    //        https://wiseodd.github.io/techblog/2017/12/23/annealed-importance-sampling/
+    // TODO: Optimize function (está implementado como "caixa preta")
+
+    RBM prior(xSize, hSize);
+    prior.setRandomSeed(generator());
+    prior.setVisibleBiases(d);
+
+    // FIXME: These are preliminary parameters, should change them
+    int n_betas = 1000;
+    int transitionRepeat = 50;
+    double betas[n_betas];
+
+    for (int k=0; k < n_betas; k++) {
+        betas[k] = double(k)/(n_betas - 1);
+        // cout << "Beta_" << k << ": " << betas[k] << endl;
+    }
+
+    // vector<double> weights;
+    double w, sumW;
+    VectorXd x_k;
+
+    auto f_0 = [&r = prior](VectorXd & x_vec) { return exp(- r.freeEnergy(x_vec)); };
+    auto f_n = [&](VectorXd & x_vec) { return exp(- freeEnergy(x_vec)); };
+
+    auto f_j = [&f0 = f_0, &fn = f_n, &b = betas](VectorXd & x_vec, int j) {
+        return pow( f0(x_vec), 1 - b[j] ) * pow( fn(x_vec), b[j] );
+    };
+
+    auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat]
+                (VectorXd & x_vec, int j) {
+        VectorXd x_prime(X);
+
+        for (int t=0; t < tr; t++) {
+            for (int i=0; i < X; i++) {
+                x_prime(i) = x_vec(i) + 2 * (*distr)(gen) - 1;
+                if (x_prime(i) < 0.5) x_prime(i) = 0;
+                else x_prime(i) = 1;
+            }
+
+            if ( (*distr)(gen) < fj(x_prime, j)/fj(x_vec, j) ) x_vec = x_prime;
+        }
+    };
+
+    sumW = 0;
+
+    for (int r=0; r < n_runs; r++) {
+
+        x_k = prior.sample_xout();
+        w = f_j(x_k, 1)/f_j(x_k, 0);
+
+        for (int bIdx=1; bIdx < n_betas; bIdx++) {
+            T(x_k, bIdx);
+
+            w *= f_j(x_k, r+1)/f_j(x_k, r);
+        }
+
+        // weights.push_back(w);
+        sumW += w;
+    }
+
+    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
+    long double ZA = 1;
+    for (int i=0; i<hSize; i++) {
+        ZA *= 1 + exp(bA(i));
+    }
+    for (int j=0; j<xSize; j++) {
+        ZA *= 1 + exp(dA(j));
+    }
+    // cout << "r^ = " << sumW/n_runs << ", Z_A = " << ZA << endl;
+    // cout << "Z^ = " << ZA * (sumW/n_runs) << endl;
+
+    return ZA * (sumW/n_runs);
 }
 
 

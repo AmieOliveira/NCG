@@ -31,6 +31,12 @@ enum Heuristic {
     // SA_SGD
 };
 
+enum ZEstimation {  // Normalization constant estimation methods
+    None,   // No estimation (exact value). Only available for small RBMs
+    MC,
+    AIS,
+};
+
 class RBM {
     // Flags
     bool initialized;   // True if RBM has dimensions
@@ -184,13 +190,14 @@ public:
 
     // Evaluation methods
     double negativeLogLikelihood(Data & data);
+    double negativeLogLikelihood(Data & data, ZEstimation method);
     vector<double> getTrainingHistory();
 
     // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);
-    // long double normalizationConstant_AISestimation();
+    long double normalizationConstant_AISestimation(int n_runs);
 
     VectorXd complete_pattern(VectorXd & sample, int repeat);
 

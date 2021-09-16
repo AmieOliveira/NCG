@@ -324,112 +324,143 @@ int main(int argc, char **argv) {
     Data mnistTrain("Datasets/bin_mnist-train.data", true);
     cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
 
-    Data mnistTest("Datasets/bin_mnist-test.data", true);
-    cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
+    // Data mnistTest("Datasets/bin_mnist-test.data", true);
+    // cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
 
     RBM model;
 
-    for (int i=0; i<5; i++) {
-        stringstream fname;
-        fname << "Training Outputs/Teste MNIST/mnist_" << "sgd-1" << "_H500_CD-1_lr0.01_mBatch50_iter20_withLabels_run" << i << ".rbm";
-        model.load(fname.str());
-
-        cout << "FILE: '" << fname.str() << "'" << endl;
-        cout << "TRAIN SET" << endl;
-        model.classificationStatistics(mnistTrain);
-        cout << endl << "TEST SET" << endl;
-        model.classificationStatistics(mnistTest);
-        cout << endl << endl;
-    }
-
+    // for (int i=0; i<5; i++) {
+    //     stringstream fname;
+    //     fname << "Training Outputs/Teste MNIST/mnist_" << "sgd-1" << "_H500_CD-1_lr0.01_mBatch50_iter20_withLabels_run" << i << ".rbm";
+    //     model.load(fname.str());
+    //
+    //     cout << "FILE: '" << fname.str() << "'" << endl;
+    //     cout << "TRAIN SET" << endl;
+    //     model.classificationStatistics(mnistTrain);
+    //     cout << endl << "TEST SET" << endl;
+    //     model.classificationStatistics(mnistTest);
+    //     cout << endl << endl;
+    // }
 
     // int size = mnistTrain.get_sample_size();
 
-    // int k = 10;
-    // int iter = 2;
-    // int b_size = 10;
-    // double l_rate = 0.01;
+    int k = 10;
+    int iter = 100;
+    int b_size = 5;
+    double l_rate = 0.01;
     // double p = 1;
-    // unsigned seed = 8924;  // 1382
-    // bool shuffleData = true;
-//
+    unsigned seed = 7732601;  // 1382 8924 2321345824
+    bool shuffleData = true;
+
+    int repeat = 5;
+
+    // // BAS Dataset
+    // Data bas(BAS, 5);
+    //
     // // Traditional RBM
-    // RBM model(size, 500, false);
+    // RBM model;
+    // model.setDimensions(bas.get_sample_size(), bas.get_sample_size(), false);
     // model.setRandomSeed(seed);
-    // // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
-    // // model.fit(mnistTrain);
-    // // model.save("mnist-partial_H500_CD-10_lr0.01_mBatch10_iter2_shuffle_seed0.rbm");
-//
-//
-    // int repeat = 10;
-//
-    // // Auxiliar variables
-    // VectorXd nll(repeat);
-    // VectorXd nllTest(repeat);
-    // double meanTrain, meanTest, sumTrain, sumTest;
-//
-    // // // RBM model complete
-    // // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
-    // // model.setRandomSeed(seed);
-    // //
-    // // for (int r=0; r<repeat; r++) {
-    // //     nll(r) = model.negativeLogLikelihood(mnist);
-    // //     cout << "Estimated value: " << nll(r) << endl;
-    // // }
-    // // cout << "\t Complete: Mean of " << nll.mean() << endl;
-//
-    // // RBM model Complete
-    // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.1_mBatch50_iter50_run0.rbm");
+    // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
+    // model.fit(bas);
+    // model.save("bas5test.rbm");
+    //
+    // cout << "Exact value: " << model.negativeLogLikelihood(bas, ZEstimation::None) << endl;
+    // for (int r=1; r <= repeat; r++) {
+    //     cout << "MC estimation " << r << ": " << model.negativeLogLikelihood(bas, ZEstimation::MC) << endl;
+    //     cout << "AIS estimation " << r << ": " << model.negativeLogLikelihood(bas, ZEstimation::AIS) << endl;
+    // }
+
+    // Auxiliar variables
+    VectorXd nll(repeat);
+    VectorXd nllAIS(repeat);
+    double meanTrain, meanAIS, sumTrain, sumAIS;
+
+    // model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.01_mBatch50_iter20_run0.rbm");
     // model.setRandomSeed(seed);
-//
+    //
+    // cout << "MC estimation: " << endl;
     // for (int r=0; r<repeat; r++) {
-    //     nll(r) = model.negativeLogLikelihood(mnistTrain);
+    //     nll(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::MC);
     //     cout << "Estimated value: " << nll(r) << endl;
     // }
-//
-    // meanTrain = nll.mean();
-//
-    // sumTrain = 0;
-    // for (int r=0; r<repeat; r++) {
-    //     sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
-    // }
-    // cout << "\t Complete RBM: " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
-//
-//
-    // // RBM model Convolutional
-    // model.load("Training Outputs/Teste MNIST/mnist_convolution_H484_CD-1_lr0.1_mBatch50_iter50_run0.rbm");
+    // cout << "\t Complete: Mean of " << nll.mean() << endl;
+    //
     // model.setRandomSeed(seed);
-//
+    // cout << "AIS estimation: " << endl;
     // for (int r=0; r<repeat; r++) {
-    //     nll(r) = model.negativeLogLikelihood(mnistTrain);
+    //     nll(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::AIS);
     //     cout << "Estimated value: " << nll(r) << endl;
     // }
-//
-    // meanTrain = nll.mean();
-//
-    // sumTrain = 0;
-    // for (int r=0; r<repeat; r++) {
-    //     sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
-    // }
-    // cout << "\t Convolutional RBM: " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+    // cout << "\t Complete: Mean of " << nll.mean() << endl;
+
+    // RBM model Complete
+    model.load("Training Outputs/Teste MNIST/mnist_complete_H500_CD-1_lr0.1_mBatch50_iter50_run0.rbm");
+    model.setRandomSeed(seed);
+
+    for (int r=0; r<repeat; r++) {
+        nll(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::MC);
+        nllAIS(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::AIS);
+        cout << "Estimated values: " << nll(r) << " for MC and " << nllAIS(r) << " for AIS." << endl;
+    }
+
+    meanTrain = nll.mean();
+    meanAIS = nllAIS.mean();
+
+    sumTrain = 0;
+    sumAIS = 0;
+    for (int r=0; r<repeat; r++) {
+        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+        sumAIS += (nllAIS(r) - meanAIS)*(nllAIS(r) - meanAIS);
+    }
+    cout << "\t Complete RBM with MC:  " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+    cout << "\t Complete RBM with AIS: " << meanAIS << " ± " << sqrt(sumAIS/repeat) << endl;
 
 
-    //// RBM model SGD
-    //model.load("Training Outputs/Teste MNIST/mnist_sgd-1_H500_CD-1_lr0.01_mBatch50_iter20_run2.rbm");
-    //model.setRandomSeed(seed);
-    //
-    //for (int r=0; r<repeat; r++) {
-    //    nll(r) = model.negativeLogLikelihood(mnistTrain);
-    //    cout << "Estimated value: " << nll(r) << endl;
-    //}
-    //
-    //meanTrain = nll.mean();
-    //
-    //sumTrain = 0;
-    //for (int r=0; r<repeat; r++) {
-    //    sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
-    //}
-    //cout << "\t SGD (run 2): " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+    // RBM model Convolutional
+    model.load("Training Outputs/Teste MNIST/mnist_convolution_H484_CD-1_lr0.1_mBatch50_iter50_run0.rbm");
+    model.setRandomSeed(seed);
+
+    for (int r=0; r<repeat; r++) {
+        nll(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::MC);
+        nllAIS(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::AIS);
+        cout << "Estimated values: " << nll(r) << " for MC and " << nllAIS(r) << " for AIS." << endl;
+    }
+
+    meanTrain = nll.mean();
+    meanAIS = nllAIS.mean();
+
+    sumTrain = 0;
+    sumAIS = 0;
+    for (int r=0; r<repeat; r++) {
+        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+        sumAIS += (nllAIS(r) - meanAIS)*(nllAIS(r) - meanAIS);
+    }
+    cout << "\t Convolutional RBM with MC:  " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+    cout << "\t Convolutional RBM with AIS: " << meanAIS << " ± " << sqrt(sumAIS/repeat) << endl;
+
+
+    // RBM model SGD
+    model.load("Training Outputs/Teste MNIST/mnist_sgd-1_H500_CD-1_lr0.1_mBatch50_iter50_run2.rbm");
+    model.setRandomSeed(seed);
+
+    for (int r=0; r<repeat; r++) {
+        nll(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::MC);
+        nllAIS(r) = model.negativeLogLikelihood(mnistTrain, ZEstimation::AIS);
+        cout << "Estimated values: " << nll(r) << " for MC and " << nllAIS(r) << " for AIS." << endl;
+    }
+
+    meanTrain = nll.mean();
+    meanAIS = nllAIS.mean();
+
+    sumTrain = 0;
+    sumAIS = 0;
+    for (int r=0; r<repeat; r++) {
+        sumTrain += (nll(r) - meanTrain)*(nll(r) - meanTrain);
+        sumAIS += (nllAIS(r) - meanAIS)*(nllAIS(r) - meanAIS);
+    }
+    cout << "\t SGD RBM with MC:  " << meanTrain << " ± " << sqrt(sumTrain/repeat) << endl;
+    cout << "\t SGD RBM with AIS: " << meanAIS << " ± " << sqrt(sumAIS/repeat) << endl;
 
     return 0;
 }
