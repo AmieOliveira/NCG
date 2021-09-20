@@ -209,16 +209,25 @@ int main(int argc, char **argv) {
         case conv:
             printInfo("Training RBM with convolutional connectivity");
 
-            int side;
+            int side, tmp;
 
             side = int(sqrt(H));
+            tmp = H;
             H = side*side;
-            msg.str("");
-            msg << "Since we use convolutional connectivity, changed number of hidden units to " << H;
-            printWarning(msg.str());
+            if (H != tmp){
+                msg.str("");
+                msg << "Since we use convolutional connectivity, changed number of hidden units to " << H;
+                printWarning(msg.str());
+                model.setDimensions(X, H);
+                model.setRandomSeed(seed);
+            }
+
+            int nLabels;
+            if (useLabels) nLabels = mnist.get_number_of_labels();
+            else nLabels = 0;
 
             model.connectivity(true);
-            model.setConnectivity(square_convolution( X, H ));
+            model.setConnectivity( square_convolution( X, H, nLabels ) );
             cout << "Connectivity matrix:" << endl << model.getConnectivity() << endl;
 
             model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);

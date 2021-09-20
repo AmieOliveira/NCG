@@ -375,13 +375,17 @@ Eigen::MatrixXd Mixer::mix_neighbors(Eigen::MatrixXd regPattern, int iter) {
 
 }
 
-Eigen::MatrixXd square_convolution(int X, int H) {
+Eigen::MatrixXd square_convolution(int X, int H, int n_labels) {
     // Generates a convolutional connecitivty matrix
     // Assumes that the input figure is a square
 
+    cout << "Number of labels: " << n_labels << endl;
+
     Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(H, X);
 
-    int side = sqrt(X);
+    int dataX = X - n_labels;
+
+    int side = sqrt(dataX);
     int rest = H;
 
     int h = 0;
@@ -401,6 +405,10 @@ Eigen::MatrixXd square_convolution(int X, int H) {
                         ret( h, (row+i)*side + (col+j) ) = 1;
                     }
                 }
+                // Activate label' neurons
+                for (int j = dataX; j < X; j++) {
+                    ret( h, j ) = 1;
+                }
                 h++;
             }
         }
@@ -410,7 +418,11 @@ Eigen::MatrixXd square_convolution(int X, int H) {
 
     if (rest > 0) {
         for (int idx=0; idx<rest; idx++) {
-            for (int j=0; j<X; j++) {
+            for (int j=0; j<dataX; j++) {
+                ret( h, j ) = 1;
+            }
+            // Activate label' neurons
+            for (int j = dataX; j < X; j++) {
                 ret( h, j ) = 1;
             }
             h++;
