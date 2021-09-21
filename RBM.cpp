@@ -884,6 +884,7 @@ void RBM::optimizer_SGD(Data & trainData) {
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
         for (int j=0; j<xSize; j++) {
+            // TODO: Take into account whether the x_j is a label
             A_(i,j) = (*p_dis)(generator)/2;
             if (A(i,j) == 1) A_(i,j) += 0.5;
             // A_ is initialized uniformly between 0 and 0.5 or
@@ -1009,9 +1010,9 @@ double RBM::negativeLogLikelihood(Data & data) {
         if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
             printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
         }
-        return negativeLogLikelihood(data, ZEstimation::None);
-    } else {
         return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default?
+    } else {
+        return negativeLogLikelihood(data, ZEstimation::None);
     }
 }
 
@@ -1033,6 +1034,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
         total += freeEnergy( data.get_sample(idx) );
     }
     total = total/N;
+    // cout << "Parcial da NLL: " << total << endl;
 
     switch (method) {
         case None:
@@ -1053,7 +1055,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += log( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
@@ -1063,7 +1065,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                 printError(errorMessage);
                 throw runtime_error(errorMessage);
             }
-            total += log( normalizationConstant_AISestimation( 100 ) );
+            total += logl( normalizationConstant_AISestimation( 20 ) );
             break;
 
         default:
@@ -1072,7 +1074,6 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                  << "'. Please choose another one."<< endl;
             exit(1);
     }
-    //cout << "Partial: " << total << endl;
 
     return total;
 }
@@ -1175,12 +1176,9 @@ long double RBM::normalizationConstant_MCestimation(int n_samples) {
             sample_h();
             sample_x();
         }
-
-        soma += exp(freeEnergy());
-
-        // if (exp(freeEnergy()) == 0) check++;
+        soma += expl(freeEnergy());
+        // cout << "Soma = " << soma << endl;
     }
-    // cout << "  " << check << " null energy samples" << endl;
 
     return pow(2, xSize) * n_samples / soma;
 }
@@ -1208,20 +1206,20 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     }
 
     // vector<double> weights;
-    double w, sumW;
+    long double w, sumW;
     VectorXd x_k;
+    double tmp;
+    VectorXd x_aux(xSize);
 
-    auto f_0 = [&r = prior](VectorXd & x_vec) { return exp(- r.freeEnergy(x_vec)); };
-    auto f_n = [&](VectorXd & x_vec) { return exp(- freeEnergy(x_vec)); };
+    auto f_0 = [&r = prior](VectorXd & x_vec) { return expl(- r.freeEnergy(x_vec)); };
+    auto f_n = [&](VectorXd & x_vec) { return expl(- freeEnergy(x_vec)); };
 
     auto f_j = [&f0 = f_0, &fn = f_n, &b = betas](VectorXd & x_vec, int j) {
-        return pow( f0(x_vec), 1 - b[j] ) * pow( fn(x_vec), b[j] );
+        return powl( f0(x_vec), 1 - b[j] ) * powl( fn(x_vec), b[j] );
     };
 
-    auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat]
+    auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat, &x_prime = x_aux]
                 (VectorXd & x_vec, int j) {
-        VectorXd x_prime(X);
-
         for (int t=0; t < tr; t++) {
             for (int i=0; i < X; i++) {
                 x_prime(i) = x_vec(i) + 2 * (*distr)(gen) - 1;
@@ -1238,28 +1236,31 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     for (int r=0; r < n_runs; r++) {
 
         x_k = prior.sample_xout();
-        w = f_j(x_k, 1)/f_j(x_k, 0);
+        w = expl( (betas[1] - betas[0]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
+        // f_j(x_k, 1)/f_j(x_k, 0);
 
         for (int bIdx=1; bIdx < n_betas; bIdx++) {
             T(x_k, bIdx);
 
-            w *= f_j(x_k, r+1)/f_j(x_k, r);
+            w *= expl( (betas[r+1] - betas[r]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
+            // f_j(x_k, r+1)/f_j(x_k, r);
         }
-
+        // cout << "Weight " << r << ": " << w << endl;
         // weights.push_back(w);
         sumW += w;
     }
 
     VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
     long double ZA = 1;
-    for (int i=0; i<hSize; i++) {
+    for (int i=0; i<hSize; i++) {  // TODO: Erase this if b is kept as zero biases
         ZA *= 1 + exp(bA(i));
     }
     for (int j=0; j<xSize; j++) {
         ZA *= 1 + exp(dA(j));
     }
+    // cout << "Sum of the weights: " << sumW << endl;
     // cout << "r^ = " << sumW/n_runs << ", Z_A = " << ZA << endl;
-    // cout << "Z^ = " << ZA * (sumW/n_runs) << endl;
+    // cout << "Z^ = " << ZA * (sumW/n_runs) << ", ln: " << logl(ZA * (sumW/n_runs)) << endl;
 
     return ZA * (sumW/n_runs);
 }
