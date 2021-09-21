@@ -1242,8 +1242,8 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
         for (int bIdx=1; bIdx < n_betas; bIdx++) {
             T(x_k, bIdx);
 
-            w *= expl( (betas[r+1] - betas[r]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-            // f_j(x_k, r+1)/f_j(x_k, r);
+            w *= expl( (betas[bIdx+1] - betas[bIdx]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
+            // f_j(x_k, bIdx+1)/f_j(x_k, bIdx);
         }
         // cout << "Weight " << r << ": " << w << endl;
         // weights.push_back(w);
