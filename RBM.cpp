@@ -1208,8 +1208,6 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     // vector<double> weights;
     long double w, sumW;
     VectorXd x_k;
-    double tmp;
-    VectorXd x_aux(xSize);
 
     auto f_0 = [&r = prior](VectorXd & x_vec) { return expl(- r.freeEnergy(x_vec)); };
     auto f_n = [&](VectorXd & x_vec) { return expl(- freeEnergy(x_vec)); };
@@ -1218,6 +1216,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
         return powl( f0(x_vec), 1 - b[j] ) * powl( fn(x_vec), b[j] );
     };
 
+    VectorXd x_aux(xSize);
     auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat, &x_prime = x_aux]
                 (VectorXd & x_vec, int j) {
         for (int t=0; t < tr; t++) {
@@ -1233,24 +1232,24 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
 
     sumW = 0;
 
+    double prob;
+    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
+
     for (int r=0; r < n_runs; r++) {
 
         x_k = prior.sample_xout();
         w = expl( (betas[1] - betas[0]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-        // f_j(x_k, 1)/f_j(x_k, 0);
 
-        for (int bIdx=1; bIdx < n_betas; bIdx++) {
+        for (int bIdx=2; bIdx < n_betas; bIdx++) {
             T(x_k, bIdx);
 
-            w *= expl( (betas[bIdx+1] - betas[bIdx]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-            // f_j(x_k, bIdx+1)/f_j(x_k, bIdx);
+            w *= expl( (betas[bIdx] - betas[bIdx-1]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
         }
         // cout << "Weight " << r << ": " << w << endl;
         // weights.push_back(w);
         sumW += w;
     }
 
-    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
     long double ZA = 1;
     for (int i=0; i<hSize; i++) {  // TODO: Erase this if b is kept as zero biases
         ZA *= 1 + exp(bA(i));
