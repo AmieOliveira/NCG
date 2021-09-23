@@ -175,6 +175,10 @@ int main(int argc, char **argv) {
     // Training
     bool doShuffle = true;  // Is there a reason I'd wish it not to be true?
 
+    int nLabels;
+    if (useLabels) nLabels = mnist.get_number_of_labels();
+    else nLabels = 0;
+
     switch ( resolveOption(trainType) ) {
         case complete:
             printInfo("Training complete RBM");
@@ -201,7 +205,7 @@ int main(int argc, char **argv) {
 
             model.connectivity(true);
             model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
-            model.optSetup(Heuristic::SGD, connect_fname, trainParam);
+            model.optSetup(Heuristic::SGD, connect_fname, trainParam, nLabels);
 
             model.fit_connectivity(mnist);
 
@@ -221,10 +225,6 @@ int main(int argc, char **argv) {
                 model.setDimensions(X, H);
                 model.setRandomSeed(seed);
             }
-
-            int nLabels;
-            if (useLabels) nLabels = mnist.get_number_of_labels();
-            else nLabels = 0;
 
             model.connectivity(true);
             model.setConnectivity( square_convolution( X, H, nLabels ) );

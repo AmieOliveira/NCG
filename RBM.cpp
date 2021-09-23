@@ -317,7 +317,7 @@ void RBM::startConnectivity(double p) {
     double moeda;
 
     for (int i=0; i<hSize; i++) {
-        for (int j=0; j<xSize; j++) {
+        for (int j=0; j < xSize-nLabels; j++) {
             moeda = (*p_dis)(generator);
 
             if (moeda < p) A(i,j) = 1;
@@ -837,14 +837,19 @@ void RBM::fit_connectivity(Data & trainData) {
 }
 
 
-void RBM::optSetup(){
-    optSetup(SGD, "connectivity", 1);
-}
+void RBM::optSetup(){ optSetup(SGD, "connectivity", 1, 0); }
+
+void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, "connectivity", p, 0); }
 
 void RBM::optSetup(Heuristic method, string connFileName, double p){
+    optSetup(SGD, connFileName, p, 0);
+}
+
+void RBM::optSetup(Heuristic method, string connFileName, double p, int labels){
     opt_type = method;
     connect_out = connFileName;
     a_prob = p;
+    nLabels = labels;
     startConnectivity(p);
 
     // SGD parameters
@@ -879,11 +884,13 @@ void RBM::optimizer_SGD(Data & trainData) {
     int actualSize;
     double nll_val;
 
+    int Xdata = xSize - nLabels;
+
     if (shuffle) { trainData.setRandomSeed(generator()); }
 
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
-        for (int j=0; j<xSize; j++) {
+        for (int j=0; j<Xdata; j++) {
             // TODO: Take into account whether the x_j is a label
             A_(i,j) = (*p_dis)(generator)/2;
             if (A(i,j) == 1) A_(i,j) += 0.5;
@@ -962,7 +969,7 @@ void RBM::optimizer_SGD(Data & trainData) {
             A_gradient = A_gradient/actualSize;
             A_ = A_ + l_rate * A_gradient;
             for (int i=0; i<hSize; i++) {
-                for (int j=0; j<xSize; j++) {
+                for (int j=0; j<Xdata; j++) {
                     if ( A_(i,j) < limiar ) {
                         A(i,j) = 0;
 
