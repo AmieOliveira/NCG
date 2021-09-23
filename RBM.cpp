@@ -317,7 +317,7 @@ void RBM::startConnectivity(double p) {
     double moeda;
 
     for (int i=0; i<hSize; i++) {
-        for (int j=0; j<xSize; j++) {
+        for (int j=0; j < xSize-nLabels; j++) {
             moeda = (*p_dis)(generator);
 
             if (moeda < p) A(i,j) = 1;
@@ -837,14 +837,19 @@ void RBM::fit_connectivity(Data & trainData) {
 }
 
 
-void RBM::optSetup(){
-    optSetup(SGD, "connectivity", 1);
-}
+void RBM::optSetup(){ optSetup(SGD, "connectivity", 1, 0); }
+
+void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, "connectivity", p, 0); }
 
 void RBM::optSetup(Heuristic method, string connFileName, double p){
+    optSetup(SGD, connFileName, p, 0);
+}
+
+void RBM::optSetup(Heuristic method, string connFileName, double p, int labels){
     opt_type = method;
     connect_out = connFileName;
     a_prob = p;
+    nLabels = labels;
     startConnectivity(p);
 
     // SGD parameters
@@ -879,11 +884,13 @@ void RBM::optimizer_SGD(Data & trainData) {
     int actualSize;
     double nll_val;
 
+    int Xdata = xSize - nLabels;
+
     if (shuffle) { trainData.setRandomSeed(generator()); }
 
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
-        for (int j=0; j<xSize; j++) {
+        for (int j=0; j<Xdata; j++) {
             // TODO: Take into account whether the x_j is a label
             A_(i,j) = (*p_dis)(generator)/2;
             if (A(i,j) == 1) A_(i,j) += 0.5;
@@ -962,7 +969,7 @@ void RBM::optimizer_SGD(Data & trainData) {
             A_gradient = A_gradient/actualSize;
             A_ = A_ + l_rate * A_gradient;
             for (int i=0; i<hSize; i++) {
-                for (int j=0; j<xSize; j++) {
+                for (int j=0; j<Xdata; j++) {
                     if ( A_(i,j) < limiar ) {
                         A(i,j) = 0;
 
@@ -1055,7 +1062,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += logl( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 10000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
@@ -1065,7 +1072,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                 printError(errorMessage);
                 throw runtime_error(errorMessage);
             }
-            total += logl( normalizationConstant_AISestimation( 20 ) );
+            total += logl( normalizationConstant_AISestimation( 30 ) );
             break;
 
         default:
@@ -1196,7 +1203,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     prior.setVisibleBiases(d);
 
     // FIXME: These are preliminary parameters, should change them
-    int n_betas = 1000;
+    int n_betas = 5000;
     int transitionRepeat = 50;
     double betas[n_betas];
 
@@ -1208,8 +1215,6 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     // vector<double> weights;
     long double w, sumW;
     VectorXd x_k;
-    double tmp;
-    VectorXd x_aux(xSize);
 
     auto f_0 = [&r = prior](VectorXd & x_vec) { return expl(- r.freeEnergy(x_vec)); };
     auto f_n = [&](VectorXd & x_vec) { return expl(- freeEnergy(x_vec)); };
@@ -1218,6 +1223,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
         return powl( f0(x_vec), 1 - b[j] ) * powl( fn(x_vec), b[j] );
     };
 
+    VectorXd x_aux(xSize);
     auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat, &x_prime = x_aux]
                 (VectorXd & x_vec, int j) {
         for (int t=0; t < tr; t++) {
@@ -1233,24 +1239,47 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
 
     sumW = 0;
 
+    double prob;
+    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
+    // VectorXd hA(hSize);
+
     for (int r=0; r < n_runs; r++) {
 
         x_k = prior.sample_xout();
         w = expl( (betas[1] - betas[0]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-        // f_j(x_k, 1)/f_j(x_k, 0);
 
-        for (int bIdx=1; bIdx < n_betas; bIdx++) {
+        for (int bIdx=2; bIdx < n_betas; bIdx++) {
             T(x_k, bIdx);
 
-            w *= expl( (betas[r+1] - betas[r]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-            // f_j(x_k, r+1)/f_j(x_k, r);
+            // for (int s=0; s < transitionRepeat; s++) {
+            //     auxH = b + (*p_W)*x_k;
+            //     for (int i=0; i<hSize; i++) {
+            //         // Target RBM
+            //         prob = 1.0/( 1 + exp( - betas[bIdx] * auxH(i) ) );
+            //         if ((*p_dis)(generator) < prob) h(i) = 1;
+            //         else h(i) = 0;
+            //
+            //         // Prior RBM
+            //         prob = 1.0/( 1 + exp( - (1 - betas[bIdx]) * bA(i) ) );  // Since all prior's weights are null...
+            //         if ((*p_dis)(generator) < prob) hA(i) = 1;
+            //         else hA(i) = 0;
+            //     }
+            //
+            //     auxX = (betas[bIdx] * ( (h.transpose()*(*p_W)).transpose() + d )) + ((1 - betas[bIdx]) * dA);
+            //     for (int j=0; j<xSize; j++) {
+            //         prob = 1.0/( 1 + exp( - auxX(j) ) );
+            //         if ((*p_dis)(generator) < prob) x_k(j) = 1;
+            //         else x_k(j) = 0;
+            //     }
+            // }
+
+            w *= expl( (betas[bIdx] - betas[bIdx-1]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
         }
         // cout << "Weight " << r << ": " << w << endl;
         // weights.push_back(w);
         sumW += w;
     }
 
-    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
     long double ZA = 1;
     for (int i=0; i<hSize; i++) {  // TODO: Erase this if b is kept as zero biases
         ZA *= 1 + exp(bA(i));
@@ -1428,7 +1457,7 @@ void RBM::load(string filename) {
     if( !input ) {
         printError("Could not load RBM!");
         cerr << "File '" << filename << "' could not be opened" << endl;
-        exit(1);
+        throw runtime_error("Load failed");
     }
 
     string line;

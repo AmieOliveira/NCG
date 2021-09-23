@@ -103,6 +103,7 @@ class RBM {
     Heuristic opt_type;     // Connectivity optimization method
     string connect_out;     // Filename of connectivity output (dumps A throughout training)
     double a_prob;          // Probability used for initialization of A
+    int nLabels;            // Number of labels (when using for classification)
 
     double limiar;
 
@@ -185,6 +186,7 @@ public:
     void optSetup();
     void optSetup(Heuristic method, double p);
     void optSetup(Heuristic method, string connFileName, double p);
+    void optSetup(Heuristic method, string connFileName, double p, int labels);
 
     void fit_connectivity(Data & trainData);
 
