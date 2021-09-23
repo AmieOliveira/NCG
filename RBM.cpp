@@ -1055,7 +1055,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += logl( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 10000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
@@ -1065,7 +1065,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                 printError(errorMessage);
                 throw runtime_error(errorMessage);
             }
-            total += logl( normalizationConstant_AISestimation( 20 ) );
+            total += logl( normalizationConstant_AISestimation( 30 ) );
             break;
 
         default:
@@ -1196,7 +1196,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     prior.setVisibleBiases(d);
 
     // FIXME: These are preliminary parameters, should change them
-    int n_betas = 1000;
+    int n_betas = 5000;
     int transitionRepeat = 50;
     double betas[n_betas];
 
@@ -1234,6 +1234,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
 
     double prob;
     VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
+    // VectorXd hA(hSize);
 
     for (int r=0; r < n_runs; r++) {
 
@@ -1242,6 +1243,28 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
 
         for (int bIdx=2; bIdx < n_betas; bIdx++) {
             T(x_k, bIdx);
+
+            // for (int s=0; s < transitionRepeat; s++) {
+            //     auxH = b + (*p_W)*x_k;
+            //     for (int i=0; i<hSize; i++) {
+            //         // Target RBM
+            //         prob = 1.0/( 1 + exp( - betas[bIdx] * auxH(i) ) );
+            //         if ((*p_dis)(generator) < prob) h(i) = 1;
+            //         else h(i) = 0;
+            //
+            //         // Prior RBM
+            //         prob = 1.0/( 1 + exp( - (1 - betas[bIdx]) * bA(i) ) );  // Since all prior's weights are null...
+            //         if ((*p_dis)(generator) < prob) hA(i) = 1;
+            //         else hA(i) = 0;
+            //     }
+            //
+            //     auxX = (betas[bIdx] * ( (h.transpose()*(*p_W)).transpose() + d )) + ((1 - betas[bIdx]) * dA);
+            //     for (int j=0; j<xSize; j++) {
+            //         prob = 1.0/( 1 + exp( - auxX(j) ) );
+            //         if ((*p_dis)(generator) < prob) x_k(j) = 1;
+            //         else x_k(j) = 0;
+            //     }
+            // }
 
             w *= expl( (betas[bIdx] - betas[bIdx-1]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
         }
@@ -1427,7 +1450,7 @@ void RBM::load(string filename) {
     if( !input ) {
         printError("Could not load RBM!");
         cerr << "File '" << filename << "' could not be opened" << endl;
-        exit(1);
+        throw runtime_error("Load failed");
     }
 
     string line;
