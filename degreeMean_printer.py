@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
         for p in p_val:
             try:
-                df[f"Maximum in H, CD-{k}, p = {p}"].head()
+                df[f"Maximum in H, CD-{k}, p = {p}"].head(1)
                 n_ps += 1
             except KeyError:
                 pass
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
         fig, ax = plt.subplots(nrows=2, ncols=n_ps, sharex='all', figsize=(n_ps*4, 5))
         fig.suptitle(f"Unit's degree for CD-{k}")
-        ax.flatten()
+        ax = ax.flatten()
 
 
         pIdx = 0
@@ -175,8 +175,8 @@ if __name__ == "__main__":
                 ax[n].yaxis.set_tick_params(labelbottom=True)
                 # ax[i, j].tick_params(left=False)
 
-        ax[0].set_ylabel("Hidden\nMean degree")
-        ax[n_ps].set_ylabel("Visible\nMean degree")
+        ax[0].set_ylabel("Hidden\nAverage degree")
+        ax[n_ps].set_ylabel("Visible\nAverage degree")
 
         plt.tight_layout()
 

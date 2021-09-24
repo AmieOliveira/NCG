@@ -7,24 +7,24 @@ from math import log
 
 # basSize = 4
 
-comparison = "compConvSGD1"  # "inicializacaoA_"
+comparison = "compConvSGD"  # "inicializacaoA_"
 # "neighTypes", "neighbors10-14_BAScon2-4_complete"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-k_vals = [1]  # [100, 20, 10, 5, 2, 1]
+k_vals = [1, 10]  # [100, 20, 10, 5, 2, 1]
 # k = 1
 # neighbors = [14, 12, 10]   # 16 [14, 12, 10, 8, 6, 4]
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
-lim_iter = 20
-errorType = "quartile"        # None, "std", "quartile"
+lim_iter = 100
+errorType = None        # None, "std", "quartile"
 repeat = 5
 p_vals = [1, 0.5]
 # p = 1
 seed = 0
-lRate = 0.01
+lRate = 0.1
 bSize = 50
 H = 500
 addOthers = False
@@ -352,17 +352,17 @@ cmsize = 20.0
 
 cmap = cm.get_cmap(colormap)
 
-filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.1_mBatch50_100iter-5rep.csv"
+filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.1_mBatch50_iter100-5rep.csv"
 dfC = pd.read_csv(filenameC, comment="#", index_col=0)
 dfC = dfC.astype(float)
 dfC = dfC.iloc[0:lim_iter+1]
 
-filenameS = "Training Outputs/meanNLL_mnist_convolution_H500_lr0.1_mBatch50_100iter-5rep.csv"
+filenameS = "Training Outputs/meanNLL_mnist_convolution_H484_lr0.1_mBatch50_iter100-5rep.csv"
 dfS = pd.read_csv(filenameS, comment="#", index_col=0)
 dfS = dfS.astype(float)
 dfS = dfS.iloc[0:lim_iter+1]
 
-filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.1_mBatch50_100iter-5rep.csv"
+filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.1_mBatch50_iter100-5rep.csv"
 dfO = pd.read_csv(filenameO, comment="#", index_col=0)
 dfO = dfO.astype(float)
 dfO = dfO.iloc[0:lim_iter+1]
