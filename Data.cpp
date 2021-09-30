@@ -113,8 +113,6 @@ void Data::fill_bas(int n, vector<int> state) {
 }
 
 void Data::createData(DataDistribution distr, int size, int nSamples) {
-    printInfo("Starting Data creation");
-
     VectorXd aux(_size);
 
     switch (distr) {
@@ -149,6 +147,8 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
                 _indexMap.push_back( sIdx );
                 sIdx++;
             }
+
+            printInfo("Created (partial) BAS data");
             break;
         default:
             string errorMessage = "Data distribution not implemented";
