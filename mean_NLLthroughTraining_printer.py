@@ -35,58 +35,16 @@ outputPath = inputPath
 inputBaseBAS = {"complete": "nll_progress_bas{}_complete_k{}-run{}.csv",
                  "neighbors":  "nll_progress_bas{}_neighbors{}_{}_k{}-run{}.csv",
                  "BAScon":     "nll_progress_bas{}_BASconV{}_k{}-run{}.csv",
-                 "SGD":        ["nll_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv",
-                                "connectivity_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv"]}
-inputBaseMNIST = ["nll_mnist_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",
-                  "connectivity_mnist_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv"]
+                 "SGD":        "nll_bas{}_SGD_CD-{}_lr{}_p{}_run{}.csv"}
+inputBaseMNIST = "nll_mnist_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv"
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
 
 fig, ax = plt.subplots(1, figsize=figSize[size])
 
 meanDF = pd.DataFrame()
-connectivityDF = pd.DataFrame()
 indexes = np.array(list(range(0, lim_iter + 1, periodoNLL)))  # NOTE: THIS IS HANDMADE AND SHOULD BE CHANGED ACCORDINGLY
 # print(indexes)
-
-
-def read_degree_stats(name):
-    Xsize = 0
-    Hsize = 0
-    if dataType == "bas":
-        Xsize = dataSize**2
-        Hsize = Xsize
-    elif dataType == "mnist":
-        Xsize = 784  # 28*28
-        Hsize = hiddenUnits
-
-    tmpdf = pd.read_csv(name, comment="#", index_col=0, header=None)
-    tmpdf = tmpdf.astype(int)
-    arr = tmpdf.to_numpy()
-    arr = np.reshape(arr, (arr.shape[0], Hsize, Xsize))
-
-    iterations = len(tmpdf.index)
-
-    gh_max = np.zeros(iterations)
-    gh_med = np.zeros(iterations)
-    gh_min = np.zeros(iterations)
-
-    gx_max = np.zeros(iterations)
-    gx_med = np.zeros(iterations)
-    gx_min = np.zeros(iterations)
-
-    for i in range(iterations):
-        gh = [sum(arr[i, r, :]) for r in range(Hsize)]
-        gh_med[i] = sum(gh)/len(gh)
-        gh_min[i] = min(gh)
-        gh_max[i] = max(gh)
-
-        gx = [sum(arr[i, :, c]) for c in range(Xsize)]
-        gx_med[i] = sum(gx)/len(gx)
-        gx_min[i] = min(gx)
-        gx_max[i] = max(gx)
-
-    return gh_med, gh_max, gh_min, gx_med, gx_max, gx_min
 
 
 
@@ -104,7 +62,7 @@ if plotType in ["complete", "convolution"]:
                     filename = inputPath + "/" + "nll_progress_complete_k{}-run{}.csv".format(k, r)
                     df = pd.read_csv(filename, comment="#")  # index_col=0
             elif dataType == "mnist":
-                filename = inputPath + "/" + inputBaseMNIST[0].format(plotType, hiddenUnits, k, lRate, bSize, lim_iter, r)
+                filename = inputPath + "/" + inputBaseMNIST.format(plotType, hiddenUnits, k, lRate, bSize, lim_iter, r)
                 df = pd.read_csv(filename, comment="#", index_col=0)
 
             df = df.astype(float)
@@ -233,43 +191,18 @@ elif plotType.upper() == "SGD":
 
             for r in range(repeat):
                 filenameNLL = ""
-                filenameCon = ""
 
                 if dataType == "bas":
                     filenameNLL = inputPath + "/" + inputBaseBAS[plotType][0].format(dataSize, k, lRate, p, r)
-                    filenameCon = inputPath + "/" + inputBaseBAS[plotType][1].format(dataSize, k, lRate, p, r)
                 elif dataType == "mnist":
                     tmp = f"{plotType}-{p}"
-                    filenameNLL = inputPath + "/" + inputBaseMNIST[0].format(tmp, hiddenUnits, k, lRate, bSize, lim_iter, r)
-                    filenameCon = inputPath + "/" + inputBaseMNIST[1].format(tmp, hiddenUnits, k, lRate, bSize, lim_iter, r)
+                    filenameNLL = inputPath + "/" + inputBaseMNIST.format(tmp, hiddenUnits, k, lRate, bSize, lim_iter, r)
 
                 df = pd.read_csv(filenameNLL, comment="#", index_col=0)
                 df = df.astype(float)
                 df = df.iloc[0:lim_iter + 1]
                 df = df.rename(columns={"NLL": f"iter{r}"})
                 dfListNLL.append(df)
-
-                if (r == 0) and (periodoNLL != 1):
-                    gh_med, gh_max, gh_min, gx_med, gx_max, gx_min = read_degree_stats(filenameCon)
-
-                    iterations = len(gh_med)
-                    degMeanH = np.zeros(shape=(iterations, repeat))
-                    degMeanX = np.zeros(shape=(iterations, repeat))
-                    degMaxH = np.zeros(shape=(iterations, repeat))
-                    degMaxX = np.zeros(shape=(iterations, repeat))
-                    degMinH = np.zeros(shape=(iterations, repeat))
-                    degMinX = np.zeros(shape=(iterations, repeat))
-
-                    degMeanH[:, 0] = gh_med
-                    degMeanX[:, 0] = gx_med
-                    degMaxH[:, 0] = gh_max
-                    degMaxX[:, 0] = gx_max
-                    degMinH[:, 0] = gh_min
-                    degMinX[:, 0] = gx_min
-
-                else:
-                    degMeanH[:, r], degMaxH[:, r], degMinH[:, r], \
-                    degMeanX[:, r], degMaxX[:, r], degMinX[:, r] = read_degree_stats(filenameCon)
 
             # NLL statistics
             fullDfNLL = pd.concat(dfListNLL, axis=1)
@@ -293,39 +226,6 @@ elif plotType.upper() == "SGD":
                 errorMinus = meanDF[f"CD-{k}, p = {p} - q1"].to_numpy()
                 ax.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
-
-            # Connectivity statistics
-            connectivityDF[f"Mean in H, CD-{k}, p = {p}"] = degMeanH.mean(axis=1)
-            connectivityDF[f"Mean in H, CD-{k}, p = {p} - std"] = degMeanH.std(axis=1)
-            connectivityDF[f"Mean in H, CD-{k}, p = {p} - q1"] = np.quantile(degMeanH, q=0.25,axis=1)
-            connectivityDF[f"Mean in H, CD-{k}, p = {p} - q3"] = np.quantile(degMeanH, q=0.75,axis=1)
-
-            connectivityDF[f"Mean in X, CD-{k}, p = {p}"] = degMeanX.mean(axis=1)
-            connectivityDF[f"Mean in X, CD-{k}, p = {p} - std"] = degMeanX.std(axis=1)
-            connectivityDF[f"Mean in X, CD-{k}, p = {p} - q1"] = np.quantile(degMeanX, q=0.25,axis=1)
-            connectivityDF[f"Mean in X, CD-{k}, p = {p} - q3"] = np.quantile(degMeanX, q=0.75,axis=1)
-
-            connectivityDF[f"Maximum in X, CD-{k}, p = {p}"] = degMaxX.mean(axis=1)
-            connectivityDF[f"Maximum in X, CD-{k}, p = {p} - std"] = degMaxX.std(axis=1)
-            connectivityDF[f"Maximum in X, CD-{k}, p = {p} - q1"] = np.quantile(degMaxX, q=0.25,axis=1)
-            connectivityDF[f"Maximum in X, CD-{k}, p = {p} - q3"] = np.quantile(degMaxX, q=0.75,axis=1)
-
-            connectivityDF[f"Maximum in H, CD-{k}, p = {p}"] = degMaxH.mean(axis=1)
-            connectivityDF[f"Maximum in H, CD-{k}, p = {p} - std"] = degMaxH.std(axis=1)
-            connectivityDF[f"Maximum in H, CD-{k}, p = {p} - q1"] = np.quantile(degMaxH, q=0.25,axis=1)
-            connectivityDF[f"Maximum in H, CD-{k}, p = {p} - q3"] = np.quantile(degMaxH, q=0.75,axis=1)
-
-            connectivityDF[f"Minimum in X, CD-{k}, p = {p}"] = degMinX.mean(axis=1)
-            connectivityDF[f"Minimum in X, CD-{k}, p = {p} - std"] = degMinX.std(axis=1)
-            connectivityDF[f"Minimum in X, CD-{k}, p = {p} - q1"] = np.quantile(degMinX, q=0.25,axis=1)
-            connectivityDF[f"Minimum in X, CD-{k}, p = {p} - q3"] = np.quantile(degMinX, q=0.75,axis=1)
-
-            connectivityDF[f"Minimum in H, CD-{k}, p = {p}"] = degMinH.mean(axis=1)
-            connectivityDF[f"Minimum in H, CD-{k}, p = {p} - std"] = degMinH.std(axis=1)
-            connectivityDF[f"Minimum in H, CD-{k}, p = {p} - q1"] = np.quantile(degMinH, q=0.25,axis=1)
-            connectivityDF[f"Minimum in H, CD-{k}, p = {p} - q3"] = np.quantile(degMinH, q=0.75,axis=1)
-
-    # connectivityDF.set_index(indexes, inplace=True)  # TODO: Need to fix training to only output at certain intervals
 
 
 plt.legend()
@@ -353,6 +253,3 @@ plt.savefig(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUni
 # plt.show()
 
 meanDF.to_csv(f"{outputPath}/meanNLL_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}_iter{lim_iter}-{repeat}rep.csv")
-
-if plotType.upper() == "SGD":
-    connectivityDF.to_csv(f"{outputPath}/meanDeg_{basename}_{plotType}{neighPrint}_H{hiddenUnits}_lr{lRate}_mBatch{bSize}_iter{lim_iter}-{repeat}rep.csv")
