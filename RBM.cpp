@@ -1017,7 +1017,8 @@ double RBM::negativeLogLikelihood(Data & data) {
         if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
             printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
         }
-        return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default?
+        // return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default? (I think it's too slow..)
+        return negativeLogLikelihood(data, ZEstimation::Trunc);
     } else {
         return negativeLogLikelihood(data, ZEstimation::None);
     }
@@ -1062,7 +1063,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += logl( normalizationConstant_MCestimation( 10000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 100000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
@@ -1072,7 +1073,15 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                 printError(errorMessage);
                 throw runtime_error(errorMessage);
             }
-            total += logl( normalizationConstant_AISestimation( 30 ) );
+            total += logl( normalizationConstant_AISestimation( 10 ) );
+            break;
+
+        case Trunc:
+            total += log( normalizationConstant_trunc(data) );
+            break;
+
+        case TruncRep:
+            total += log( normalizationConstant_truncRep(data) );
             break;
 
         default:
@@ -1203,7 +1212,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     prior.setVisibleBiases(d);
 
     // FIXME: These are preliminary parameters, should change them
-    int n_betas = 5000;
+    int n_betas = 8000;
     int transitionRepeat = 50;
     double betas[n_betas];
 
@@ -1292,6 +1301,59 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     // cout << "Z^ = " << ZA * (sumW/n_runs) << ", ln: " << logl(ZA * (sumW/n_runs)) << endl;
 
     return ZA * (sumW/n_runs);
+}
+
+
+long double RBM::normalizationConstant_trunc(Data & data) {
+    // NOTE: This method version assumes there are no duplicated samples in 'data'
+    //  This makes the method faster, although could lead to over-estimation of the
+    //  normalization constant if there are duplicated samples
+    long double estimativa = 0;
+
+    int N = data.get_number_of_samples();
+    int size = data.get_sample_size();
+
+    for (int s = 0; s < N; ++s) {
+
+        estimativa += addSampleAndNeighbors( data.get_sample(s) );
+    }
+
+    return estimativa;
+}
+
+
+long double RBM::normalizationConstant_truncRep(Data & data) {
+    long double estimativa = 0;
+
+    int N = data.get_number_of_samples();
+
+    for (int s = 0; s < N; ++s) {
+        if ( data.isDuplicated(s) ) continue;  // Skips sample if it's been computed
+
+        estimativa += addSampleAndNeighbors( data.get_sample(s) );
+    }
+
+    return estimativa;
+}
+
+
+long double RBM::addSampleAndNeighbors(VectorXd & vec) {
+    x = vec;
+
+    long double partialSum = expl( - freeEnergy() );
+
+    // Troca do primeiro elemento
+    x(0) = abs(1 - x(0));
+    partialSum += expl( - freeEnergy() );
+
+    // Troca dos outros elementos (primeiro destroca o anterior)
+    for (int e = 1; e < xSize; e++) {
+        x(e-1) = abs(1 - x(e-1));
+        x(e) = abs(1 - x(e));
+        partialSum += expl( - freeEnergy() );
+    }
+
+    return partialSum;
 }
 
 

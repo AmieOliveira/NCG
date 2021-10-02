@@ -19,6 +19,7 @@ using namespace std;
 
 enum DataDistribution {
     BAS,    // Bars and Stripes, from A. Fischer, C. Igel "Training restricted Boltzmann machines: An introduction"
+    BASnoRep,
 };
 
 class Data {
@@ -44,7 +45,7 @@ class Data {
     void loadData(string filename, bool labels);
 
     // Support data creation methods
-    void fill_bas(int n, vector<int> state);
+    void fill_bas(int n, vector<int> state, bool hasDuplicates);
 
     // Manipulating the data
     void _shuffle();
@@ -85,6 +86,8 @@ public:
     void shuffle();
     void shuffle(unsigned seed);
 
+    // Miscellaneous
+    bool isDuplicated(int idx);
     void printData();
 };
 
