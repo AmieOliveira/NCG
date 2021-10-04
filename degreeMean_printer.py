@@ -28,7 +28,7 @@ lRate = 0.1
 bSize = 50
 H = 500
 
-p_val = [1, 0.75, 0.5, 0.25]
+p_val = [1, 0.75, 0.5, 0.25, 0.1]
 k_val = [100, 20, 10, 5, 2, 1]
 
 # cms = [cm.get_cmap("Blues"), cm.get_cmap("Oranges"),
