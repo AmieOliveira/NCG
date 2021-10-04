@@ -1414,7 +1414,7 @@ int RBM::predict(VectorXd & sample, int n_labels) {
     return maxL;
 }
 
-void RBM::classificationStatistics(Data & data) {
+double RBM::classificationStatistics(Data & data) {
     if ( !initialized ) {
         printError("Cannot predict label without a trained RBM!");
         exit(1);
@@ -1467,12 +1467,13 @@ void RBM::classificationStatistics(Data & data) {
 
     for (int l=0; l < labels; l++) {
         lTotal = results[l][1] + results[l][0];
-        cout << "Label " << l << ": " << results[l][1] * 100 / lTotal << "% correct and "
-                         << results[l][0] * 100 / lTotal << "% incorrect (total of "
-                         << lTotal << " samples)" << endl;
+        cout << "Label " << l << ": " << results[l][1] * 100 / lTotal
+             << "% correct and (total of " << lTotal << " samples)" << endl;
         rights += results[l][1];
     }
-    cout << "\t Total Accuracy: " << float(rights)*100/total << " %" << endl;
+    // cout << "\t Total Accuracy: " << float(rights)*100/total << " %" << endl;
+
+    return double(rights)*100/total;
 }
 
 

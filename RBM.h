@@ -209,7 +209,7 @@ public:
     VectorXd complete_pattern(VectorXd & sample, int repeat);
 
     int predict(VectorXd & sample, int n_labels);
-    void classificationStatistics(Data & data);
+    double classificationStatistics(Data & data);
 
     // Saving methods
     void save(string filename);
