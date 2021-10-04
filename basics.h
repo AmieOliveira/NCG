@@ -11,9 +11,11 @@ namespace colors {
     #define RED     "\033[31m"
     #define GREEN   "\033[32m"
     #define YELLOW  "\033[33m"
+    #define GRAY    "\u001b[30;1m"
     #define BOLDRED     "\033[1m\033[31m"
     #define BOLDGREEN   "\033[1m\033[32m"
     #define BOLDYELLOW  "\033[1m\033[33m"
+    #define BOLDGRAY    "\u001b[1m\u001b[30;1m"
 }
 
 #include <iostream>
@@ -32,6 +34,7 @@ using namespace colors;
 void printError(string msg);
 void printWarning(string msg);
 void printInfo(string msg);
+void printVerbose(string msg);
 
 // Connectivity Matrixes
 Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs);

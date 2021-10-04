@@ -17,6 +17,10 @@ void printInfo(string msg){
     cout << BOLDGREEN << "INFO:\t" << GREEN << msg << RESET << endl;
 }
 
+void printVerbose(string msg){
+    cout << BOLDGRAY << "VERBOSE:\t" << GRAY << msg << RESET << endl;
+}
+
 // Connectivity Matrixes
 Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs) {
     if (nNeighs <= 0) {

@@ -58,8 +58,9 @@ Data::Data(unsigned seed, DataDistribution distr, int size, int nSamples) {
 
 void Data::createData(DataDistribution distr, int size) {
     switch (distr) {
-        case DataDistribution::BAS:
         case DataDistribution::BASnoRep:
+            printVerbose("Creating no duplictes BAS dataset");
+        case DataDistribution::BAS:
         {
             _size = size*size;
             _n = pow(2, size + 1);
@@ -125,8 +126,9 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
     VectorXd aux(_size);
 
     switch (distr) {
-        case DataDistribution::BAS:
         case DataDistribution::BASnoRep:
+            printVerbose("Creating no duplictes BAS dataset");
+        case DataDistribution::BAS:
             _size = size*size;
             _n = nSamples;
             hasLabels = false;
