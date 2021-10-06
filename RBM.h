@@ -35,6 +35,8 @@ enum ZEstimation {  // Normalization constant estimation methods
     None,   // No estimation (exact value). Only available for small RBMs
     MC,
     AIS,
+    Trunc,
+    TruncRep,
 };
 
 class RBM {
@@ -84,6 +86,7 @@ class RBM {
     // Normalization constant methods
     double partialZ(int n);
     double partialZ_effX(int n);
+    long double addSampleAndNeighbors(VectorXd & vec);
 
     // Training variables
     SampleType stype;       // training method
@@ -200,11 +203,13 @@ public:
     double normalizationConstant_effX();
     long double normalizationConstant_MCestimation(int n_samples);
     long double normalizationConstant_AISestimation(int n_runs);
+    long double normalizationConstant_trunc(Data & data);
+    long double normalizationConstant_truncRep(Data & data);
 
     VectorXd complete_pattern(VectorXd & sample, int repeat);
 
     int predict(VectorXd & sample, int n_labels);
-    void classificationStatistics(Data & data);
+    double classificationStatistics(Data & data);
 
     // Saving methods
     void save(string filename);

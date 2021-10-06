@@ -321,14 +321,14 @@ void testRBMprediction() {
 
 
 int main(int argc, char **argv) {
-    Data mnistTrain("Datasets/bin_mnist-train.data", true);
-    cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
+    // Data mnistTrain("Datasets/bin_mnist-train.data", true);
+    // cout << "Using " << mnistTrain.get_number_of_samples() << " training samples." << endl;
 
     // Data mnistTest("Datasets/bin_mnist-test.data", true);
     // cout << "Using " << mnistTest.get_number_of_samples() << " test samples." << endl;
 
-    RBM model;
-
+    // RBM model;
+    //
     // string rbmType = "complete";
     // int H = 500;
     // int k = 1;
@@ -355,34 +355,70 @@ int main(int argc, char **argv) {
     // int size = mnistTrain.get_sample_size();
 
     int k = 1;
-    int iter = 20;
-    int b_size = 5;
+    int iter = 500;
+    int b_size = 50;  // 5
     double l_rate = 0.1;
     // double p = 1;
-    unsigned seed = 7732601;  // 1382 8924 2321345824
+    unsigned seed = 232140824;  // 1382 8924 2321345824 7732601
     bool shuffleData = true;
 
-    int repeat = 5;
+    int repeat = 1;
+    int n_seeds = 5;
 
-    // BAS Dataset
-    Data bas(BAS, 10);
-    // Data bas(seed, BAS, 28, 1000);
+    //// BAS Dataset
+    Data bas(BASnoRep, 5);
+    //Data bas(seed, BAS, 28, 1000);
+    //Data bas("Datasets/bin_mnist-test.data", false); bas = bas.separateTrainTestSets(0.1).at(0);
 
     // Traditional RBM
     RBM model;
-    model.setDimensions(bas.get_sample_size(), 500, false);
-    model.setRandomSeed(seed);
-    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 0, shuffleData);
-    model.fit(bas);
-    // model.save("bas10test.rbm");
 
     // model.load("bas28test.rbm");
     // model.setRandomSeed(seed);
 
-    // cout << "Exact value: " << model.negativeLogLikelihood(bas, ZEstimation::None) << endl;
-    for (int r=1; r <= repeat; r++) {
-        cout << "MC estimation " << r << ": " << model.negativeLogLikelihood(bas, ZEstimation::MC) << endl;
-        cout << "AIS estimation " << r << ": " << model.negativeLogLikelihood(bas, ZEstimation::AIS) << endl;
+    for (int s = 0; s < n_seeds; s++) {
+        model.setDimensions(bas.get_sample_size(), 500, false);
+        model.setRandomSeed(seed + s);
+        model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 50, shuffleData);
+        // cout << "Before training: " << model.negativeLogLikelihood(bas) << endl;
+
+        model.fit(bas);
+        //model.optSetup(Heuristic::SGD, "connectivityBAS6", 1, 0); model.fit_connectivity(bas);
+
+        // model.save("bas10test.rbm");
+        cout << "Exact value: " << model.negativeLogLikelihood(bas, ZEstimation::None) << endl;
+        cout << "Trunc estimation no verification: " << model.negativeLogLikelihood(bas, ZEstimation::Trunc) << endl;
+
+        // vector<double> vals;
+        //
+        double sumMC = 0, tmp;
+        // for (int r=1; r <= repeat; r++) {
+        //     model.setRandomSeed(seed + s + r);
+        //     tmp = model.negativeLogLikelihood(bas, ZEstimation::MC);
+        //     sumMC += tmp;
+        //     vals.push_back(tmp);
+        //     cout << "MC estimation " << r << ": " << tmp << endl;
+        // }
+        // sumMC = sumMC/repeat;
+        // double std = 0;
+        // for (auto v: vals) { std += pow(sumMC - v, 2); }
+        // std = sqrt(std/repeat);
+        // cout << "\tMC mean: " << sumMC << " ± " << std << endl;
+        //
+        // double sumAIS = 0;
+        // for (int r=1; r <= repeat; r++) {
+        //     model.setRandomSeed(seed + s + r);
+        //     tmp = model.negativeLogLikelihood(bas, ZEstimation::AIS);
+        //     //sumAIS += tmp;
+        //     //vals.at(r-1) = tmp;
+        //     cout << "AIS estimation " << r << ": " << tmp << endl;
+        // }
+        // sumAIS = sumAIS/repeat;
+        // std = 0;
+        // for (auto v: vals) { std += pow(sumAIS - v, 2); }
+        // std = sqrt(std/repeat);
+        // cout << "\tAIS mean: " << sumAIS << " ± " << std << endl;
+        // cout << endl;
     }
 
     // // Auxiliar variables

@@ -53,6 +53,7 @@ if __name__ == "__main__":
     outputFileName = f"{path}/degreeMean_{dataT}_sgd_H{H}_lr{lr}_mBatch{bSize}_iter{iters}{labels}.csv"
 
     indexes = []
+    firstFile = True
 
     connectivityDF = pd.DataFrame()
 
@@ -87,10 +88,13 @@ if __name__ == "__main__":
 
                     connections = line.split(",")
 
-                    if int(connections[0]) > iters:
+                    tmp = int(connections[0])
+                    if tmp > iters:
                         break
 
-                    indexes += [int(connections[0])]
+                    if firstFile:
+                        indexes += [tmp]
+
                     connections = connections[1:]
 
                     xDegrees = np.zeros(X)
@@ -128,6 +132,8 @@ if __name__ == "__main__":
                     gx_med[itIdx, r] = float(sumOfdegs)/X
 
                     itIdx += 1
+
+                firstFile = False
 
             # print("Max in H\n", gh_max)
             # print("Mean in H\n", gh_med)

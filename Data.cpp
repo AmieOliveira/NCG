@@ -59,14 +59,22 @@ Data::Data(unsigned seed, DataDistribution distr, int size, int nSamples) {
 void Data::createData(DataDistribution distr, int size) {
     switch (distr) {
         case DataDistribution::BAS:
+        case DataDistribution::BASnoRep:
         {
             _size = size*size;
             _n = pow(2, size + 1);
             hasLabels = false;
+            bool noDuplicate;
 
             vector<int> state(size, 0);
 
-            fill_bas(size, state);
+            if  (distr == BASnoRep) {
+                 noDuplicate = true;
+                 _n -= 2;
+            }
+            else noDuplicate = false;
+
+            fill_bas(size, state, noDuplicate);
 
             for (int i=0; i<_n; i++) {
                 _indexMap.push_back(i);
@@ -84,9 +92,12 @@ void Data::createData(DataDistribution distr, int size) {
     }
 }
 
-void Data::fill_bas(int n, vector<int> state) {
+void Data::fill_bas(int n, vector<int> state, bool noDuplicates) {
     if (n == 0) {
         VectorXd horizontal(_size), vertical(_size);
+
+        bool allSame = std::all_of(state.begin(), state.end(), [](int i) { return i==0 ; });
+        allSame = allSame || ( std::all_of(state.begin(), state.end(), [](int i) { return i==1; }) );
 
         int s = state.size();
         for (int i = 0; i < s; i++) {
@@ -100,16 +111,14 @@ void Data::fill_bas(int n, vector<int> state) {
         }
 
         _data.push_back(horizontal);
-        _data.push_back(vertical);
-
-
+        if ( !noDuplicates || !allSame ) _data.push_back(vertical);
 
         return;
     }
 
-    fill_bas(n-1, state);
+    fill_bas(n-1, state, noDuplicates);
     state.at(n-1) = abs(1 - state.at(n-1));
-    fill_bas(n-1, state);
+    fill_bas(n-1, state, noDuplicates);
 }
 
 void Data::createData(DataDistribution distr, int size, int nSamples) {
@@ -117,6 +126,7 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
 
     switch (distr) {
         case DataDistribution::BAS:
+        case DataDistribution::BASnoRep:
             _size = size*size;
             _n = nSamples;
             hasLabels = false;
@@ -143,9 +153,13 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
                         }
                     }
                 }
-                _data.push_back(aux);
+                if (std::find(_data.begin(), _data.end(), aux) != _data.end()) {
+                    _data.push_back(aux);
                 _indexMap.push_back( sIdx );
                 sIdx++;
+                } else {
+                    s--;
+                }
             }
 
             printInfo("Created (partial) BAS data");
@@ -381,6 +395,17 @@ void Data::shuffle() {
 void Data::shuffle(unsigned seed) {
     setRandomSeed(seed);
     _shuffle();
+}
+
+
+// Miscellaneous
+bool Data::isDuplicated(int idx) {
+    // Method checks whether idx-th item has appeared previously in dataset
+    int mIdx = _indexMap.at(idx);
+
+    auto first = _data.begin();
+    auto last = first + mIdx;
+    return ( std::find( first, last, _data.at(mIdx) ) != last );
 }
 
 void Data::printData() {
