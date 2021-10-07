@@ -155,12 +155,14 @@ void Data::createData(DataDistribution distr, int size, int nSamples) {
                         }
                     }
                 }
-                if (std::find(_data.begin(), _data.end(), aux) != _data.end()) {
-                    _data.push_back(aux);
-                _indexMap.push_back( sIdx );
-                sIdx++;
-                } else {
+                if ( (distr == DataDistribution::BASnoRep) &&
+                     (std::find(_data.begin(), _data.end(), aux) != _data.end()) ) {
                     s--;
+                    cout << "Created duplicated configuration, and BASnoRep cannot have them. Skipping" << endl;
+                } else {
+                    _data.push_back(aux);
+                    _indexMap.push_back( sIdx );
+                    sIdx++;
                 }
             }
 
