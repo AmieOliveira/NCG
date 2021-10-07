@@ -66,9 +66,9 @@ int main(int argc, char **argv) {
 
         cout << "FILE: '" << fname.str() << "'" << endl;
         cout << "TRAIN SET" << endl;
-        trainResults.push_back( model.classificationStatistics(mnistTrain) );
+        trainResults.push_back( model.classificationStatistics(mnistTrain, true) );
         cout << endl << "TEST SET" << endl;
-        testResults.push_back( model.classificationStatistics(mnistTest) );
+        testResults.push_back( model.classificationStatistics(mnistTest, true) );
         cout << endl << endl;
     }
 
