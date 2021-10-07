@@ -837,16 +837,23 @@ void RBM::fit_connectivity(Data & trainData) {
 }
 
 
-void RBM::optSetup(){ optSetup(SGD, "connectivity", 1, 0); }
-
-void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, "connectivity", p, 0); }
+void RBM::optSetup(){ optSetup(SGD, true, "connectivity", 1, 0); }
 
 void RBM::optSetup(Heuristic method, string connFileName, double p){
-    optSetup(SGD, connFileName, p, 0);
+    optSetup(SGD, true, connFileName, p, 0);
 }
 
 void RBM::optSetup(Heuristic method, string connFileName, double p, int labels){
+    optSetup(SGD, true, connFileName, p, 0);
+}
+
+void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, false, "", p, 0); }
+
+void RBM::optSetup(Heuristic method, double p, int labels){ optSetup(SGD, false, "", p, 0); }
+
+void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double p, int labels){
     opt_type = method;
+    saveConnectivity = saveConn;
     connect_out = connFileName;
     a_prob = p;
     nLabels = labels;
@@ -909,11 +916,13 @@ void RBM::optimizer_SGD(Data & trainData) {
     if (calcNLL) {
         history.push_back(negativeLogLikelihood(trainData)); // Before training
     }
-    output << "# Connectivity patterns throughout training" << endl;
-    output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
-    output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
-    output << "# A initialized with p = " << a_prob << endl;
-    output << "0," << printConnectivity_linear() << endl;
+    if (saveConnectivity) {
+        output << "# Connectivity patterns throughout training" << endl;
+        output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
+        output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
+        output << "# A initialized with p = " << a_prob << endl;
+        output << "0," << printConnectivity_linear() << endl;
+    }
 
     int it, bIdx, s;
 
@@ -1006,7 +1015,9 @@ void RBM::optimizer_SGD(Data & trainData) {
                 cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
             }
         }
-        output << it+1 << "," << printConnectivity_linear() << endl;
+        if (saveConnectivity) {
+            output << it+1 << "," << printConnectivity_linear() << endl;
+        }
     }
 
     isTrained = true;
