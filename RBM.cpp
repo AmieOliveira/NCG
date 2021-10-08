@@ -724,7 +724,6 @@ void RBM::fit(Data & trainData){
     if (shuffle) { trainData.setRandomSeed(generator()); }
 
     printInfo("------- TRAINING DATA -------");
-    // TODO: Print training setup?
 
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
     MatrixXd W_gradient(hSize, xSize);
@@ -749,15 +748,18 @@ void RBM::fit(Data & trainData){
         actualSize = b_size;
 
         for (bIdx = 0; bIdx < n_batches; ++bIdx) {
-            //cout << "Batch " << bIdx+1 << endl;
+            // cout << "\tBatch " << bIdx+1 << endl;
 
-            for (s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
+            int initS = bIdx * b_size;
+
+            for (s = initS; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
+                // cout << "\t\ts = " << s << endl;
 
                 VectorXd & xt = trainData.get_sample(s);
                 getProbabilities_h(h_hat, xt);
 
-                if (s == 0) {
+                if (s == initS) {
                     W_gradient = h_hat * xt.transpose();
                     b_gradient = h_hat;
                     d_gradient = xt;
@@ -790,6 +792,8 @@ void RBM::fit(Data & trainData){
 
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
+
+            // cout << "\tUpdated weights" << endl;
 
         }
 
@@ -837,16 +841,23 @@ void RBM::fit_connectivity(Data & trainData) {
 }
 
 
-void RBM::optSetup(){ optSetup(SGD, "connectivity", 1, 0); }
-
-void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, "connectivity", p, 0); }
+void RBM::optSetup(){ optSetup(SGD, true, "connectivity", 1, 0); }
 
 void RBM::optSetup(Heuristic method, string connFileName, double p){
-    optSetup(SGD, connFileName, p, 0);
+    optSetup(SGD, true, connFileName, p, 0);
 }
 
 void RBM::optSetup(Heuristic method, string connFileName, double p, int labels){
+    optSetup(SGD, true, connFileName, p, 0);
+}
+
+void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, false, "", p, 0); }
+
+void RBM::optSetup(Heuristic method, double p, int labels){ optSetup(SGD, false, "", p, 0); }
+
+void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double p, int labels){
     opt_type = method;
+    saveConnectivity = saveConn;
     connect_out = connFileName;
     a_prob = p;
     nLabels = labels;
@@ -891,7 +902,6 @@ void RBM::optimizer_SGD(Data & trainData) {
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
         for (int j=0; j<Xdata; j++) {
-            // TODO: Take into account whether the x_j is a label
             A_(i,j) = (*p_dis)(generator)/2;
             if (A(i,j) == 1) A_(i,j) += 0.5;
             // A_ is initialized uniformly between 0 and 0.5 or
@@ -909,11 +919,13 @@ void RBM::optimizer_SGD(Data & trainData) {
     if (calcNLL) {
         history.push_back(negativeLogLikelihood(trainData)); // Before training
     }
-    output << "# Connectivity patterns throughout training" << endl;
-    output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
-    output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
-    output << "# A initialized with p = " << a_prob << endl;
-    output << "0," << printConnectivity_linear() << endl;
+    if (saveConnectivity) {
+        output << "# Connectivity patterns throughout training" << endl;
+        output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
+        output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
+        output << "# A initialized with p = " << a_prob << endl;
+        output << "0," << printConnectivity_linear() << endl;
+    }
 
     int it, bIdx, s;
 
@@ -927,8 +939,9 @@ void RBM::optimizer_SGD(Data & trainData) {
         actualSize = b_size;
 
         for (bIdx = 0; bIdx < n_batches; ++bIdx) {
+            int initS = bIdx * b_size;
 
-            for (s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
+            for (s = initS; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
 
                 VectorXd & xt = trainData.get_sample(s);
@@ -936,7 +949,7 @@ void RBM::optimizer_SGD(Data & trainData) {
 
                 matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
 
-                if (s == 0) {
+                if (s == initS) {
                     W_gradient = matAux;
                     b_gradient = h_hat;
                     d_gradient = xt;
@@ -1006,7 +1019,9 @@ void RBM::optimizer_SGD(Data & trainData) {
                 cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
             }
         }
-        output << it+1 << "," << printConnectivity_linear() << endl;
+        if (saveConnectivity) {
+            output << it+1 << "," << printConnectivity_linear() << endl;
+        }
     }
 
     isTrained = true;
@@ -1017,8 +1032,8 @@ double RBM::negativeLogLikelihood(Data & data) {
         if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
             printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
         }
-        // return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default? (I think it's too slow..)
-        return negativeLogLikelihood(data, ZEstimation::Trunc);
+        return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default? (I think it's too slow..)
+        // return negativeLogLikelihood(data, ZEstimation::Trunc);
     } else {
         return negativeLogLikelihood(data, ZEstimation::None);
     }
@@ -1063,7 +1078,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += logl( normalizationConstant_MCestimation( 100000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 10000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
@@ -1414,21 +1429,21 @@ int RBM::predict(VectorXd & sample, int n_labels) {
     return maxL;
 }
 
-double RBM::classificationStatistics(Data & data) {
+double RBM::classificationStatistics(Data & data, bool printExtras) {
     if ( !initialized ) {
         printError("Cannot predict label without a trained RBM!");
-        exit(1);
-    }
-    data.joinLabels(true);
-    if (data.get_sample_size() != xSize) {
-        printError("Size of the data given does not match RBM size!");
         exit(1);
     }
 
     data.joinLabels(false);
     int total = data.get_number_of_samples();
     int labels = data.get_number_of_labels();
-    int sampleSize = data.get_sample_size();  // FIXME: Melhor calcular?
+    int sampleSize = data.get_sample_size();
+
+    if (sampleSize + labels != xSize) {
+        printError("Size of the data given does not match RBM size!");
+        exit(1);
+    }
 
     int results[labels][2];
     memset( results, 0, sizeof(results) );
@@ -1467,11 +1482,14 @@ double RBM::classificationStatistics(Data & data) {
 
     for (int l=0; l < labels; l++) {
         lTotal = results[l][1] + results[l][0];
-        cout << "Label " << l << ": " << results[l][1] * 100 / lTotal
-             << "% correct and (total of " << lTotal << " samples)" << endl;
+        if (printExtras) {
+            cout << "Label " << l << ": " << results[l][1] * 100 / lTotal
+                 << "% correct and (total of " << lTotal << " samples)" << endl;
+        }
         rights += results[l][1];
     }
-    // cout << "\t Total Accuracy: " << float(rights)*100/total << " %" << endl;
+    if (printExtras) cout << "\t Total Accuracy: " << float(rights)*100/total << " %" << endl;
+    data.joinLabels(true);
 
     return double(rights)*100/total;
 }

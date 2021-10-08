@@ -1,7 +1,8 @@
 /*
- *  Script to train RBMs with MNIST dataset. One can choose between training a traditional
- *      RBM, to train connectivity using the SGD optimizer or to train RBM's with a fixed
- *      connectivity pattern from a set of available options. Hardcodes NLL calculation.
+ *  Script to train RBMs with MNIST dataset and save classification accuracy throughout
+ *      training. One can choose between training a traditional RBM, to train connectivity
+ *      using the SGD optimizer or to train RBM's with a fixed connectivity pattern from a
+ *      set of available options. Does not calculate NLL.
  *  Author: Amanda
  *
  */
@@ -91,12 +92,12 @@ int main(int argc, char **argv) {
     msg << "Setting number of sample steps: " << k;
     printInfo(msg.str());
 
-    int iter = 6000;
+    int total_iter = 6000;
     if (argc > 7) {
-        iter = atoi(argv[7]);
+        total_iter = atoi(argv[7]);
     }
     msg.str("");
-    msg << "Setting number of iterations: " << iter;
+    msg << "Setting number of iterations: " << total_iter;
     printInfo(msg.str());
 
     int H = 500;
@@ -123,30 +124,26 @@ int main(int argc, char **argv) {
     msg << "Setting learning rate: " << l_rate;
     printInfo(msg.str());
 
-    int f_nll = 10;
+    int f_acc = 10;
     if (argc > 11) {
-        f_nll = atoi(argv[11]);
+        f_acc = atoi(argv[11]);
     }
-    if (f_nll < 1) {
+    if (f_acc < 1) {
         printError("Cannot calculate more than one NLL per iteration");
-        cerr << "Invalid f_nll value: " << f_nll << ". Aborting" << endl;
+        cerr << "Invalid f_acc value: " << f_acc << ". Aborting" << endl;
         exit(1);
     }
     msg.str("");
-    msg << "Setting frequence of NLL calculation: " << f_nll;
+    msg << "Setting frequence of classification accuracy calculation: " << f_acc;
     printInfo(msg.str());
-
-    bool useLabels = false;
-    if (argc > 12) {
-        if (string(argv[12]) == "label") useLabels = true;
-        if (atoi(argv[12]) == 1) useLabels = true;
-    }
-    if (useLabels) printInfo("RBM will be trained for classification!");
 
 
     // Data and RBM creation
-    Data mnist("bin_mnist-train.data", useLabels);
-    mnist.joinLabels(useLabels);
+    Data mnist("Datasets/bin_mnist-train.data", true);
+    mnist.joinLabels(true);
+
+    Data mnist_test("Datasets/bin_mnist-test.data", true);
+    mnist_test.joinLabels(true);
 
     int X = mnist.get_sample_size();
     if (X == 0){
@@ -158,30 +155,55 @@ int main(int argc, char **argv) {
     RBM model(X, H);
     model.setRandomSeed(seed);
 
+    // Training variables
+    bool doShuffle = true;  // Is there a reason I'd wish it not to be true?
+    int nLabels = mnist.get_number_of_labels();
+    int loops = ceil(total_iter/f_acc);
+    double acc_train, acc_test;
+
+    if ( int(loops * f_acc) != total_iter ) {
+        total_iter = loops * f_acc;
+        msg.str("");
+        msg << "The given frequency of accuracy verification does not allow for exactly " << total_iter
+            << " epochs of training. Will train for " << total_iter << " instead";
+        printWarning(msg.str());
+    }
+
     // Output files' base name
     stringstream filebase;
     filebase << "mnist_" << trainType;
     if (trainParam != 0) { filebase << "-" << trainParam; }
-    filebase << "_H" << H << "_CD-" << k << "_lr" << l_rate << "_mBatch" << b_size << "_iter" << iter;
-    if (useLabels) { filebase << "_withLabels"; }
+    filebase << "_H" << H << "_CD-" << k << "_lr" << l_rate << "_mBatch" << b_size << "_iter" << total_iter << "_withLabels";
     if (seed != fileIDX) { filebase << "_seed" << seed; }
     filebase << "_run" << fileIDX;
 
-    string rbm_fname, nll_fname, connect_fname;
+    string acc_fname = filePath + "acc_" + filebase.str() + ".csv";
 
-    // Training
-    bool doShuffle = true;  // Is there a reason I'd wish it not to be true?
-
-    int nLabels;
-    if (useLabels) nLabels = mnist.get_number_of_labels();
-    else nLabels = 0;
+    ofstream outdata;
+    outdata.open(acc_fname);
+    if( !outdata ) { cerr << "Error: file could not be opened" << endl; exit(1); }
+    outdata << "# Classification accuracy through RBM training for MNIST data set with connectivity pattern of type " << trainType;
+    if (trainParam != 0) { outdata << " (parameter " << trainParam << ")"; }
+    outdata << endl;
+    outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
+    outdata << ",Train,Test" << endl;
 
     switch ( resolveOption(trainType) ) {
         case complete:
             printInfo("Training complete RBM");
             // model.connectivity(false);
-            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
-            model.fit(mnist);
+            model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
+
+            for (int l=1; l <= loops; l++) {
+                model.fit(mnist);
+
+                acc_train = model.classificationStatistics(mnist, false);
+                acc_test = model.classificationStatistics(mnist_test, false);
+
+                cout << "Epoch " << l * f_acc << ":\tTrain Acc = " << acc_train
+                     << " %\tTest Acc = " << acc_test << " %" << endl;
+                outdata << l * f_acc << "," << acc_train << "," << acc_test << endl;
+            }
             break;
 
         case sgd:
@@ -198,15 +220,22 @@ int main(int argc, char **argv) {
             msg << "Training connectivity with SGD (p=" << trainParam << ")";
             printInfo(msg.str());
 
-            connect_fname = filePath + "connectivity_" + filebase.str() + ".csv";
-
             model.connectivity(true);
-            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
-            model.optSetup(Heuristic::SGD, connect_fname, trainParam, nLabels);
+            model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
+            model.optSetup(Heuristic::SGD, false, "", trainParam, nLabels);
 
-            model.fit_connectivity(mnist);
+            for (int l=1; l <= loops; l++) {
+                model.fit_connectivity(mnist);
 
+                acc_train = model.classificationStatistics(mnist, false);
+                acc_test = model.classificationStatistics(mnist_test, false);
+
+                cout << "Epoch " << l * f_acc << ":\tTrain Acc = " << acc_train
+                     << " %\tTest Acc = " << acc_test << " %" << endl;
+                outdata << l * f_acc << "," << acc_train << "," << acc_test << endl;
+            }
             break;
+
         case conv:
             printInfo("Training RBM with convolutional connectivity");
 
@@ -227,8 +256,18 @@ int main(int argc, char **argv) {
             model.setConnectivity( square_convolution( X, H, nLabels ) );
             cout << "Connectivity matrix:" << endl << model.getConnectivity() << endl;
 
-            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
-            model.fit(mnist);
+            model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
+
+            for (int l=1; l <= loops; l++) {
+                model.fit(mnist);
+
+                acc_train = model.classificationStatistics(mnist, false);
+                acc_test = model.classificationStatistics(mnist_test, false);
+
+                cout << "Epoch " << l * f_acc << ":\tTrain Acc = " << acc_train
+                     << " %\tTest Acc = " << acc_test << " %" << endl;
+                outdata << l * f_acc << "," << acc_train << "," << acc_test << endl;
+            }
             break;
 
         default:
@@ -236,30 +275,7 @@ int main(int argc, char **argv) {
             cerr << "Training type '" << trainType << "' not implemented. Check what types are available" << endl;
             exit(1);
     }
-    vector<double> h = model.getTrainingHistory();
 
-    // Outputs
-    rbm_fname = filePath + filebase.str() + ".rbm";
-    nll_fname = filePath + "nll_" + filebase.str() + ".csv";
-
-    model.save(rbm_fname);
-
-    ofstream outdata;
-    outdata.open(nll_fname);
-    if( !outdata ) {
-        cerr << "Error: file could not be opened" << endl;
-        exit(1);
-    }
-    outdata << "# NLL through RBM training for MNIST data set with connectivity pattern of type " << trainType;
-    if (trainParam != 0) { outdata << " (parameter " << trainParam << ")"; }
-    outdata << endl;
-    outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
-    if (f_nll != 1) outdata << "# NLL calculated every " << f_nll << " iterations." << endl;
-
-    outdata << ",NLL" << endl;
-    for (int i=0; i<=(float(iter)/f_nll); i++) {
-        outdata << i*f_nll << "," << h.at(i) << endl;
-    }
-    if ((iter % f_nll) != 0) outdata << iter-1 << "," << h.back() << endl;
-    outdata.close();
+    // string rbm_fname = filePath + filebase.str() + ".rbm";
+    // model.save(rbm_fname);
 }
