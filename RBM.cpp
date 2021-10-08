@@ -748,12 +748,13 @@ void RBM::fit(Data & trainData){
         actualSize = b_size;
 
         for (bIdx = 0; bIdx < n_batches; ++bIdx) {
-            //cout << "Batch " << bIdx+1 << endl;
+            // cout << "\tBatch " << bIdx+1 << endl;
 
             int initS = bIdx * b_size;
 
             for (s = initS; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
+                // cout << "\t\ts = " << s << endl;
 
                 VectorXd & xt = trainData.get_sample(s);
                 getProbabilities_h(h_hat, xt);
@@ -791,6 +792,8 @@ void RBM::fit(Data & trainData){
 
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
+
+            // cout << "\tUpdated weights" << endl;
 
         }
 
@@ -1431,16 +1434,16 @@ double RBM::classificationStatistics(Data & data, bool printExtras) {
         printError("Cannot predict label without a trained RBM!");
         exit(1);
     }
-    data.joinLabels(true);
-    if (data.get_sample_size() != xSize) {
-        printError("Size of the data given does not match RBM size!");
-        exit(1);
-    }
 
     data.joinLabels(false);
     int total = data.get_number_of_samples();
     int labels = data.get_number_of_labels();
-    int sampleSize = data.get_sample_size();  // FIXME: Melhor calcular?
+    int sampleSize = data.get_sample_size();
+
+    if (sampleSize + labels != xSize) {
+        printError("Size of the data given does not match RBM size!");
+        exit(1);
+    }
 
     int results[labels][2];
     memset( results, 0, sizeof(results) );
@@ -1486,6 +1489,7 @@ double RBM::classificationStatistics(Data & data, bool printExtras) {
         rights += results[l][1];
     }
     if (printExtras) cout << "\t Total Accuracy: " << float(rights)*100/total << " %" << endl;
+    data.joinLabels(true);
 
     return double(rights)*100/total;
 }
