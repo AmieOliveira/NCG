@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 
     for (int i=0; i<repeat; i++) {
         stringstream fname;
-        fname << "Training Outputs/MNIST Classificacao/mnist_" << rbmType << "_H" << H << "_CD-" << k << "_lr" << lr
+        fname << "result/mnist/mnist_" << rbmType << "_H" << H << "_CD-" << k << "_lr" << lr
               << "_mBatch" << bSize << "_iter" << iter << "_withLabels_run" << i << ".rbm";
         try {
             model.load(fname.str());
