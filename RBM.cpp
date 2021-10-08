@@ -724,7 +724,6 @@ void RBM::fit(Data & trainData){
     if (shuffle) { trainData.setRandomSeed(generator()); }
 
     printInfo("------- TRAINING DATA -------");
-    // TODO: Print training setup?
 
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
     MatrixXd W_gradient(hSize, xSize);
@@ -751,13 +750,15 @@ void RBM::fit(Data & trainData){
         for (bIdx = 0; bIdx < n_batches; ++bIdx) {
             //cout << "Batch " << bIdx+1 << endl;
 
-            for (s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
+            int initS = bIdx * b_size;
+
+            for (s = initS; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
 
                 VectorXd & xt = trainData.get_sample(s);
                 getProbabilities_h(h_hat, xt);
 
-                if (s == 0) {
+                if (s == initS) {
                     W_gradient = h_hat * xt.transpose();
                     b_gradient = h_hat;
                     d_gradient = xt;
@@ -898,7 +899,6 @@ void RBM::optimizer_SGD(Data & trainData) {
     MatrixXd A_(hSize, xSize);    // Continuous version of A
     for (int i=0; i<hSize; i++) {
         for (int j=0; j<Xdata; j++) {
-            // TODO: Take into account whether the x_j is a label
             A_(i,j) = (*p_dis)(generator)/2;
             if (A(i,j) == 1) A_(i,j) += 0.5;
             // A_ is initialized uniformly between 0 and 0.5 or
@@ -936,8 +936,9 @@ void RBM::optimizer_SGD(Data & trainData) {
         actualSize = b_size;
 
         for (bIdx = 0; bIdx < n_batches; ++bIdx) {
+            int initS = bIdx * b_size;
 
-            for (s = bIdx * b_size; s < (bIdx+1) * b_size; ++s) {
+            for (s = initS; s < (bIdx+1) * b_size; ++s) {
                 if ( s >= trainData.get_number_of_samples() ) break;
 
                 VectorXd & xt = trainData.get_sample(s);
@@ -945,7 +946,7 @@ void RBM::optimizer_SGD(Data & trainData) {
 
                 matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
 
-                if (s == 0) {
+                if (s == initS) {
                     W_gradient = matAux;
                     b_gradient = h_hat;
                     d_gradient = xt;
@@ -1028,8 +1029,8 @@ double RBM::negativeLogLikelihood(Data & data) {
         if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
             printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
         }
-        // return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default? (I think it's too slow..)
-        return negativeLogLikelihood(data, ZEstimation::Trunc);
+        return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default? (I think it's too slow..)
+        // return negativeLogLikelihood(data, ZEstimation::Trunc);
     } else {
         return negativeLogLikelihood(data, ZEstimation::None);
     }
@@ -1074,7 +1075,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += logl( normalizationConstant_MCestimation( 100000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 10000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
