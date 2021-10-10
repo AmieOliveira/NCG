@@ -139,10 +139,10 @@ int main(int argc, char **argv) {
 
 
     // Data and RBM creation
-    Data mnist("Datasets/bin_mnist-train.data", true);
+    Data mnist("bin_mnist-train.data", true);
     mnist.joinLabels(true);
 
-    Data mnist_test("Datasets/bin_mnist-test.data", true);
+    Data mnist_test("bin_mnist-test.data", true);
     mnist_test.joinLabels(true);
 
     int X = mnist.get_sample_size();

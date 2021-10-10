@@ -18,7 +18,7 @@ k_vals = [1, 10]
 H = 500
 lRate = 0.1
 bSize = 50
-iterations = 100
+iterations = 120
 freq = 10
 repeat = 5
 
@@ -38,8 +38,8 @@ with open(f"{basepath}/{output}", "w") as f:
     f.write("when_to_transfer_output\t= ON_EXIT\n")
 
     f.write(f"transfer_input_files\t= {basepath}/Datasets/bin_mnist-train.data,{basepath}/Datasets/bin_mnist-test.data\n")
-    f.write(f"transfer_output_remaps\t= \"{basepath}/Datasets/bin_mnist-train.data = Datasets/bin_mnist-train.data\"\n")
-    f.write(f"transfer_output_remaps\t= \"{basepath}/Datasets/bin_mnist-test.data = Datasets/bin_mnist-test.data\"\n")
+    f.write(f"transfer_output_remaps\t= \"{basepath}/Datasets/bin_mnist-train.data = bin_mnist-train.data\"\n")
+    f.write(f"transfer_output_remaps\t= \"{basepath}/Datasets/bin_mnist-test.data = bin_mnist-test.data\"\n")
     
     f.write(f"\n\n")
 
@@ -60,7 +60,7 @@ with open(f"{basepath}/{output}", "w") as f:
             for p in p_vals:
                 basename = f"{dataset}_{trainType}-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{iterations}_withLabels_run"
                 
-                f.write(f"Arguments\t\t= \"$(Step) . $(Step) {trainType} {p} {k} {iterations} {H} {bSize} {lRate} {freq}\n")
+                f.write(f"Arguments\t\t= \"$(Step) . $(Step) {trainType} {p} {k} {iterations} {H} {bSize} {lRate} {freq}\"\n")
                 f.write(f"Log\t\t\t= {basepath}/log/{executable}.log\n")
                 f.write(f"Error\t\t\t= {basepath}/error/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_$(Step).err\n")
                 f.write(f"Output\t\t\t= {basepath}/out/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_$(Step).out\n")
