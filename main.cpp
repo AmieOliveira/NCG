@@ -355,43 +355,48 @@ int main(int argc, char **argv) {
     // int size = mnistTrain.get_sample_size();
 
     int k = 1;
-    int iter = 500;
+    int iter = 900;
     int b_size = 50;  // 5
     double l_rate = 0.1;
     // double p = 1;
-    unsigned seed = 232140824;  // 1382 8924 2321345824 7732601
+    unsigned seed = 9217;  // 232140824
     bool shuffleData = true;
 
     int repeat = 1;
     int n_seeds = 5;
 
     //// BAS Dataset
-    Data bas(BASnoRep, 5);
-    //Data bas(seed, BAS, 28, 1000);
-    //Data bas("Datasets/bin_mnist-test.data", false); bas = bas.separateTrainTestSets(0.1).at(0);
+    //Data bas(BASnoRep, 5);
+    //Data bas(seed, BASnoRep, 28, 1000);
+    Data bas("Datasets/bin_mnist-test.data", false); bas = bas.separateTrainTestSets(0.1).at(0);
 
     // Traditional RBM
     RBM model;
+
+    cout << "Training model for " << iter << " epochs" << endl;
 
     // model.load("bas28test.rbm");
     // model.setRandomSeed(seed);
 
     for (int s = 0; s < n_seeds; s++) {
+        cout << "Experiment " << s+1 << " of " << n_seeds << endl;
+
         model.setDimensions(bas.get_sample_size(), 500, false);
         model.setRandomSeed(seed + s);
-        model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 50, shuffleData);
-        // cout << "Before training: " << model.negativeLogLikelihood(bas) << endl;
+        model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 1, shuffleData);
+        cout << "Before training: " << model.negativeLogLikelihood(bas) << endl;
 
-        model.fit(bas);
+        //model.fit(bas);
         //model.optSetup(Heuristic::SGD, "connectivityBAS6", 1, 0); model.fit_connectivity(bas);
 
         // model.save("bas10test.rbm");
-        cout << "Exact value: " << model.negativeLogLikelihood(bas, ZEstimation::None) << endl;
-        cout << "Trunc estimation no verification: " << model.negativeLogLikelihood(bas, ZEstimation::Trunc) << endl;
 
+        // // cout << "Exact value: " << model.negativeLogLikelihood(bas, ZEstimation::None) << endl;
+        // cout << "Truncation estimation (no verification): " << model.negativeLogLikelihood(bas, ZEstimation::Trunc) << endl;
+        //
         // vector<double> vals;
         //
-        double sumMC = 0, tmp;
+        // double sumMC = 0, tmp;
         // for (int r=1; r <= repeat; r++) {
         //     model.setRandomSeed(seed + s + r);
         //     tmp = model.negativeLogLikelihood(bas, ZEstimation::MC);
@@ -409,8 +414,8 @@ int main(int argc, char **argv) {
         // for (int r=1; r <= repeat; r++) {
         //     model.setRandomSeed(seed + s + r);
         //     tmp = model.negativeLogLikelihood(bas, ZEstimation::AIS);
-        //     //sumAIS += tmp;
-        //     //vals.at(r-1) = tmp;
+        //     sumAIS += tmp;
+        //     vals.at(r-1) = tmp;
         //     cout << "AIS estimation " << r << ": " << tmp << endl;
         // }
         // sumAIS = sumAIS/repeat;
