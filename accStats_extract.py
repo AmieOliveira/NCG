@@ -150,15 +150,19 @@ if __name__ == "__main__":
 
                 if not hasInstance:
                     continue
+                if accTrainDF.empty:
+                    accTrainDF = pd.DataFrame(tmpTrain.mean(axis=1).rename(f"CD-{k} {pltT}"))
+                    accTestDF = pd.DataFrame(tmpTest.mean(axis=1).rename(f"CD-{k} {pltT}"))
+                else:
+                    accTrainDF[f"CD-{k} {pltT}"] = tmpTrain.mean(axis=1)
+                    accTestDF[f"CD-{k} {pltT}"] = tmpTest.mean(axis=1)
 
-                accTrainDF = pd.DataFrame(tmpTrain.mean(axis=1).rename(f"CD-{k} {pltT}"))
                 accTrainDF[f"CD-{k} {pltT} - std"] = tmpTrain.std(axis=1)
                 accTrainDF[f"CD-{k} {pltT} - q1"] = tmpTrain.quantile(q=0.25, axis=1)
                 accTrainDF[f"CD-{k} {pltT} - q3"] = tmpTrain.quantile(q=0.75, axis=1)
                 accTrainDF[f"CD-{k} {pltT} - Max"] = tmpTrain.max(axis=1)
                 accTrainDF[f"CD-{k} {pltT} - Min"] = tmpTrain.min(axis=1)
 
-                accTestDF = pd.DataFrame(tmpTest.mean(axis=1).rename(f"CD-{k} {pltT}"))
                 accTestDF[f"CD-{k} {pltT} - std"] = tmpTest.std(axis=1)
                 accTestDF[f"CD-{k} {pltT} - q1"] = tmpTest.quantile(q=0.25, axis=1)
                 accTestDF[f"CD-{k} {pltT} - q3"] = tmpTest.quantile(q=0.75, axis=1)
