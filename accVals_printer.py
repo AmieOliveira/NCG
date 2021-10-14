@@ -175,8 +175,15 @@ if __name__ == "__main__":
             axTrain.grid(color="gray", linestyle=":", linewidth=.2)
             axTest.grid(color="gray", linestyle=":", linewidth=.2)
 
+            axTrain.xlabel("Epoch")
+            axTest.xlabel("Epoch")
+
+            axTrain.ylabel("Accuracy")
+            axTest.ylabel("Accuracy")
+
+            print(f"Saving plots for k = {k}")
             # plt.show()
-            figTrain.savefig(f"{args.outputpath}/meanScatter_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}-{repeat}rep.pdf",
+            figTrain.savefig(f"{args.outputpath}/meanScatter_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.pdf",
                              transparent=True)
-            figTest.savefig(f"{args.outputpath}/meanScatter_acc-Test_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}-{repeat}rep.pdf",
+            figTest.savefig(f"{args.outputpath}/meanScatter_acc-Test_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.pdf",
                             transparent=True)
