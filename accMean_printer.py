@@ -107,8 +107,8 @@ if __name__ == "__main__":
             if pltT == "sgd":
                 for p in p_values:
                     try:
-                        inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8)
-                        inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8)
+                        inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+                        inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
                     except KeyError:
                         continue
 
@@ -150,8 +150,8 @@ if __name__ == "__main__":
 
             else:
                 try:
-                    inputTrainFile[f"CD-{k} {pltT}"].plot(ax=axTrain, linewidth=1, alpha=0.8)
-                    inputTestFile[f"CD-{k} {pltT}"].plot(ax=axTest, linewidth=1, alpha=0.8)
+                    inputTrainFile[f"CD-{k} {pltT}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+                    inputTestFile[f"CD-{k} {pltT}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
                 except KeyError:
                     continue
 
