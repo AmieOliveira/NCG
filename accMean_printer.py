@@ -195,11 +195,11 @@ if __name__ == "__main__":
             axTrain.grid(color="gray", linestyle=":", linewidth=.2)
             axTest.grid(color="gray", linestyle=":", linewidth=.2)
 
-            axTrain.xlabel("Epoch")
-            axTest.xlabel("Epoch")
+            axTrain.set_xlabel("Epoch")
+            axTest.set_xlabel("Epoch")
 
-            axTrain.ylabel("Accuracy")
-            axTest.ylabel("Accuracy")
+            axTrain.set_ylabel("Accuracy")
+            axTest.set_ylabel("Accuracy")
 
             # plt.show()
             print(f"Saving plots for k = {k}")
