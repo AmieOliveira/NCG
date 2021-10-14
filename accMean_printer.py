@@ -195,11 +195,18 @@ if __name__ == "__main__":
             axTrain.grid(color="gray", linestyle=":", linewidth=.2)
             axTest.grid(color="gray", linestyle=":", linewidth=.2)
 
+            axTrain.xlabel("Epoch")
+            axTest.xlabel("Epoch")
+
+            axTrain.ylabel("Accuracy")
+            axTest.ylabel("Accuracy")
+
             # plt.show()
+            print(f"Saving plots for k = {k}")
             figTrain.savefig(
-                f"{args.outputpath}/mean_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}-{repeat}rep{errorPrint}.pdf",
+                f"{args.outputpath}/mean_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
                 transparent=True)
             figTest.savefig(
-                f"{args.outputpath}/mean_acc-Test_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}-{repeat}rep{errorPrint}.pdf",
+                f"{args.outputpath}/mean_acc-Test_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
                 transparent=True)
 

@@ -165,5 +165,6 @@ if __name__ == "__main__":
                 accTestDF[f"CD-{k} {pltT} - Max"] = tmpTest.max(axis=1)
                 accTestDF[f"CD-{k} {pltT} - Min"] = tmpTest.min(axis=1)
 
+        print(f"Saving ouputs for {pltT} runs")
         accTrainDF.to_csv(outputTrainFileName)
         accTestDF.to_csv(outputTestFileName)
