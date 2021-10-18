@@ -63,8 +63,8 @@ if __name__ == "__main__":
     # size = X + nLabels
 
     for pltT in list_types:
-        outputTrainFileName = f"{args.outputpath}/accMean-train_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}.csv"
-        outputTestFileName =  f"{args.outputpath}/accMean-test_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}.csv"
+        outputTrainFileName = f"{args.outputpath}/accMean-train_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
+        outputTestFileName =  f"{args.outputpath}/accMean-test_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
 
         accTrainDF = pd.DataFrame()
         accTestDF = pd.DataFrame()
