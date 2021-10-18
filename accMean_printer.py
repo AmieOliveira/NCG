@@ -91,14 +91,15 @@ if __name__ == "__main__":
         hasKinstance = False
 
         for pltT in list_types:
-            ifTrainName = f"{path}/accMean-train_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}.csv"
-            ifTestName = f"{path}/accMean-test_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}.csv"
+            ifTrainName = f"{path}/accMean-train_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
+            ifTestName = f"{path}/accMean-test_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
 
             try:
                 inputTrainFile = pd.read_csv(ifTrainName, index_col=0)
                 inputTestFile = pd.read_csv(ifTestName, index_col=0)
             except FileNotFoundError:
-                print("Files not found. Check training parameters and which plots you wnat to add!")
+                print("ERROR:\tFiles not found. Check training parameters and which plots you wnat to add!")
+                raise
 
             if args.noFirst:
                 inputTrainFile = inputTrainFile.iloc[1:iters + 1]
