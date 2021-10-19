@@ -33,6 +33,7 @@ enum Heuristic {
 
 enum ZEstimation {  // Normalization constant estimation methods
     None,   // No estimation (exact value). Only available for small RBMs
+    None_H,
     MC,
     AIS,
     Trunc,
@@ -86,6 +87,7 @@ class RBM {
     // Normalization constant methods
     double partialZ(int n);
     double partialZ_effX(int n);
+    double partialZ_effH(int n);
     long double addSampleAndNeighbors(VectorXd & vec);
 
     // Training variables
@@ -204,6 +206,7 @@ public:
     // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
+    double normalizationConstant_effH();
     long double normalizationConstant_MCestimation(int n_samples);
     long double normalizationConstant_AISestimation(int n_runs);
     long double normalizationConstant_trunc(Data & data);

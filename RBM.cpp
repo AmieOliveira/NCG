@@ -1028,12 +1028,17 @@ void RBM::optimizer_SGD(Data & trainData) {
 }
 
 double RBM::negativeLogLikelihood(Data & data) {
+    //return negativeLogLikelihood(data, ZEstimation::TruncRep);
     if (xSize > MAXSIZE_EXACTPROBABILITY) {
-        if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
-            printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
+        if (hSize <= MAXSIZE_EXACTPROBABILITY) {
+            return negativeLogLikelihood(data, ZEstimation::None_H);
+        } else {
+            if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
+                printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
+            }
+            // return negativeLogLikelihood(data, ZEstimation::MC);
+            return negativeLogLikelihood(data, ZEstimation::Trunc);
         }
-        return negativeLogLikelihood(data, ZEstimation::MC);  // FIXME: Do I want to have AIS as default? (I think it's too slow..)
-        // return negativeLogLikelihood(data, ZEstimation::Trunc);
     } else {
         return negativeLogLikelihood(data, ZEstimation::None);
     }
@@ -1065,6 +1070,13 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                 printWarning("Attempting to calculate exact NLL for a RBM that is too big. Script may never finish.");
             }
             total += log( normalizationConstant_effX() );
+            break;
+
+        case None_H:
+            if (hSize > MAXSIZE_EXACTPROBABILITY) {
+                printWarning("Attempting to calculate exact NLL for a RBM that is too big. Script may never finish.");
+            }
+            total += log( normalizationConstant_effH() );
             break;
 
         case MC:
@@ -1177,19 +1189,38 @@ double RBM::partialZ(int n) {
 }
 
 double RBM::normalizationConstant_effX() {
-    // TODO: Warning for intractable calculation?
-
-    double ret = partialZ_effX(xSize);
-    return ret;
+    return partialZ_effX(xSize);
 }
 double RBM::partialZ_effX(int n) {
     if (n == 0) {
         //cout << "current x: " << x.transpose() << "(F = " << freeEnergy() << ")" << endl;
-        return exp( -freeEnergy() );
+        double ret = exp(x.transpose()*d);
+        auxH = (*p_W)* x + b;
+        for (int i=0; i < hSize; i++) { ret *= 1 + exp( auxH(i) ); }
+
+        return ret;
     }
     double ret = partialZ_effX(n-1);
     x(n-1) = abs(1 - x(n-1));
     ret += partialZ_effX(n-1);
+
+    return ret;
+}
+
+
+double RBM::normalizationConstant_effH() {
+    return partialZ_effH(hSize);
+}
+double RBM::partialZ_effH(int n) {
+    if (n == 0) {
+        double ret = exp(h.transpose()*b);
+        auxX = h.transpose() * (*p_W) + d.transpose();
+        for (int j=0; j < xSize; j++) { ret *= 1 + exp( auxX(j) ); }
+        return ret;
+    }
+    double ret = partialZ_effH(n-1);
+    h(n-1) = abs(1 - h(n-1));
+    ret += partialZ_effH(n-1);
 
     return ret;
 }
