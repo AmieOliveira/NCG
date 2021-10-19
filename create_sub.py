@@ -10,7 +10,7 @@ from pathlib import Path
 executable = "accuracy"
 dataset = "mnist"
 
-extras = ""
+extras = "-iter60"
 
 trainType = "complete"
 
@@ -18,9 +18,9 @@ k_vals = [1, 10]
 H = 500
 lRate = 0.1
 bSize = 50
-iterations = 120
-freq = 10
-repeat = 5
+iterations = 60
+freq = 5
+repeat = 25
 
 p_vals = [1, 0.5, 0.1]
 
@@ -47,10 +47,10 @@ with open(f"{basepath}/{output}", "w") as f:
         if trainType in ["complete", "convolution"]:
             basename = f"{dataset}_{trainType}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{iterations}_withLabels_run"
 
-            f.write(f"Arguments\t\t= \"$(Step) . $(Step) {trainType} 0 {k} {iterations} {H} {bSize} {lRate} {freq}\n")
+            f.write(f"Arguments\t\t= \"$(Step) . $(Step) {trainType} 0 {k} {iterations} {H} {bSize} {lRate} {freq}\"\n")
             f.write(f"Log\t\t\t= {basepath}/log/{executable}.log\n")
-            f.write(f"Error\t\t\t= {basepath}/error/{executable}_{trainType}_CD-{k}_lr{lRate}_$(Step).err\n")
-            f.write(f"Output\t\t\t= {basepath}/out/{executable}_{trainType}_CD-{k}_lr{lRate}_$(Step).out\n")
+            f.write(f"Error\t\t\t= {basepath}/error/{executable}_{trainType}_CD-{k}_lr{lRate}_iter{iterations}_$(Step).err\n")
+            f.write(f"Output\t\t\t= {basepath}/out/{executable}_{trainType}_CD-{k}_lr{lRate}_iter{iterations}_$(Step).out\n")
             f.write(f"transfer_output_files\t= acc_{basename}$(Step).csv\n")
 
             f.write(f"Queue {repeat}\n")
@@ -62,13 +62,12 @@ with open(f"{basepath}/{output}", "w") as f:
                 
                 f.write(f"Arguments\t\t= \"$(Step) . $(Step) {trainType} {p} {k} {iterations} {H} {bSize} {lRate} {freq}\"\n")
                 f.write(f"Log\t\t\t= {basepath}/log/{executable}.log\n")
-                f.write(f"Error\t\t\t= {basepath}/error/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_$(Step).err\n")
-                f.write(f"Output\t\t\t= {basepath}/out/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_$(Step).out\n")
+                f.write(f"Error\t\t\t= {basepath}/error/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_iter{iterations}_$(Step).err\n")
+                f.write(f"Output\t\t\t= {basepath}/out/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_iter{iterations}_$(Step).out\n")
                 f.write(f"transfer_output_files\t= acc_{basename}$(Step).csv\n")
 
                 f.write(f"Queue {repeat}\n")
                 f.write(f"\n")
 
 print("----> Done")
-
 
