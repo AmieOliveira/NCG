@@ -120,22 +120,22 @@ if __name__ == "__main__":
 
                         errorPlus = inputTestFile[f"CD-{k} p = {p} - q3"].to_numpy()
                         errorMinus = inputTestFile[f"CD-{k} p = {p} - q1"].to_numpy()
-                        axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                        axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
                         errorPlus = inputTrainFile[f"CD-{k} p = {p} - q3"].to_numpy()
                         errorMinus = inputTrainFile[f"CD-{k} p = {p} - q1"].to_numpy()
-                        axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                        axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
                     elif args.stdErr:
                         indexes = inputTrainFile.index
 
                         error = inputTestFile[f"CD-{k} p = {p} - std"].to_numpy()
                         mean = inputTestFile[f"CD-{k} p = {p}"].to_numpy()
-                        axTrain.fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                        axTest.fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
                         error = inputTrainFile[f"CD-{k} p = {p} - std"].to_numpy()
                         mean = inputTrainFile[f"CD-{k} p = {p}"].to_numpy()
-                        axTest.fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                        axTrain.fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
                     elif args.minmaxErr:
                         indexes = inputTrainFile.index
@@ -163,33 +163,33 @@ if __name__ == "__main__":
 
                     errorPlus = inputTestFile[f"CD-{k} {pltT} - q3"].to_numpy()
                     errorMinus = inputTestFile[f"CD-{k} {pltT} - q1"].to_numpy()
-                    axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                    axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
                     errorPlus = inputTrainFile[f"CD-{k} {pltT} - q3"].to_numpy()
                     errorMinus = inputTrainFile[f"CD-{k} {pltT} - q1"].to_numpy()
-                    axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                    axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
                 elif args.stdErr:
                     indexes = inputTrainFile.index
 
                     error = inputTestFile[f"CD-{k} {pltT} - std"].to_numpy()
                     mean = inputTestFile[f"CD-{k} {pltT}"].to_numpy()
-                    axTrain.fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                    axTest.fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
                     error = inputTrainFile[f"CD-{k} {pltT} - std"].to_numpy()
                     mean = inputTrainFile[f"CD-{k} {pltT}"].to_numpy()
-                    axTest.fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                    axTrain.fill_between(indexes, mean - error, mean + error, alpha=0.3)
 
                 elif args.minmaxErr:
                     indexes = inputTrainFile.index
 
                     maxV = inputTrainFile[f"CD-{k} {pltT} - Max"].to_numpy()
                     minV = inputTrainFile[f"CD-{k} {pltT} - Min"].to_numpy()
-                    axTrain.fill_between(indexes, minV, maxV, alpha=0.3)
+                    axTest.fill_between(indexes, minV, maxV, alpha=0.3)
 
                     maxV = inputTestFile[f"CD-{k} {pltT} - Max"].to_numpy()
                     minV = inputTestFile[f"CD-{k} {pltT} - Min"].to_numpy()
-                    axTest.fill_between(indexes, minV, maxV, alpha=0.3)
+                    axTrain.fill_between(indexes, minV, maxV, alpha=0.3)
 
 
         if hasKinstance:
@@ -199,8 +199,8 @@ if __name__ == "__main__":
             axTrain.set_xlabel("Epoch")
             axTest.set_xlabel("Epoch")
 
-            axTrain.set_ylabel("Accuracy")
-            axTest.set_ylabel("Accuracy")
+            axTrain.set_ylabel("Accuracy (%)")
+            axTest.set_ylabel("Accuracy (%)")
 
             # plt.show()
             print(f"Saving plots for k = {k}")
