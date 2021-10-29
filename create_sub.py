@@ -12,7 +12,7 @@ dataset = "mnist"
 
 extras = "-iter60"
 
-trainType = "complete"
+trainType = "sgd"
 
 k_vals = [1, 10]
 H = 500
@@ -22,7 +22,7 @@ iterations = 60
 freq = 5
 repeat = 25
 
-p_vals = [1, 0.5, 0.1]
+p_vals = [0.7, 0.3]  # [1, 0.5, 0.1]
 
 basepath = Path().absolute()
 output = f"result/{dataset}/{trainType}-{executable}{extras}.sub"
