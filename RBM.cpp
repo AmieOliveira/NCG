@@ -811,7 +811,7 @@ void RBM::fit(Data & trainData){
 }
 
 
-void RBM::fit_connectivity(Data & trainData) {
+void RBM::fit_connectivity(Data & trainData, int itInit) {
     if ( !patterns ){
         printError("Cannot optimize patterns if we have a classical RBM");
         cerr << "Cannot optimize patterns if we have a classical RBM, "
@@ -831,7 +831,7 @@ void RBM::fit_connectivity(Data & trainData) {
 
     switch (opt_type) {
         case Heuristic::SGD:
-            optimizer_SGD(trainData);
+            optimizer_SGD(trainData, itInit);
             break;
         default:
             printError("Not yet implemented!");
@@ -883,7 +883,7 @@ string RBM::printConnectivity_linear() {
     return ret.str();
 }
 
-void RBM::optimizer_SGD(Data & trainData) {
+void RBM::optimizer_SGD(Data & trainData, int itInit) {
     printInfo("------- TRAINING DATA: Optimizing A -------");
 
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
@@ -914,12 +914,13 @@ void RBM::optimizer_SGD(Data & trainData) {
     // TODO: Rever esse nome (o que eu quero e não quero por? E vai dar certo criar o nome aqui dentro?)
 
     ofstream output;
-    output.open(connect_out);
+    if (itInit == 0) output.open(connect_out);
+    else output.open(connect_out, std::ios_base::app);
 
     if (calcNLL) {
         history.push_back(negativeLogLikelihood(trainData)); // Before training
     }
-    if (saveConnectivity) {
+    if (saveConnectivity && (itInit == 0)) {
         output << "# Connectivity patterns throughout training" << endl;
         output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
         output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
@@ -929,7 +930,7 @@ void RBM::optimizer_SGD(Data & trainData) {
 
     int it, bIdx, s;
 
-    for (it = 0; it < n_iter; ++it) {
+    for (it = itInit; it < n_iter + itInit; ++it) {
         // cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         if ( (it > 0) && shuffle ) {

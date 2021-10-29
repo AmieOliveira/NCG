@@ -115,7 +115,7 @@ class RBM {
 
 
     // Training methods
-    void optimizer_SGD(Data & trainData);
+    void optimizer_SGD(Data & trainData, int itInit);
 
     // Helper function
     string printConnectivity_linear();
@@ -196,7 +196,7 @@ public:
     void optSetup(Heuristic method, double p, int labels);
     void optSetup(Heuristic method, bool saveConn, string connFileName, double p, int labels);
 
-    void fit_connectivity(Data & trainData);
+    void fit_connectivity(Data & trainData, int itInit);
 
     // Evaluation methods
     double negativeLogLikelihood(Data & data);

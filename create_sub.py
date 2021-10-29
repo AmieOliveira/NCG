@@ -10,19 +10,19 @@ from pathlib import Path
 executable = "accuracy"
 dataset = "mnist"
 
-extras = "-iter60"
+extras = "-iter10-conn"
 
 trainType = "sgd"
 
-k_vals = [1, 10]
+k_vals = [10]
 H = 500
 lRate = 0.1
 bSize = 50
-iterations = 60
-freq = 5
+iterations = 10
+freq = 1
 repeat = 25
 
-p_vals = [0.7, 0.3]  # [1, 0.5, 0.1]
+p_vals = [1, 0.5, 0.1] # [0.7, 0.3]
 
 basepath = Path().absolute()
 output = f"result/{dataset}/{trainType}-{executable}{extras}.sub"
@@ -64,7 +64,7 @@ with open(f"{basepath}/{output}", "w") as f:
                 f.write(f"Log\t\t\t= {basepath}/log/{executable}.log\n")
                 f.write(f"Error\t\t\t= {basepath}/error/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_iter{iterations}_$(Step).err\n")
                 f.write(f"Output\t\t\t= {basepath}/out/{executable}_{trainType}-{p}_CD-{k}_lr{lRate}_iter{iterations}_$(Step).out\n")
-                f.write(f"transfer_output_files\t= acc_{basename}$(Step).csv\n")
+                f.write(f"transfer_output_files\t= acc_{basename}$(Step).csv,connectivity_{basename}$(Step).csv\n")
 
                 f.write(f"Queue {repeat}\n")
                 f.write(f"\n")

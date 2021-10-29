@@ -187,6 +187,8 @@ int main(int argc, char **argv) {
     outdata << endl;
     outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     outdata << ",Train,Test" << endl;
+    
+    string conFile;
 
     switch ( resolveOption(trainType) ) {
         case complete:
@@ -226,10 +228,12 @@ int main(int argc, char **argv) {
             msg.str("");
             msg << "Training connectivity with SGD (p=" << trainParam << ")";
             printInfo(msg.str());
+	     
+	    conFile = filePath + "connectivity_" + filebase.str() + ".csv";
 
             model.connectivity(true);
             model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
-            model.optSetup(Heuristic::SGD, false, "", trainParam, nLabels);
+            model.optSetup(Heuristic::SGD, true, conFile, trainParam, nLabels);
 
             acc_train = model.classificationStatistics(mnist, false);
             acc_test = model.classificationStatistics(mnist_test, false);
@@ -239,7 +243,7 @@ int main(int argc, char **argv) {
             outdata << 0 << "," << acc_train << "," << acc_test << endl;
 
             for (int l=1; l <= loops; l++) {
-                model.fit_connectivity(mnist);
+                model.fit_connectivity(mnist, (l-1)*f_acc);
 
                 acc_train = model.classificationStatistics(mnist, false);
                 acc_test = model.classificationStatistics(mnist_test, false);
