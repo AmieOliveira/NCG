@@ -87,7 +87,7 @@ class RBM {
     // Normalization constant methods
     double partialZ(int n);
     double partialZ_effX(int n);
-    double partialZ_effH(int n);
+    long double partialZ_effH(int n);
     long double addSampleAndNeighbors(VectorXd & vec);
 
     // Training variables
@@ -201,12 +201,13 @@ public:
     // Evaluation methods
     double negativeLogLikelihood(Data & data);
     double negativeLogLikelihood(Data & data, ZEstimation method);
+    double negativeLogLikelihood(Data & data, double logZ);
     vector<double> getTrainingHistory();
 
     // FIXME: Convert to private? (Or add warning flags)
     double normalizationConstant();
     double normalizationConstant_effX();
-    double normalizationConstant_effH();
+    long double normalizationConstant_effH();
     long double normalizationConstant_MCestimation(int n_samples);
     long double normalizationConstant_AISestimation(int n_runs);
     long double normalizationConstant_trunc(Data & data);

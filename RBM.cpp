@@ -703,7 +703,7 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
     freqNLL = period;       // Rate of NLL calculation
     shuffle = doShuffle;    // flag to shuffle data order through iterations
 
-    if ( calcNLL && (xSize > MAXSIZE_EXACTPROBABILITY) ) {
+    if ( calcNLL && (xSize > MAXSIZE_EXACTPROBABILITY) && (hSize > MAXSIZE_EXACTPROBABILITY) ) {
         printWarning("Training set to calculate NLL, but dimensions are too big. "
                      "An approximation will be made instead");
     }
@@ -1028,7 +1028,7 @@ void RBM::optimizer_SGD(Data & trainData) {
 }
 
 double RBM::negativeLogLikelihood(Data & data) {
-    //return negativeLogLikelihood(data, ZEstimation::TruncRep);
+    //return negativeLogLikelihood(data, ZEstimation::Trunc);
     if (xSize > MAXSIZE_EXACTPROBABILITY) {
         if (hSize <= MAXSIZE_EXACTPROBABILITY) {
             return negativeLogLikelihood(data, ZEstimation::None_H);
@@ -1076,6 +1076,9 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             if (hSize > MAXSIZE_EXACTPROBABILITY) {
                 printWarning("Attempting to calculate exact NLL for a RBM that is too big. Script may never finish.");
             }
+            // double Z = logl( normalizationConstant_effH() );
+            // cout << "\nLog of the normalization constant: " << Z << endl;
+            // total += Z;
             total += log( normalizationConstant_effH() );
             break;
 
@@ -1090,7 +1093,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             idx = int( N * (*p_dis)(generator) );
 
             x = data.get_sample(idx);
-            total += logl( normalizationConstant_MCestimation( 10000 ) );  // TODO: Fine-tune parameter
+            total += logl( normalizationConstant_MCestimation( 1000 ) );  // TODO: Fine-tune parameter
             break;
 
         case AIS:
@@ -1117,6 +1120,25 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                  << "'. Please choose another one."<< endl;
             exit(1);
     }
+
+    return total;
+}
+
+double RBM::negativeLogLikelihood(Data & data, double logZ) {
+    if (!initialized){
+        string errorMessage;
+        errorMessage = "Cannot calculate NLL without initializing RBM!";
+        printError(errorMessage);
+        throw runtime_error(errorMessage);
+    }
+
+    long double total = 0;
+    int N = data.get_number_of_samples();
+
+    for (int idx = 0; idx < N; ++idx) {
+        total += freeEnergy( data.get_sample(idx) );
+    }
+    total = (total/N) + logZ;
 
     return total;
 }
@@ -1208,17 +1230,17 @@ double RBM::partialZ_effX(int n) {
 }
 
 
-double RBM::normalizationConstant_effH() {
+long double RBM::normalizationConstant_effH() {
     return partialZ_effH(hSize);
 }
-double RBM::partialZ_effH(int n) {
+long double RBM::partialZ_effH(int n) {
     if (n == 0) {
-        double ret = exp(h.transpose()*b);
+        long double ret = exp(h.transpose()*b);
         auxX = h.transpose() * (*p_W) + d.transpose();
         for (int j=0; j < xSize; j++) { ret *= 1 + exp( auxX(j) ); }
         return ret;
     }
-    double ret = partialZ_effH(n-1);
+    long double ret = partialZ_effH(n-1);
     h(n-1) = abs(1 - h(n-1));
     ret += partialZ_effH(n-1);
 
@@ -1228,7 +1250,7 @@ double RBM::partialZ_effH(int n) {
 
 long double RBM::normalizationConstant_MCestimation(int n_samples) {
     // Estimates the normalization constant (partition function) of the RBM
-    int steps = int(log(xSize)); // FIXME: Is it big enough?
+    int steps = int(xSize * log(2)); // FIXME: It does not seem to be big enough
 
     // int check = 0;
 
@@ -1258,7 +1280,7 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     prior.setVisibleBiases(d);
 
     // FIXME: These are preliminary parameters, should change them
-    int n_betas = 8000;
+    int n_betas = 20000;
     int transitionRepeat = 50;
     double betas[n_betas];
 
