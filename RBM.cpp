@@ -1076,7 +1076,8 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             if (hSize > MAXSIZE_EXACTPROBABILITY) {
                 printWarning("Attempting to calculate exact NLL for a RBM that is too big. Script may never finish.");
             }
-            // double Z = logl( normalizationConstant_effH() );
+            // double Z;
+            // Z = logl( normalizationConstant_effH() );
             // cout << "\nLog of the normalization constant: " << Z << endl;
             // total += Z;
             total += log( normalizationConstant_effH() );
@@ -1103,7 +1104,7 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
                 printError(errorMessage);
                 throw runtime_error(errorMessage);
             }
-            total += logl( normalizationConstant_AISestimation( 10 ) );
+            total += logl( normalizationConstant_AISestimation( 100 ) );
             break;
 
         case Trunc:
@@ -1273,21 +1274,42 @@ long double RBM::normalizationConstant_AISestimation(int n_runs) {
     //      - Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
     //      - Agustinus Kristiadi's Blog, Introduction to Annealed Importance Sampling.
     //        https://wiseodd.github.io/techblog/2017/12/23/annealed-importance-sampling/
-    // TODO: Optimize function (está implementado como "caixa preta")
+    // TODO: Optimize function
 
     RBM prior(xSize, hSize);
     prior.setRandomSeed(generator());
     prior.setVisibleBiases(d);
 
-    // FIXME: These are preliminary parameters, should change them
-    int n_betas = 20000;
+    int n_betas = 5503;
     int transitionRepeat = 50;
     double betas[n_betas];
 
-    for (int k=0; k < n_betas; k++) {
-        betas[k] = double(k)/(n_betas - 1);
-        // cout << "Beta_" << k << ": " << betas[k] << endl;
+    double eps = 0.000000000000001;
+
+    // Distribution from Ruslan Salakhutdinov
+    int idx = 0;
+    double bet = 0;
+    for (bet = 0; bet < 0.5 + eps; bet += 0.001) {
+        betas[idx] = bet;
+        idx++;
     }
+    for (bet = 0.5; bet <= 0.9 + eps; bet += 0.0001) {
+        betas[idx] = bet;
+        idx++;
+    }
+    for (bet = 0.9; bet <= 1 + eps; bet += 0.0001) {
+        betas[idx] = bet;
+        idx++;
+    }
+    if (idx != n_betas) {
+        printError("Something wrong with AIS distribution initizalization. Check it out!");
+        exit(1);
+    }
+
+    // for (int k=0; k < n_betas; k++) { // Uniform distributions
+    //     betas[k] = double(k)/(n_betas - 1);
+    //     // cout << "Beta_" << k << ": " << betas[k] << endl;
+    // }
 
     // vector<double> weights;
     long double w, sumW;
