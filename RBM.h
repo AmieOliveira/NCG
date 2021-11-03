@@ -111,6 +111,7 @@ class RBM {
     double a_prob;          // Probability used for initialization of A
     int nLabels;            // Number of labels (when using for classification)
 
+    int timeScale;          // Number of epochs between two consecutive connectivity updates
     double limiar;
 
 

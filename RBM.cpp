@@ -895,23 +895,11 @@ void RBM::optimizer_SGD(Data & trainData) {
     int actualSize;
     double nll_val;
 
+    // TODO: Set parameters timeScale and limiar
+
     int Xdata = xSize - nLabels;
 
     if (shuffle) { trainData.setRandomSeed(generator()); }
-
-    MatrixXd A_(hSize, xSize);    // Continuous version of A
-    for (int i=0; i<hSize; i++) {
-        for (int j=0; j<Xdata; j++) {
-            A_(i,j) = (*p_dis)(generator)/2;
-            if (A(i,j) == 1) A_(i,j) += 0.5;
-            // A_ is initialized uniformly between 0 and 0.5 or
-            // between 0.5 and 1, according to A's values
-        }
-    }
-
-    //stringstream mat_dump;
-    //mat_dump << connect_out << "_SGD_lim" << limiar << "_CD-" << k;
-    // TODO: Rever esse nome (o que eu quero e não quero por? E vai dar certo criar o nome aqui dentro?)
 
     ofstream output;
     output.open(connect_out);
@@ -921,7 +909,7 @@ void RBM::optimizer_SGD(Data & trainData) {
     }
     if (saveConnectivity) {
         output << "# Connectivity patterns throughout training" << endl;
-        output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
+        output << "# Gradient intensity optimization (version 2) " << limiar << ". CD-" << k_steps << endl;
         output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
         output << "# A initialized with p = " << a_prob << endl;
         output << "0," << printConnectivity_linear() << endl;
@@ -947,18 +935,16 @@ void RBM::optimizer_SGD(Data & trainData) {
                 VectorXd & xt = trainData.get_sample(s);
                 getProbabilities_h(h_hat, xt);
 
-                matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
+                matAux = h_hat * xt.transpose();
 
                 if (s == initS) {
                     W_gradient = matAux;
                     b_gradient = h_hat;
                     d_gradient = xt;
-                    A_gradient = W.cwiseProduct( matAux );
                 } else {
                     W_gradient += matAux;
                     b_gradient += h_hat;
                     d_gradient += xt;
-                    A_gradient += W.cwiseProduct( matAux );
                 }
 
                 sampleXtilde(stype, k_steps, xt);  // Changes x value
@@ -968,7 +954,6 @@ void RBM::optimizer_SGD(Data & trainData) {
                 W_gradient -= matAux;
                 b_gradient -= h_hat;
                 d_gradient -= x;
-                A_gradient -= W.cwiseProduct( matAux );
             }
 
             if (bIdx == n_batches-1) {
@@ -979,30 +964,6 @@ void RBM::optimizer_SGD(Data & trainData) {
             W_gradient = W_gradient.cwiseProduct(A);
             W = W + l_rate*W_gradient;
 
-            A_gradient = A_gradient/actualSize;
-            A_ = A_ + l_rate * A_gradient;
-            for (int i=0; i<hSize; i++) {
-                for (int j=0; j<Xdata; j++) {
-                    if ( A_(i,j) < limiar ) {
-                        A(i,j) = 0;
-
-                        if ( A_(i,j) < 0 ) A_(i,j) = 0;
-                    }
-                    else if ( A_(i,j) > limiar ) {
-                        A(i,j) = 1;
-
-                        if ( A_(i,j) > 1 ) A_(i,j) = 1;
-                    }
-                }
-            }   // NOTE: Talvez criar uma função para binarizar a matriz A
-
-            // cout << "Maximum and minimum coefficients of A's gradient: "
-            //      << A_gradient.maxCoeff() << ", " << A_gradient.minCoeff() << endl;
-
-            // // Print for debugging
-            // cout << "Continuous connectivity: " << endl;
-            // cout << A_ << endl;
-
             C = W.cwiseProduct(A);
 
             b_gradient = b_gradient/actualSize;
@@ -1012,13 +973,59 @@ void RBM::optimizer_SGD(Data & trainData) {
             d = d + l_rate*d_gradient;
         }
 
+        if ((it+1) % timeScale == 0) {
+            // NOTE: Eu quero fazer em batches ou tudo de uma só vez?? TESTAR!!
+
+            // A_gradient = W.cwiseProduct( matAux );
+
+            // NOTE: TESTING A SINGLE UPDATE
+            // To use batches, put all this inside a loop, change variable actual size, etc.
+            actualSize = trainData.get_number_of_samples();
+            int sInit = 0;
+            for (s = sInit; s < actualSize; s++) {
+                VectorXd & xt = trainData.get_sample(s);
+                getProbabilities_h(h_hat, xt);
+
+                matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
+
+                if (s == sInit) {
+                    A_gradient = W.cwiseProduct( matAux );
+                } else {
+                    A_gradient += W.cwiseProduct( matAux );
+                }
+
+                sampleXtilde(stype, k_steps, xt);  // Changes x value
+                getProbabilities_h(h_hat);
+                matAux = h_hat * x.transpose();
+
+                A_gradient -= W.cwiseProduct( matAux );
+            }
+
+            // Updating A according to gradient values
+            A_gradient = A_gradient/actualSize;
+
+            for (int i=0; i<hSize; i++) {
+                for (int j=0; j<xSize; j++) {
+                    cout << "∇A (" << i << "," << j << ") = " << A_gradient(i,j) << endl;
+                    if ( A_gradient(i,j) > limiar ) A(i,j) = 1;
+                    else if ( A_gradient(i,j) < limiar ) A(i,j) = 0;
+                }
+            }
+
+            C = W.cwiseProduct(A);
+        }
+
+
+        // TODO: Do I want it to print before or after connectiviy chage, if that is the case?
         if (calcNLL) {
             if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
                 nll_val = negativeLogLikelihood(trainData);
                 history.push_back(nll_val);
-                cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
+                cout << "Epoch " << it+1 << ": NLL = " << nll_val << endl;
             }
         }
+
+        // TODO: Change to save just when I change it?
         if (saveConnectivity) {
             output << it+1 << "," << printConnectivity_linear() << endl;
         }
