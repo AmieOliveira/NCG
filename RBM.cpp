@@ -865,8 +865,9 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
 
     // SGD parameters
     limiar = 0.5;
-    // TODO: Change this so it is not hardcoded
-    // Talvez fazer uma função setThreshold, só fica bem chato ter que dar três setups diferentes
+    timeScale = 5;
+    // TODO: Change parameters so they are not hardcoded!
+    // Ascrescentar como argumentos...
 
     optReady = true;
 }
@@ -918,7 +919,7 @@ void RBM::optimizer_SGD(Data & trainData) {
     int it, bIdx, s;
 
     for (it = 0; it < n_iter; ++it) {
-        // cout << "Iteration " << it+1 << " of " << n_iter << endl;
+        cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         if ( (it > 0) && shuffle ) {
             trainData.shuffle();
@@ -973,46 +974,56 @@ void RBM::optimizer_SGD(Data & trainData) {
             d = d + l_rate*d_gradient;
         }
 
+        if (calcNLL) {
+            if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
+                nll_val = negativeLogLikelihood(trainData);
+                cout << "Epoch " << it+1 << ": NLL = " << nll_val << endl;
+            }
+        }
+
+        // Update connectivity
         if ((it+1) % timeScale == 0) {
+            cout << "Changing network structure" << endl;
             // NOTE: Eu quero fazer em batches ou tudo de uma só vez?? TESTAR!!
+            actualSize = b_size;
 
-            // A_gradient = W.cwiseProduct( matAux );
+            for (bIdx = 0; bIdx < n_batches; ++bIdx) {
+                int sInit = bIdx * b_size;
 
-            // NOTE: TESTING A SINGLE UPDATE
-            // To use batches, put all this inside a loop, change variable actual size, etc.
-            actualSize = trainData.get_number_of_samples();
-            int sInit = 0;
-            for (s = sInit; s < actualSize; s++) {
-                VectorXd & xt = trainData.get_sample(s);
-                getProbabilities_h(h_hat, xt);
+                for (s = sInit; s < sInit + actualSize; s++) {
+                    cout << "Sample: " << s << endl;
 
-                matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
+                    VectorXd & xt = trainData.get_sample(s);
+                    getProbabilities_h(h_hat, xt);
 
-                if (s == sInit) {
-                    A_gradient = W.cwiseProduct( matAux );
-                } else {
-                    A_gradient += W.cwiseProduct( matAux );
+                    matAux = h_hat * xt.transpose();
+
+                    if (s == sInit) {
+                        A_gradient = W.cwiseProduct( matAux );
+                    } else {
+                        A_gradient += W.cwiseProduct( matAux );
+                    }
+
+                    sampleXtilde(stype, k_steps, xt);  // Changes x value
+                    getProbabilities_h(h_hat);
+                    matAux = h_hat * x.transpose();
+
+                    A_gradient -= W.cwiseProduct( matAux );
                 }
 
-                sampleXtilde(stype, k_steps, xt);  // Changes x value
-                getProbabilities_h(h_hat);
-                matAux = h_hat * x.transpose();
+                // Updating A according to gradient values
+                A_gradient = A_gradient/actualSize;
 
-                A_gradient -= W.cwiseProduct( matAux );
-            }
-
-            // Updating A according to gradient values
-            A_gradient = A_gradient/actualSize;
-
-            for (int i=0; i<hSize; i++) {
-                for (int j=0; j<xSize; j++) {
-                    cout << "∇A (" << i << "," << j << ") = " << A_gradient(i,j) << endl;
-                    if ( A_gradient(i,j) > limiar ) A(i,j) = 1;
-                    else if ( A_gradient(i,j) < limiar ) A(i,j) = 0;
+                for (int i=0; i<hSize; i++) {
+                    for (int j=0; j<xSize; j++) {
+                        cout << "∇A (" << i << "," << j << ") = " << A_gradient(i,j) << endl;
+                        if ( A_gradient(i,j) > limiar ) A(i,j) = 1;
+                        else if ( A_gradient(i,j) < -limiar ) A(i,j) = 0;
+                    }
                 }
-            }
 
-            C = W.cwiseProduct(A);
+                C = W.cwiseProduct(A);
+            }
         }
 
 

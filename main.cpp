@@ -321,34 +321,27 @@ void testRBMprediction() {
 
 
 int main(int argc, char **argv) {
-    RBM model(784,15);
+    int k = 10;
+    int iter = 10;
+    int b_size = 50;
+    double l_rate = 0.01;
+    int H = 15;
+    double p = 1;
+    string A_out = "connectivity";
+    unsigned seed = 32985;
+    bool shuffleData = true;
 
-    // model.load("Training Outputs/Teste MNIST/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
-    // model.load("Training Outputs/Teste MNIST/mnist_complete_H16_CD-1_lr0.01_mBatch50_iter1000_run0.rbm");
-    model.load("Training Outputs/Teste MNIST/mnist_complete_H16_CD-1_lr0.01_mBatch50_iter1000_run0-LAND.rbm");
+    Data dat("Datasets/bin_mnist-test.data", false); dat = dat.separateTrainTestSets(0.1).at(0);
 
-    // MatrixXd w = MatrixXd::Constant(15,784,1);
-    // w(0,1) = -1; w(1,0) = -1; w(1,2) = 2;
-    // w(3,7) = .3; w(0,9) = -1; w(2,8) = -.5; w(4,3) = .7;
-    // model.setWeights(w);
-    //
-    // VectorXd b(15);
-    // b(0) = 1; b(1) = 2; b(2) = 1.23; b(3) = -0.1; b(4) = -1;
-    // model.setHiddenBiases(b);
-    //
-    // VectorXd d(784);
-    // d(0) = 1; d(1) = 2; d(2) = 3; d(3) = 2; d(4) = 1; d(5) = -1; d(6) = -2; d(7) = .7; d(8) = 1; d(9) = -.2;
-    // model.setVisibleBiases(d);
+    RBM model(dat.get_sample_size(), H);
 
-    // model.printVariables();
+    model.setRandomSeed(seed);
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, 1, shuffleData);
+    model.connectivity(true);
+    model.optSetup(Heuristic::SGD, A_out, p, 0);
+    model.fit_connectivity(dat);
 
-    MatrixXd datMat = MatrixXd::Constant(784, 1, 1);
-    Data dat(datMat);
 
-    double nll; // = model.negativeLogLikelihood(dat, None);
-    nll = model.negativeLogLikelihood(dat, None_H);
-
-    // model.save("test.rbm");
 
     return 0;
 }
