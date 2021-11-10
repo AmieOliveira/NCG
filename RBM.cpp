@@ -864,7 +864,7 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
     startConnectivity(p);
 
     // SGD parameters
-    limiar = 0.5;
+    limiar = 0.12;
     timeScale = 5;
     // TODO: Change parameters so they are not hardcoded!
     // Ascrescentar como argumentos...
@@ -919,7 +919,7 @@ void RBM::optimizer_SGD(Data & trainData) {
     int it, bIdx, s;
 
     for (it = 0; it < n_iter; ++it) {
-        cout << "Iteration " << it+1 << " of " << n_iter << endl;
+        // cout << "Iteration " << it+1 << " of " << n_iter << endl;
 
         if ( (it > 0) && shuffle ) {
             trainData.shuffle();
@@ -974,24 +974,29 @@ void RBM::optimizer_SGD(Data & trainData) {
             d = d + l_rate*d_gradient;
         }
 
-        if (calcNLL) {
-            if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
-                nll_val = negativeLogLikelihood(trainData);
-                cout << "Epoch " << it+1 << ": NLL = " << nll_val << endl;
-            }
-        }
-
         // Update connectivity
         if ((it+1) % timeScale == 0) {
-            cout << "Changing network structure" << endl;
-            // NOTE: Eu quero fazer em batches ou tudo de uma só vez?? TESTAR!!
-            actualSize = b_size;
+            printVerbose("Changing network structure");
 
-            for (bIdx = 0; bIdx < n_batches; ++bIdx) {
+            if (calcNLL) {
+                if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
+                    nll_val = negativeLogLikelihood(trainData);
+                    cout << "Epoch " << it+1 << ": NLL = " << nll_val << endl;
+                }
+            }
+
+            // NOTE: Eu quero fazer em batches ou tudo de uma só vez?? TESTAR!!
+            actualSize = 1000; // trainData.get_number_of_samples();
+            int g_nBatches = ceil(trainData.get_number_of_samples()/actualSize);
+
+            for (bIdx = 0; bIdx < g_nBatches; ++bIdx) {
                 int sInit = bIdx * b_size;
 
+                //cout << "BATCH " << bIdx << endl;
+                //cout << "Progress of gradient calculation: ∇A (0,0) = ";
+
                 for (s = sInit; s < sInit + actualSize; s++) {
-                    cout << "Sample: " << s << endl;
+                    // cout << "Sample: " << s << endl;
 
                     VectorXd & xt = trainData.get_sample(s);
                     getProbabilities_h(h_hat, xt);
@@ -1009,20 +1014,29 @@ void RBM::optimizer_SGD(Data & trainData) {
                     matAux = h_hat * x.transpose();
 
                     A_gradient -= W.cwiseProduct( matAux );
+
+
+                    //cout << A_gradient(9,350) << " → ";
                 }
+                //cout << endl;
 
                 // Updating A according to gradient values
                 A_gradient = A_gradient/actualSize;
+                // cout << "\tFinal value: " << A_gradient(9,350) << endl;
 
                 for (int i=0; i<hSize; i++) {
                     for (int j=0; j<xSize; j++) {
-                        cout << "∇A (" << i << "," << j << ") = " << A_gradient(i,j) << endl;
+                        // if (j == 352) cout << "∇A (" << i << "," << j << ") = " << A_gradient(i,j) << endl;
                         if ( A_gradient(i,j) > limiar ) A(i,j) = 1;
                         else if ( A_gradient(i,j) < -limiar ) A(i,j) = 0;
                     }
                 }
 
                 C = W.cwiseProduct(A);
+            }
+
+            if (saveConnectivity) {
+                output << it+1 << "," << printConnectivity_linear() << endl;
             }
         }
 
@@ -1034,11 +1048,6 @@ void RBM::optimizer_SGD(Data & trainData) {
                 history.push_back(nll_val);
                 cout << "Epoch " << it+1 << ": NLL = " << nll_val << endl;
             }
-        }
-
-        // TODO: Change to save just when I change it?
-        if (saveConnectivity) {
-            output << it+1 << "," << printConnectivity_linear() << endl;
         }
     }
 

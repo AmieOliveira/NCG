@@ -322,12 +322,12 @@ void testRBMprediction() {
 
 int main(int argc, char **argv) {
     int k = 10;
-    int iter = 10;
+    int iter = 100;
     int b_size = 50;
     double l_rate = 0.01;
     int H = 15;
     double p = 1;
-    string A_out = "connectivity";
+    string A_out = "connectivity.csv";
     unsigned seed = 32985;
     bool shuffleData = true;
 
@@ -341,6 +341,7 @@ int main(int argc, char **argv) {
     model.optSetup(Heuristic::SGD, A_out, p, 0);
     model.fit_connectivity(dat);
 
+    //model.fit(dat);
 
 
     return 0;
