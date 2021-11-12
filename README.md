@@ -1,4 +1,4 @@
-# Connectivity Patterns in Neural Networks
+# Gradient Optimal Network Connectivity (GONC)
 
 This project was designed to evaluate the effect of 
 using different connectivity patterns in a neural 
