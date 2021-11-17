@@ -7,7 +7,7 @@ from math import log
 
 # basSize = 4
 
-comparison = "connectivityScale-batch1k-limiar0.12"
+comparison = "connectivityScaleType-batch1k-limiar0.08"
 
 # k_vals = [1, 10]  # [100, 20, 10, 5, 2, 1]
 # neighbors = [14, 12, 10]   # 16 [14, 12, 10, 8, 6, 4]
@@ -35,108 +35,6 @@ sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 
 
-# filename = f"Training Outputs/Teste Gradiente/BatchSize50/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Batch 50"})
-# df[f"Batch 50"].plot(ax=ax, linewidth=1, alpha=0.8)
-
-# filename = f"Training Outputs/Teste Gradiente/Batch1k_scale2/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Time Scale 2"})
-# df[f"Time Scale 2"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# filename = f"Training Outputs/Teste Gradiente/BatchSize1k/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# # df = df.rename(columns={"NLL": f"Batch 1k"})
-# # df[f"Batch 1k"].plot(ax=ax, linewidth=1, alpha=0.8)
-# df = df.rename(columns={"NLL": f"Time Scale 5"})
-# df[f"Time Scale 5"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# filename = f"Training Outputs/Teste Gradiente/Batch1k_scale10/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Time Scale 10"})
-# df[f"Time Scale 10"].plot(ax=ax, linewidth=1, alpha=0.8)
-
-# filename = f"Training Outputs/Teste Gradiente/Batch1k_scale20/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# # df = df.rename(columns={"NLL": f"Time Scale 20"})
-# # df[f"Time Scale 20"].plot(ax=ax, linewidth=1, alpha=0.8)
-# df = df.rename(columns={"NLL": f"Threshold 0,04"})
-# df[f"Threshold 0,04"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# filename = f"Training Outputs/Teste Gradiente/Batch1k_scale20_lim0.08/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Threshold 0,08"})
-# df[f"Threshold 0,08"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-filename = f"Training Outputs/Teste Gradiente/Batch1k_scale20_lim0.12/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-df = pd.read_csv(filename, comment="#", index_col=0)
-df = df.astype(float)
-df = df.iloc[0:lim_iter+1]
-
-# df = df.rename(columns={"NLL": f"Threshold 0,12"})
-# df[f"Threshold 0,12"].plot(ax=ax, linewidth=1, alpha=0.8)
-df = df.rename(columns={"NLL": f"Scale 20"})
-df[f"Scale 20"].plot(ax=ax, linewidth=1, alpha=0.8)
-
-filename = f"Training Outputs/Teste Gradiente/Batch1k_scale5_lim0.12/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-df = pd.read_csv(filename, comment="#", index_col=0)
-df = df.astype(float)
-df = df.iloc[0:lim_iter+1]
-
-df = df.rename(columns={"NLL": f"Scale 5"})
-df[f"Scale 5"].plot(ax=ax, linewidth=1, alpha=0.8)
-
-# filename = f"Training Outputs/Teste Gradiente/SingleBatch/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Single Batch"})
-# df[f"Single Batch"].plot(ax=ax, linewidth=1, alpha=0.8)
-
-# filename = f"Training Outputs/Teste Gradiente/SingleBatch_scale20_lim0.04/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Threshold 0,04"})
-# df[f"Threshold 0,04"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# filename = f"Training Outputs/Teste Gradiente/SingleBatch_scale20_lim0.005/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Threshold 0,005"})
-# df[f"Threshold 0,005"].plot(ax=ax, linewidth=1, alpha=0.8)
-#
-# filename = f"Training Outputs/Teste Gradiente/SingleBatch_scale20_lim0.001/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
-# df = pd.read_csv(filename, comment="#", index_col=0)
-# df = df.astype(float)
-# df = df.iloc[0:lim_iter+1]
-#
-# df = df.rename(columns={"NLL": f"Threshold 0,001"})
-# df[f"Threshold 0,001"].plot(ax=ax, linewidth=1, alpha=0.8)
-
 filename = f"Training Outputs/Teste Gradiente/nll_mnist_complete_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
 df = pd.read_csv(filename, comment="#", index_col=0)
 df = df.astype(float)
@@ -144,6 +42,56 @@ df = df.iloc[0:lim_iter+1]
 
 df = df.rename(columns={"NLL": f"Traditional Training"})
 df[f"Traditional Training"].plot(ax=ax, linewidth=1, alpha=0.8, color="gray")
+
+filename = f"Training Outputs/Teste Gradiente/nll_mnist_sgd-1_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter+1]
+
+df = df.rename(columns={"NLL": f"Default GONC"})
+df[f"Default GONC"].plot(ax=ax, linewidth=1, alpha=0.8, color="black")
+
+
+filename = f"Training Outputs/Teste Gradiente/Batch1k_scale20_lim0.08/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter+1]
+
+df = df.rename(columns={"NLL": f"Time Scale 20"})
+df[f"Time Scale 20"].plot(ax=ax, linewidth=1, alpha=0.8)
+
+filename = f"Training Outputs/Teste Gradiente/Batch1k_scale5_lim0.08/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter+1]
+
+df = df.rename(columns={"NLL": f"Time Scale 5"})
+df[f"Time Scale 5"].plot(ax=ax, linewidth=1, alpha=0.8)
+
+filename = f"Training Outputs/Teste Gradiente/Batch1k_scale5-noInicio_lim0.08/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter+1]
+
+df = df.rename(columns={"NLL": f"Time Scale 5 - At beginning"})
+df[f"Time Scale 5 - At beginning"].plot(ax=ax, linewidth=1, alpha=0.8)
+
+filename = f"Training Outputs/Teste Gradiente/Batch1k_scale5-intermitente_lim0.08/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter+1]
+
+df = df.rename(columns={"NLL": f"Time Scale 5 - With 20-epoch pauses"})
+df[f"Time Scale 5 - With 20-epoch pauses"].plot(ax=ax, linewidth=1, alpha=0.8)
+
+filename = f"Training Outputs/Teste Gradiente/Batch1k_scale5-intermitente-20-40_lim0.08/nll_mnist_sgd-{p}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}_run0.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter+1]
+
+df = df.rename(columns={"NLL": f"Time Scale 5 - With 40-epoch pauses"})
+df[f"Time Scale 5 - With 40-epoch pauses"].plot(ax=ax, linewidth=1, alpha=0.8)
+
 
 plt.title(f"NLL evolution through RBM training")
 # ---------

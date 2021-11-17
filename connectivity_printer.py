@@ -16,12 +16,12 @@ lrate = 0.01
 bsize = 50
 iters = 100
 
-cBatch = "singleBatch"
-timeScale = 20
-limiar = 0.04
+cBatch = "Batch1k"
+timeScale = 5.3
+limiar = 0.08
 
 # inputfilename = f"Training Outputs/Teste SGD/connectivity_bas{basSize}_SGD_CD-{k}_p{p}_seed{seed}.csv"
-inputfilename = f"Training Outputs/Teste Gradiente/SingleBatch_scale20_lim0.04/connectivity_mnist_sgd-{p}_H{H}_CD-{k}_lr{lrate}_mBatch{bsize}_iter{iters}_seed{seed}_run0.csv"
+inputfilename = f"Training Outputs/Teste Gradiente/Batch1k_scale5-intermitente-20-40_lim0.08/connectivity_mnist_sgd-{p}_H{H}_CD-{k}_lr{lrate}_mBatch{bsize}_iter{iters}_seed{seed}_run0.csv"
 outpath = "Plots/Teste Gradiente"
 # ---------------
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(nrows=2, ncols=1, sharex='col', figsize=figSize["default"])
     fig.suptitle(f"Unit's degree for CD-{k}, p = {p}")
 
-    x_axis = list(range(0, iters+1, timeScale))
+    x_axis = list(range(0, iters+1, int(timeScale)))
 
     ax[0].step(x_axis, gh_max, where='post', label="Maximum")
     ax[0].step(x_axis, gh_med, where='post', label="Mean")

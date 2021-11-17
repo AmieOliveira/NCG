@@ -113,6 +113,7 @@ class RBM {
 
     int timeScale;          // Number of epochs between two consecutive connectivity updates
     double limiar;
+    int connBatchSize;
 
 
     // Training methods

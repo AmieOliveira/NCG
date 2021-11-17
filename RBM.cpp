@@ -864,8 +864,9 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
     startConnectivity(p);
 
     // SGD parameters
-    limiar = 0.12;
+    limiar = 0.08;
     timeScale = 5;
+    connBatchSize = 1000;
     // TODO: Change parameters so they are not hardcoded!
     // Ascrescentar como argumentos...
 
@@ -917,6 +918,7 @@ void RBM::optimizer_SGD(Data & trainData) {
     }
 
     int it, bIdx, s;
+    bool updateConn = true;
 
     for (it = 0; it < n_iter; ++it) {
         // cout << "Iteration " << it+1 << " of " << n_iter << endl;
@@ -976,6 +978,7 @@ void RBM::optimizer_SGD(Data & trainData) {
 
         // Update connectivity
         if ((it+1) % timeScale == 0) {
+        if (updateConn) {
             printVerbose("Changing network structure");
 
             if (calcNLL) {
@@ -985,8 +988,11 @@ void RBM::optimizer_SGD(Data & trainData) {
                 }
             }
 
-            // NOTE: Eu quero fazer em batches ou tudo de uma só vez?? TESTAR!!
-            actualSize = 1000; // trainData.get_number_of_samples();
+            if (connBatchSize < 0) {
+                actualSize = trainData.get_number_of_samples();
+            } else {
+                actualSize = connBatchSize;
+            }
             int g_nBatches = ceil(trainData.get_number_of_samples()/actualSize);
 
             for (bIdx = 0; bIdx < g_nBatches; ++bIdx) {
@@ -1034,7 +1040,14 @@ void RBM::optimizer_SGD(Data & trainData) {
 
                 C = W.cwiseProduct(A);
             }
-
+        }
+            if  ( (it+1) % 4*timeScale == 0 ) {
+                // updateConn = !updateConn;
+                updateConn = false;
+                if ( (it+1) % 6*timeScale == 0 ) {
+                    updateConn = true;
+                }
+            }
             if (saveConnectivity) {
                 output << it+1 << "," << printConnectivity_linear() << endl;
             }
