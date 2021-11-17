@@ -15,16 +15,16 @@ int main(int argc, char **argv) {
     // TODO: Add arguments so that I don't have to have all specifications hardcoded
 
 
-    int k = 10;
-    int iter = 6000;
+    int k = 1;
+    int iter = 200;
     int b_size = 50;  // 5
     double l_rate = 0.01;
     int H = 16;
     double p = 1;
-    unsigned seed = 0;  // 232140824 9217 71263 92174
+    unsigned seed = 1;  // 232140824 9217 71263 92174
     bool shuffleData = true;
 
-    int repeat = 5;
+    int repeat = 1;
     int n_seeds = 1;
 
     //// BAS Dataset
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     // Traditional RBM
     RBM model;
 
-    model.load("Training Outputs/Redes Treinadas/mnist_sgd-0.5_H16_CD-10_lr0.01_mBatch50_iter200_run0.rbm");
+    model.load("Training Outputs/Redes Treinadas/H25_nets/mnist_sgd-1_H25_CD-1_lr0.01_mBatch50_iter200_run0.rbm");
 
     cout << "Training model for " << iter << " epochs" << endl;
 
@@ -57,42 +57,41 @@ int main(int argc, char **argv) {
         // cout << "Truncation estimation (no verification): " << model.negativeLogLikelihood(bas, ZEstimation::Trunc) << endl;
         auto t3 = chrono::steady_clock::now();
 
-        cout << "Time elapsed for total calculation was " << chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()
-             << " ms and for truncated Z was " << chrono::duration_cast<chrono::milliseconds>(t3 - t2).count() << " ms" << endl;
+        cout << "Time elapsed for total calculation was " << chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000
+             << " ms and for truncated Z was " << chrono::duration_cast<chrono::milliseconds>(t3 - t2).count()/1000 << " s" << endl;
         // cout << "\t\t(In nanoseconds truncation calculated " <<  chrono::duration_cast<chrono::microseconds>(t3 - t2).count() << ")" << endl;
 
-        vector<double> vals;
-        vector<double> times;
-
-        double logZ_AIS[] = {198.053627, 198.038879, 198.212685, 198.181642, 198.079448};
-        double time_logZ[] = {55.235547, 49.144417, 80.195498, 63.984503, 78.551844};
-
-        double sumAIS = 0, sumTimes = 0, tmp, tmpT;
-
-        for (int r=1; r <= repeat; r++) {
-            model.setRandomSeed(seed + s + r);
-
-            t1 = chrono::steady_clock::now();
-            // tmp = model.negativeLogLikelihood(bas, ZEstimation::AIS);
-            tmp = model.negativeLogLikelihood(bas, logZ_AIS[r-1]);
-            t2 = chrono::steady_clock::now();
-            // tmpT = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
-            tmpT = time_logZ[r-1] + chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000;
-
-            sumAIS += tmp;
-            sumTimes += tmpT;
-            vals.push_back(tmp);
-            times.push_back(tmpT);
-            cout << "AIS estimation " << r << ": " << tmp << " (took " << tmpT << " s)" << endl;
-        }
-        sumAIS = sumAIS/repeat;
-        sumTimes = sumTimes/repeat;
-        double std = 0, stdT = 0;
-        for (auto v: vals) { std += pow(sumAIS - v, 2); }
-        for (auto t: times) { stdT += pow(sumTimes - t, 2); }
-        std = sqrt(std/repeat);
-        stdT = sqrt(stdT/repeat);
-        cout << "\tAIS mean: " << sumAIS << " ± " << std << "; time to calculate is " << sumTimes << " ± " << stdT << " s" << endl;
-        cout << endl;
+        // vector<double> vals;
+        // vector<double> times;
+        //
+        // double logZ_AIS[] = {253.794647};
+        // double time_logZ[] = {75.559418};
+        //
+        // double sumAIS = 0, sumTimes = 0, tmp, tmpT;
+        //
+        // for (int r=1; r <= repeat; r++) {
+        //     model.setRandomSeed(seed + s + r);
+        //
+        //     t1 = chrono::steady_clock::now();
+        //     tmp = model.negativeLogLikelihood(bas, logZ_AIS[r-1]);
+        //     t2 = chrono::steady_clock::now();
+        //     // tmpT = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
+        //     tmpT = time_logZ[r-1] + chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000;
+        //
+        //     sumAIS += tmp;
+        //     sumTimes += tmpT;
+        //     vals.push_back(tmp);
+        //     times.push_back(tmpT);
+        //     cout << "AIS estimation " << r << ": " << tmp << " (took " << tmpT << " s)" << endl;
+        // }
+        // sumAIS = sumAIS/repeat;
+        // sumTimes = sumTimes/repeat;
+        // double std = 0, stdT = 0;
+        // for (auto v: vals) { std += pow(sumAIS - v, 2); }
+        // for (auto t: times) { stdT += pow(sumTimes - t, 2); }
+        // std = sqrt(std/repeat);
+        // stdT = sqrt(stdT/repeat);
+        // cout << "\tAIS mean: " << sumAIS << " ± " << std << "; time to calculate is " << sumTimes << " ± " << stdT << " s" << endl;
+        // cout << endl;
     }
 }
