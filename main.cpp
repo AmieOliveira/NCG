@@ -321,34 +321,36 @@ void testRBMprediction() {
 
 
 int main(int argc, char **argv) {
-    RBM model(784,15);
+    int k = 1;
+    int iter = 100;
+    int b_size = 5;  // 5
+    double l_rate = 0.01;
+    int H = 16;
+    // double p = 1;
+    unsigned seed = 18642;
+    bool shuffleData = true;
+    bool calcNLL = false;
 
-    // model.load("Training Outputs/Teste MNIST/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
-    // model.load("Training Outputs/Teste MNIST/mnist_complete_H16_CD-1_lr0.01_mBatch50_iter1000_run0.rbm");
-    model.load("Training Outputs/Teste MNIST/mnist_complete_H16_CD-1_lr0.01_mBatch50_iter1000_run0-LAND.rbm");
+    Data bas("Datasets/bin_bas4_SMALL.data", true);
+    for (int s=0; s < bas.get_number_of_samples(); s++) {
+        cout << "Sample " << s+1 << ": " << bas.get_sample(s).transpose() << "\t";
+        cout << "Label is " << bas.get_label(s) << endl;
+    }
 
-    // MatrixXd w = MatrixXd::Constant(15,784,1);
-    // w(0,1) = -1; w(1,0) = -1; w(1,2) = 2;
-    // w(3,7) = .3; w(0,9) = -1; w(2,8) = -.5; w(4,3) = .7;
-    // model.setWeights(w);
-    //
-    // VectorXd b(15);
-    // b(0) = 1; b(1) = 2; b(2) = 1.23; b(3) = -0.1; b(4) = -1;
-    // model.setHiddenBiases(b);
-    //
-    // VectorXd d(784);
-    // d(0) = 1; d(1) = 2; d(2) = 3; d(3) = 2; d(4) = 1; d(5) = -1; d(6) = -2; d(7) = .7; d(8) = 1; d(9) = -.2;
-    // model.setVisibleBiases(d);
+    cout << "Sample size: " << bas.get_sample_size() << endl;
 
-    // model.printVariables();
+    RBM model(bas.get_sample_size(), H, true);
+    model.setRandomSeed(seed);
 
-    MatrixXd datMat = MatrixXd::Constant(784, 1, 1);
-    Data dat(datMat);
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 1, shuffleData);
+    cout << "Training for " << iter << " epochs" << endl;
+    model.fit(bas);
 
-    double nll; // = model.negativeLogLikelihood(dat, None);
-    nll = model.negativeLogLikelihood(dat, None_H);
+    cout << "NLL: " << model.negativeLogLikelihood(bas, ZEstimation::None) << endl;
+    cout << "Classification accuracy: " << endl;
+    model.classificationStatistics(bas, true);
 
-    // model.save("test.rbm");
+    //model.printVariables();
 
     return 0;
 }

@@ -268,6 +268,8 @@ void Data::loadData(string filename, bool labels) {
 
     // if (hasLabels) cout << "LABELS:\n" << _labels.at(0) << ", " << _labels.at(1) << endl;
     // cout << "DATA:\n" << _data.at(0).transpose() << endl << endl << _data.at(1).transpose() << endl;
+
+    giveLabels = hasLabels;
 }
 
 // Random auxiliars

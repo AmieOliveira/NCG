@@ -100,6 +100,7 @@ class RBM {
     int freqNLL;            // Rate of NLL calculation (1 calculus every freqNLL iterations)
     vector<double> history; // NLL
     bool shuffle;           // flag to shuffle data order through iterations
+    double tradeFO;         // Trade-off parameter of hybrid classification objective function
 
     VectorXd auxH;    // Auxiliar vectors to diminish data allocation through training
     RowVectorXd auxX;

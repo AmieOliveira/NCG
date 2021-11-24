@@ -703,6 +703,9 @@ void RBM::trainSetup(SampleType sampleType, int k, int iterations,
     freqNLL = period;       // Rate of NLL calculation
     shuffle = doShuffle;    // flag to shuffle data order through iterations
 
+    // TODO: Do not want hardcoded! (I think?)
+    tradeFO = 0.01;
+
     if ( calcNLL && (xSize > MAXSIZE_EXACTPROBABILITY) && (hSize > MAXSIZE_EXACTPROBABILITY) ) {
         printWarning("Training set to calculate NLL, but dimensions are too big. "
                      "An approximation will be made instead");
@@ -731,6 +734,12 @@ void RBM::fit(Data & trainData){
     VectorXd h_hat(hSize);
     int actualSize;
     double nll_val;
+
+    MatrixXd W_grad_discr(hSize, xSize);
+    VectorXd b_grad_discr(hSize), d_grad_discr = VectorXd::Zero(xSize);
+
+    int Xdata = xSize-nLabels;
+    double n_constant;
 
     if (calcNLL) {
         history.push_back(negativeLogLikelihood(trainData)); // Before training
@@ -763,10 +772,81 @@ void RBM::fit(Data & trainData){
                     W_gradient = h_hat * xt.transpose();
                     b_gradient = h_hat;
                     d_gradient = xt;
+
+                    if (nLabels > 0) {
+                        W_grad_discr = W_gradient;
+                        b_grad_discr = h_hat;
+
+                        for (int j=Xdata; j<xSize; j++) {
+                            d_grad_discr(j) = xt(j);
+                        }
+                    }
                 } else {
                     W_gradient += h_hat * xt.transpose();
                     b_gradient += h_hat;
                     d_gradient += xt;
+
+                    if (nLabels > 0) {
+                        W_grad_discr += W_gradient;
+                        b_grad_discr += h_hat;
+
+                        for (int j=Xdata; j<xSize; j++) {
+                            d_grad_discr(j) += xt(j);
+                        }
+                    }
+                }
+
+                if (nLabels > 0) {
+                    // 1. Constante de normalização
+                    x = xt;
+                    for (int j=Xdata; j<xSize; j++) {
+                        x(j) = 0;
+                    } // Seria bom otimizar essa parte...
+
+                    n_constant = 0;
+                    for (int y=0; y<nLabels; y++) {
+                        x(y + Xdata) = 1;
+                        if (y > 0) x(y + Xdata - 1) = 0;
+                        n_constant += expl(-freeEnergy());
+                    }
+
+                    // 2. Partes negativas dos gradientes
+                    //    - d
+                    for (int j = xSize-1; j >= Xdata; j--) {
+                        if (j < xSize-1) {
+                            x(j + 1) = 0;
+                            x(j) = 1;
+                        }
+                        d_grad_discr(j) -= expl(-freeEnergy())/n_constant;
+                    }
+
+                    //    - b
+                    for (int y=0; y<nLabels; y++) {
+                        if (y > 0) {
+                            x(y + nLabels - 1) = 0;
+                            x(y + nLabels) = 1;
+                        }
+                        getProbabilities_h(h_hat);
+                        b_grad_discr -= ( expl(-freeEnergy()) / n_constant )*h_hat;
+                    }
+
+                    //    - W
+                    for (int y=0; y<nLabels; y++) {
+                        if (y > 0) {
+                            x(y + nLabels - 1) = 0;
+                            x(y + nLabels) = 1;
+                        }
+                        getProbabilities_h(h_hat);
+                        h_hat = ( expl(-freeEnergy()) / n_constant )*h_hat;
+
+                        for (int i=0; i<hSize; i++) {
+                            for (int j=0; j<Xdata; j++) {
+                                W_grad_discr(i,j) -= x(j)*h_hat(i);
+                            }
+
+                            W_grad_discr(i, Xdata + y) -= h_hat(i);
+                        }
+                    }
                 }
 
                 sampleXtilde(stype, k_steps, xt); // Changes x value
@@ -780,6 +860,10 @@ void RBM::fit(Data & trainData){
             if (bIdx == n_batches-1) {
                 actualSize = trainData.get_number_of_samples() - bIdx * b_size;
             }
+
+            W_gradient = tradeFO * W_gradient + W_grad_discr;
+            b_gradient = tradeFO * b_gradient + b_grad_discr;
+            d_gradient = tradeFO * d_gradient + d_grad_discr;
 
             W_gradient = W_gradient/actualSize;
             if (patterns) W_gradient = W_gradient.cwiseProduct(A);
