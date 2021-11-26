@@ -787,7 +787,7 @@ void RBM::fit(Data & trainData){
                     d_gradient += xt;
 
                     if (nLabels > 0) {
-                        W_grad_discr += W_gradient;
+                        W_grad_discr += h_hat * xt.transpose();
                         b_grad_discr += h_hat;
 
                         for (int j=Xdata; j<xSize; j++) {
