@@ -738,6 +738,7 @@ void RBM::fit(Data & trainData){
     MatrixXd W_grad_discr(hSize, xSize);
     VectorXd b_grad_discr(hSize), d_grad_discr = VectorXd::Zero(xSize);
 
+    nLabels = trainData.get_number_of_labels();
     int Xdata = xSize-nLabels;
     double n_constant;
 
@@ -1643,7 +1644,7 @@ double RBM::classificationStatistics(Data & data, bool printExtras) {
         lTotal = results[l][1] + results[l][0];
         if (printExtras) {
             cout << "Label " << l << ": " << results[l][1] * 100 / lTotal
-                 << "% correct and (total of " << lTotal << " samples)" << endl;
+                 << "% correct (total of " << lTotal << " samples)" << endl;
         }
         rights += results[l][1];
     }

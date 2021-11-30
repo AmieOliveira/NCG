@@ -322,8 +322,8 @@ void testRBMprediction() {
 
 int main(int argc, char **argv) {
     int k = 1;
-    int iter = 100;
-    int b_size = 5;  // 5
+    int iter = 40;
+    int b_size = 2;  // 5
     double l_rate = 0.01;
     int H = 16;
     // double p = 1;
