@@ -104,24 +104,31 @@ int main(int argc, char **argv) {
         printInfo(msg.str());
     }
 
-    // Output file names
-    stringstream c_filename, nll_filename;
-    c_filename << filePath << "connectivity_bas" << size << "_SGD_CD-" << k << "_lr" << l_rate
-               << "_p" << p << "_run" << fileIDX << ".csv";
-    nll_filename << filePath << "nll_bas" << size << "_SGD_CD-" << k << "_lr" << l_rate
-               << "_p" << p << "_run" << fileIDX << ".csv";
-    printInfo("Ouput files: " + c_filename.str() + ", " + nll_filename.str());
-
-    // Data and RBM creation
+    // Data creation
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
+    int H = s_size;
 
-    RBM model(s_size, s_size, true);
+    // Output file names
+    stringstream fname;
+    fname << "bas" << size << "_sgd-" << p << "_H" << H << "_CD-" << k << "_lr"
+          << l_rate << "_mBatch" << b_size << "_iter" << iter;
+    if (seed != fileIDX) { fname << "_seed" << seed; }
+    fname << "_run" << fileIDX;
+
+    string c_filename, nll_filename;
+
+    c_filename = filePath + "connectivity_" + fname.str() + ".csv";
+    nll_filename = filePath + "nll_" + fname.str() + ".csv";
+    printInfo("Ouput files: " + c_filename + ", " + nll_filename);
+
+    // RBM creation
+    RBM model(s_size, H, true);
 
     // RBM setup and training
     model.setRandomSeed(seed);
     model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);
-    model.optSetup(Heuristic::SGD, c_filename.str(), p);
+    model.optSetup(Heuristic::SGD, c_filename, p);
 
     model.fit_connectivity(bas);
 
@@ -129,7 +136,7 @@ int main(int argc, char **argv) {
 
     // Saving NLL output
     ofstream outdata;
-    outdata.open(nll_filename.str()); // opens the file
+    outdata.open(nll_filename); // opens the file
     if( !outdata ) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
         exit(1);

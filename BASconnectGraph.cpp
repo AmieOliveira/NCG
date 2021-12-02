@@ -108,6 +108,7 @@ int main(int argc, char **argv) {
 
     Data bas(DataDistribution::BAS, size);
     int s_size = bas.get_sample_size();
+    int H = s_size;
     MatrixXd connectivity;
 
     switch (version) {
@@ -147,8 +148,10 @@ int main(int argc, char **argv) {
 
     ofstream outdata;
     stringstream fname;
-    fname << filePath << "nll_progress_bas" << size << "_BASconV" << version << "_k" << k;
-    fname << "-run" << fileIDX << ".csv";
+    fname << filePath << "nll_bas" << size << "_BASconV" << version << "_H" << H << "_CD-" << k
+          << "_lr" << l_rate << "_mBatch" << b_size << "_iter" << iter;
+    if (seed != fileIDX) { fname << "_seed" << seed; }
+    fname << "_run" << fileIDX << ".csv";
     cout << "Saving output as " << fname.str() << endl;
     outdata.open(fname.str()); // opens the file
     if( !outdata ) { // file couldn't be opened
