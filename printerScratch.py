@@ -12,21 +12,21 @@ comparison = "compConvSGD"  # "inicializacaoA_"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-k_vals = [1, 10]  # [100, 20, 10, 5, 2, 1]
-# k = 1
+# k_vals = [1, 10]  # [100, 20, 10, 5, 2, 1]
 # neighbors = [14, 12, 10]   # 16 [14, 12, 10, 8, 6, 4]
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
-lim_iter = 100
+k = 1
+lim_iter = 6000
 errorType = None        # None, "std", "quartile"
 repeat = 5
 p_vals = [1, 0.5]
 # p = 1
-seed = 0
-lRate = 0.1
+seed = 1
+lRate = 0.01
 bSize = 50
-H = 500
+H = 16
 addOthers = False
 zoom = False
 
@@ -36,6 +36,26 @@ figSize = {"default": (6.7, 5), "wide": (13, 5)}
 sizeNum = {1: 1, 2: 1, 5: 1, 10: 2, 20: 2, 100: 3}
 
 fig, ax = plt.subplots(1, figsize=figSize[plotSize])
+
+# NLL truncation error plot ---------
+filename = f"Training Outputs/Teste MNIST/nll_mnist_complete_H16_CD-{k}_lr0.01_mBatch50_iter{lim_iter}_run{seed}.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter]
+
+df = df.rename(columns={"NLL": f"Real Value"})
+df[f"Real Value"].plot(ax=ax, linewidth=1, alpha=0.8)
+
+filename = f"Training Outputs/Teste MNIST/nll_mnist_complete_H16_CD-{k}_lr0.01_mBatch50_iter{lim_iter}_run-truncated{seed}.csv"
+df = pd.read_csv(filename, comment="#", index_col=0)
+df = df.astype(float)
+df = df.iloc[0:lim_iter]
+
+df = df.rename(columns={"NLL": f"Truncated Estimate"})
+df[f"Truncated Estimate"].plot(ax=ax, linewidth=1, alpha=0.8)
+
+plt.title(f"NLL evolution through complete RBM training")
+# ---------
 
 # filename = f"Training Outputs/meanNll_bas{basSize}_complete-5rep.csv"
 # df = pd.read_csv(filename, comment="#", index_col=0)
@@ -344,100 +364,97 @@ fig, ax = plt.subplots(1, figsize=figSize[plotSize])
 # plt.title(f"NLL evolution through RBM training for CD-{k}")
 # ---------
 
-# MNIST: Get all CD-k for a comparison ---------
-linwdth = 1  # .5
-shadalph = .3
-colormap = 'tab20'
-cmsize = 20.0
-
-cmap = cm.get_cmap(colormap)
-
-filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.1_mBatch50_iter100-5rep.csv"
-dfC = pd.read_csv(filenameC, comment="#", index_col=0)
-dfC = dfC.astype(float)
-dfC = dfC.iloc[0:lim_iter+1]
-
-filenameS = "Training Outputs/meanNLL_mnist_convolution_H484_lr0.1_mBatch50_iter100-5rep.csv"
-dfS = pd.read_csv(filenameS, comment="#", index_col=0)
-dfS = dfS.astype(float)
-dfS = dfS.iloc[0:lim_iter+1]
-
-filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.1_mBatch50_iter100-5rep.csv"
-dfO = pd.read_csv(filenameO, comment="#", index_col=0)
-dfO = dfO.astype(float)
-dfO = dfO.iloc[0:lim_iter+1]
-
-for k in k_vals:
-    fig, ax = plt.subplots(1, figsize=figSize[plotSize])
-
-    dfC = dfC.rename(columns={f"CD-{k}": f"CD-{k}, Complete"})
-    dfC[f"CD-{k}, Complete"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
-
-    dfS = dfS.rename(columns={f"CD-{k}": f"CD-{k}, Convolution"})
-    dfS[f"CD-{k}, Convolution"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
-
-    for p in p_vals:
-        dfO[f"CD-{k}, p = {p}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
-
-    if errorType == "std":
-        ind = dfC.index
-
-        errorC = dfC[f"CD-{k} std"].to_numpy()
-        meanC = dfC[f"CD-{k}, Complete"].to_numpy()
-        ax.fill_between(ind, meanC - errorC, meanC + errorC, alpha=shadalph)
-
-        errorS = dfS[f"CD-{k} std"].to_numpy()
-        meanS = dfS[f"CD-{k}, Convolution"].to_numpy()
-        ax.fill_between(ind, meanS - errorS, meanS + errorS, alpha=shadalph)
-
-        for p in p_vals:
-            errorO = dfO[f"CD-{k}, p = {p} - std"].to_numpy()
-            meanO = dfO[f"CD-{k}, p = {p}"].to_numpy()
-            ax.fill_between(ind, meanO - errorO, meanO + errorO, alpha=shadalph)
-
-    elif errorType == "quartile":
-        ind = dfC.index
-
-        errorPlus = dfC[f"CD-{k} q3"].to_numpy()
-        errorMinus = dfC[f"CD-{k} q1"].to_numpy()
-        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
-
-        errorPlus = dfS[f"CD-{k} q3"].to_numpy()
-        errorMinus = dfS[f"CD-{k} q1"].to_numpy()
-        ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
-
-        for p in p_vals:
-            errorPlus = dfO[f"CD-{k}, p = {p} - q3"].to_numpy()
-            errorMinus = dfO[f"CD-{k}, p = {p} - q1"].to_numpy()
-            ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
-
-
-    plt.title(f"NLL evolution for CD-{k}")
-
-    plt.xlabel("Epoch")
-    plt.ylabel("Average NLL")
-    plt.grid(color="gray", linestyle=":", linewidth=.2)
-    plt.legend(prop={'size': 6})
-
-    errorPrint = f"-{errorType}Err" if errorType else ""
-    sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
-
-    plt.savefig(f"Plots/meanNLL_mnist_CD-{k}_comparison-{comparison}_H{H}_lr{lRate}_mBatch{bSize}"
-                f"-{repeat}rep{errorPrint}{sizeAppend}.pdf", transparent=True)
-# ---------
-
-# plt.xlabel("Iteration")
-# plt.ylabel("Average NLL")
-# plt.grid(color="gray", linestyle=":", linewidth=.2)
-# # plt.xlim(-10, lim_iter+10)
-# plt.legend()
+# # MNIST: Get all CD-k for a comparison ---------
+# linwdth = 1  # .5
+# shadalph = .3
+# colormap = 'tab20'
+# cmsize = 20.0
 #
+# cmap = cm.get_cmap(colormap)
+#
+# filenameC = "Training Outputs/meanNLL_mnist_complete_H500_lr0.1_mBatch50_iter100-5rep.csv"
+# dfC = pd.read_csv(filenameC, comment="#", index_col=0)
+# dfC = dfC.astype(float)
+# dfC = dfC.iloc[0:lim_iter+1]
+#
+# filenameS = "Training Outputs/meanNLL_mnist_convolution_H484_lr0.1_mBatch50_iter100-5rep.csv"
+# dfS = pd.read_csv(filenameS, comment="#", index_col=0)
+# dfS = dfS.astype(float)
+# dfS = dfS.iloc[0:lim_iter+1]
+#
+# filenameO = "Training Outputs/meanNLL_mnist_sgd_H500_lr0.1_mBatch50_iter100-5rep.csv"
+# dfO = pd.read_csv(filenameO, comment="#", index_col=0)
+# dfO = dfO.astype(float)
+# dfO = dfO.iloc[0:lim_iter+1]
+#
+# for k in k_vals:
+#     fig, ax = plt.subplots(1, figsize=figSize[plotSize])
+#
+#     dfC = dfC.rename(columns={f"CD-{k}": f"CD-{k}, Complete"})
+#     dfC[f"CD-{k}, Complete"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+#
+#     dfS = dfS.rename(columns={f"CD-{k}": f"CD-{k}, Convolution"})
+#     dfS[f"CD-{k}, Convolution"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+#
+#     for p in p_vals:
+#         dfO[f"CD-{k}, p = {p}"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+#
+#     if errorType == "std":
+#         ind = dfC.index
+#
+#         errorC = dfC[f"CD-{k} std"].to_numpy()
+#         meanC = dfC[f"CD-{k}, Complete"].to_numpy()
+#         ax.fill_between(ind, meanC - errorC, meanC + errorC, alpha=shadalph)
+#
+#         errorS = dfS[f"CD-{k} std"].to_numpy()
+#         meanS = dfS[f"CD-{k}, Convolution"].to_numpy()
+#         ax.fill_between(ind, meanS - errorS, meanS + errorS, alpha=shadalph)
+#
+#         for p in p_vals:
+#             errorO = dfO[f"CD-{k}, p = {p} - std"].to_numpy()
+#             meanO = dfO[f"CD-{k}, p = {p}"].to_numpy()
+#             ax.fill_between(ind, meanO - errorO, meanO + errorO, alpha=shadalph)
+#
+#     elif errorType == "quartile":
+#         ind = dfC.index
+#
+#         errorPlus = dfC[f"CD-{k} q3"].to_numpy()
+#         errorMinus = dfC[f"CD-{k} q1"].to_numpy()
+#         ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+#
+#         errorPlus = dfS[f"CD-{k} q3"].to_numpy()
+#         errorMinus = dfS[f"CD-{k} q1"].to_numpy()
+#         ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+#
+#         for p in p_vals:
+#             errorPlus = dfO[f"CD-{k}, p = {p} - q3"].to_numpy()
+#             errorMinus = dfO[f"CD-{k}, p = {p} - q1"].to_numpy()
+#             ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph)
+#
+#
+#     plt.title(f"NLL evolution for CD-{k}")
+#
+#     plt.xlabel("Epoch")
+#     plt.ylabel("Average NLL")
+#     plt.grid(color="gray", linestyle=":", linewidth=.2)
+#     plt.legend(prop={'size': 6})
+#
+#     errorPrint = f"-{errorType}Err" if errorType else ""
+#     sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
+#
+#     plt.savefig(f"Plots/meanNLL_mnist_CD-{k}_comparison-{comparison}_H{H}_lr{lRate}_mBatch{bSize}"
+#                 f"-{repeat}rep{errorPrint}{sizeAppend}.pdf", transparent=True)
+# # ---------
+
+plt.xlabel("Epoch")
+plt.ylabel("Average NLL")
+plt.grid(color="gray", linestyle=":", linewidth=.2)
+# plt.xlim(-10, lim_iter+10)
+plt.legend()
+
 # # Lower limit of NLL
 # nSamples = 2**(basSize+1)
 # limitante = - log(1.0/nSamples)
 # plt.plot([0, lim_iter], [limitante, limitante], "r--")
-#
-# plt.savefig(f"Plots/Teste MNIST/nll_mnist_compl-conv_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}.pdf", transparent=True)
-# # plt.savefig(f"Plots/meanNll_bas4_complete-lRate01-25rep-quartileErr.pdf", transparent=True)
-# # plt.savefig(f"Plots/meanNLL_bas{basSize}_CD-{k}_comparison-{comparison}.pdf", transparent=True)
-# # plt.savefig(f"Plots/meanNll_25rep_bas4_BASconV{identifier}.pdf", transparent=True)  # neighbors
+
+plt.savefig(f"Plots/Teste MNIST/nll_mnist_complete_truncation_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}_seed{seed}.pdf", transparent=True)

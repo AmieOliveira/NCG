@@ -118,9 +118,10 @@ int main(int argc, char **argv) {
 
     ofstream outdata;
     stringstream fname;
-    fname << filePath << "nll_progress_bas" << size << "_complete_k" << k;
-    if (H != s_size) fname << "_H" << H;
-    fname << "-run" << fileIDX << ".csv";
+    fname << filePath << "nll_bas" << size << "_complete_H" << H << "_CD-" << k << "_lr"
+          << l_rate << "_mBatch" << b_size << "_iter" << iter;
+    if (seed != fileIDX) { fname << "_seed" << seed; }
+    fname << "_run" << fileIDX << ".csv";
     cout << "Saving output as " << fname.str() << endl;
 
     outdata.open(fname.str()); // opens the file
