@@ -157,5 +157,8 @@ int main(int argc, char **argv) {
     // Final printing for results verification
     model.printVariables();
 
+    string rbmname = filePath + fname.str() + ".rbm";
+    model.save(rbmname);
+
     return 0;
 }

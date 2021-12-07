@@ -146,6 +146,14 @@ int main(int argc, char **argv) {
 
     model.printVariables();
 
+    stringstream rbmname;
+    rbmname << filePath << "bas" << size << "_complete_H" << H << "_CD-" << k << "_lr"
+            << l_rate << "_mBatch" << b_size << "_iter" << iter;
+    if (seed != fileIDX) { rbmname << "_seed" << seed; }
+    rbmname << "_run" << fileIDX << ".rbm";
+
+    model.save(rbmname.str());
+
     return 0;
 
 }
