@@ -1,3 +1,8 @@
+Only calculate_constant.m and import_RBM.m are my own. The rest is either from 
+the original code or from the MNIST data set.
+
+The original README is as follows:
+
 % Code provided by Ruslan Salakhutdinov 
 %
 % Permission is granted for anyone to copy, use, modify, or distribute this
