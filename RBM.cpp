@@ -1036,8 +1036,10 @@ double RBM::negativeLogLikelihood(Data & data) {
             if (isTrained) {    // Only raise the warning after training, so as not to pollute training log
                 printWarning("Will provide an approximation of the NLL, since the RBM is too big for exact calculation");
             }
-            // return negativeLogLikelihood(data, ZEstimation::MC);
-            return negativeLogLikelihood(data, ZEstimation::Trunc);
+            return negativeLogLikelihood(data, ZEstimation::AIS);
+            // NOTE: You must have either matlab or orcad to estimate the AIS (choose which in 'ais_estimator.sh')
+            //      You can select another way of calculating the NLL if you want (though most are not very good)
+            //      Check possibilities from ZEstimation
         }
     } else {
         return negativeLogLikelihood(data, ZEstimation::None);
@@ -1098,13 +1100,30 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             break;
 
         case AIS:
-            if (!hasSeed){
-                string errorMessage;
-                errorMessage = "Cannot estimate NLL without random seed!";
-                printError(errorMessage);
-                throw runtime_error(errorMessage);
+            {
+            // if (!hasSeed){
+            //     string errorMessage;
+            //     errorMessage = "Cannot estimate NLL without random seed!";
+            //     printError(errorMessage);
+            //     throw runtime_error(errorMessage);
+            // }
+            // total += logl( normalizationConstant_AISestimation( 100 ) );
+            save("tmp.rbm");
+            system("./ais_estimator.sh");
+
+            fstream input;
+            input.open("Z.txt", ios::in);
+            if( !input ) {
+                printError("Could not estimate normalization constant");
+                cerr << "File 'Z.txt' could not be opened" << endl;
+                throw runtime_error("Something wrong with AIS (matlab code)");
             }
-            total += logl( normalizationConstant_AISestimation( 100 ) );
+            string line;
+            input >> line;
+            input.close();
+
+            total += atof(line.c_str());
+            }
             break;
 
         case Trunc:
@@ -1266,131 +1285,6 @@ long double RBM::normalizationConstant_MCestimation(int n_samples) {
     }
 
     return pow(2, xSize) * n_samples / soma;
-}
-
-
-long double RBM::normalizationConstant_AISestimation(int n_runs) {
-    // References:
-    //      - Salakhutdinov & Murray (2008), On the quantitative analysis of deep belief networks
-    //      - Agustinus Kristiadi's Blog, Introduction to Annealed Importance Sampling.
-    //        https://wiseodd.github.io/techblog/2017/12/23/annealed-importance-sampling/
-    // TODO: Optimize function
-
-    RBM prior(xSize, hSize);
-    prior.setRandomSeed(generator());
-    prior.setVisibleBiases(d);
-
-    int n_betas = 5503;
-    int transitionRepeat = 50;
-    double betas[n_betas];
-
-    double eps = 0.000000000000001;
-
-    // Distribution from Ruslan Salakhutdinov
-    int idx = 0;
-    double bet = 0;
-    for (bet = 0; bet < 0.5 + eps; bet += 0.001) {
-        betas[idx] = bet;
-        idx++;
-    }
-    for (bet = 0.5; bet <= 0.9 + eps; bet += 0.0001) {
-        betas[idx] = bet;
-        idx++;
-    }
-    for (bet = 0.9; bet <= 1 + eps; bet += 0.0001) {
-        betas[idx] = bet;
-        idx++;
-    }
-    if (idx != n_betas) {
-        printError("Something wrong with AIS distribution initizalization. Check it out!");
-        exit(1);
-    }
-
-    // for (int k=0; k < n_betas; k++) { // Uniform distributions
-    //     betas[k] = double(k)/(n_betas - 1);
-    //     // cout << "Beta_" << k << ": " << betas[k] << endl;
-    // }
-
-    // vector<double> weights;
-    long double w, sumW;
-    VectorXd x_k;
-
-    auto f_0 = [&r = prior](VectorXd & x_vec) { return expl(- r.freeEnergy(x_vec)); };
-    auto f_n = [&](VectorXd & x_vec) { return expl(- freeEnergy(x_vec)); };
-
-    auto f_j = [&f0 = f_0, &fn = f_n, &b = betas](VectorXd & x_vec, int j) {
-        return powl( f0(x_vec), 1 - b[j] ) * powl( fn(x_vec), b[j] );
-    };
-
-    VectorXd x_aux(xSize);
-    auto T = [&X = xSize, &distr = p_dis, &gen = generator, &fj = f_j, &tr = transitionRepeat, &x_prime = x_aux]
-                (VectorXd & x_vec, int j) {
-        for (int t=0; t < tr; t++) {
-            for (int i=0; i < X; i++) {
-                x_prime(i) = x_vec(i) + 2 * (*distr)(gen) - 1;
-                if (x_prime(i) < 0.5) x_prime(i) = 0;
-                else x_prime(i) = 1;
-            }
-
-            if ( (*distr)(gen) < fj(x_prime, j)/fj(x_vec, j) ) x_vec = x_prime;
-        }
-    };
-
-    sumW = 0;
-
-    double prob;
-    VectorXd bA = prior.getHiddenBiases(), dA = prior.getVisibleBiases();
-    // VectorXd hA(hSize);
-
-    for (int r=0; r < n_runs; r++) {
-
-        x_k = prior.sample_xout();
-        w = expl( (betas[1] - betas[0]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-
-        for (int bIdx=2; bIdx < n_betas; bIdx++) {
-            T(x_k, bIdx);
-
-            // for (int s=0; s < transitionRepeat; s++) {
-            //     auxH = b + (*p_W)*x_k;
-            //     for (int i=0; i<hSize; i++) {
-            //         // Target RBM
-            //         prob = 1.0/( 1 + exp( - betas[bIdx] * auxH(i) ) );
-            //         if ((*p_dis)(generator) < prob) h(i) = 1;
-            //         else h(i) = 0;
-            //
-            //         // Prior RBM
-            //         prob = 1.0/( 1 + exp( - (1 - betas[bIdx]) * bA(i) ) );  // Since all prior's weights are null...
-            //         if ((*p_dis)(generator) < prob) hA(i) = 1;
-            //         else hA(i) = 0;
-            //     }
-            //
-            //     auxX = (betas[bIdx] * ( (h.transpose()*(*p_W)).transpose() + d )) + ((1 - betas[bIdx]) * dA);
-            //     for (int j=0; j<xSize; j++) {
-            //         prob = 1.0/( 1 + exp( - auxX(j) ) );
-            //         if ((*p_dis)(generator) < prob) x_k(j) = 1;
-            //         else x_k(j) = 0;
-            //     }
-            // }
-
-            w *= expl( (betas[bIdx] - betas[bIdx-1]) * (prior.freeEnergy(x_k) - freeEnergy(x_k)) );
-        }
-        // cout << "Weight " << r << ": " << w << endl;
-        // weights.push_back(w);
-        sumW += w;
-    }
-
-    long double ZA = 1;
-    for (int i=0; i<hSize; i++) {  // TODO: Erase this if b is kept as zero biases
-        ZA *= 1 + exp(bA(i));
-    }
-    for (int j=0; j<xSize; j++) {
-        ZA *= 1 + exp(dA(j));
-    }
-    // cout << "Sum of the weights: " << sumW << endl;
-    // cout << "r^ = " << sumW/n_runs << ", Z_A = " << ZA << endl;
-    // cout << "Z^ = " << ZA * (sumW/n_runs) << ", ln: " << logl(ZA * (sumW/n_runs)) << endl;
-
-    return ZA * (sumW/n_runs);
 }
 
 

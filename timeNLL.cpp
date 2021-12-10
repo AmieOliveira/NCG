@@ -73,7 +73,8 @@ int main(int argc, char **argv) {
             model.setRandomSeed(seed + s + r);
 
             t1 = chrono::steady_clock::now();
-            tmp = model.negativeLogLikelihood(bas, logZ_AIS[r-1]);
+            tmp = model.negativeLogLikelihood(bas, ZEstimation::AIS);
+            // tmp = model.negativeLogLikelihood(bas, logZ_AIS.at(r-1));
             t2 = chrono::steady_clock::now();
             // tmpT = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
             tmpT = time_logZ[r-1] + chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000;
