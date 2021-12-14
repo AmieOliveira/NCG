@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
 
     int k = 1;
-    int iter = 200;
+    int iter = 10;
     int b_size = 50;  // 5
     double l_rate = 0.01;
     int H = 16;
@@ -30,26 +30,24 @@ int main(int argc, char **argv) {
     //// BAS Dataset
     //Data bas(BASnoRep, 4);
     //Data bas(seed, BASnoRep, 28, 1000);
-    Data bas("Datasets/bin_mnist-test.data", false); // bas = bas.separateTrainTestSets(0.1).at(0);
-    // Data bas(BAS, 4);
+    //Data bas("Datasets/bin_mnist-test.data", false); // bas = bas.separateTrainTestSets(0.1).at(0);
+    Data bas(BAS, 8);
 
     // Traditional RBM
     RBM model;
-
-    model.load("Training Outputs/Redes Treinadas/H500_nets/mnist_sgd-1_H500_CD-1_lr0.01_mBatch50_iter200_run0.rbm");
+    //model.load("Training Outputs/Redes Treinadas/H500_nets/mnist_sgd-1_H500_CD-1_lr0.01_mBatch50_iter200_run0.rbm");
 
     cout << "Training model for " << iter << " epochs" << endl;
 
     for (int s = 0; s < n_seeds; s++) {
         cout << "Experiment " << s+1 << " of " << n_seeds << endl;
 
-        // model.setDimensions(bas.get_sample_size(), H, false);
-        // model.setRandomSeed(seed + s);
-        // model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 1, shuffleData);
-        // // cout << "Before training: " << model.negativeLogLikelihood(bas) << endl;
-        //
-        // model.fit(bas);
-        // // model.connectivity(true); model.optSetup(Heuristic::SGD, p); model.fit_connectivity(bas);
+        model.setDimensions(bas.get_sample_size(), H, false);
+        model.setRandomSeed(seed + s);
+        model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, false, 1, shuffleData);
+        // cout << "Before training: " << model.negativeLogLikelihood(bas) << endl;
+        model.fit(bas);
+        // model.connectivity(true); model.optSetup(Heuristic::SGD, p); model.fit_connectivity(bas);
 
         auto t1 = chrono::steady_clock::now();
         // cout << "Exact value (through H): " << model.negativeLogLikelihood(bas, ZEstimation::None_H) << endl;
@@ -64,8 +62,8 @@ int main(int argc, char **argv) {
         vector<double> vals;
         vector<double> times;
 
-        double logZ_AIS[] = {717.842878};
-        double time_logZ[] = {177.524293};
+        // double logZ_AIS[] = {717.842878};
+        // double time_logZ[] = {177.524293};
 
         double sumAIS = 0, sumTimes = 0, tmp, tmpT;
 
@@ -76,8 +74,8 @@ int main(int argc, char **argv) {
             tmp = model.negativeLogLikelihood(bas, ZEstimation::AIS);
             // tmp = model.negativeLogLikelihood(bas, logZ_AIS.at(r-1));
             t2 = chrono::steady_clock::now();
-            // tmpT = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
-            tmpT = time_logZ[r-1] + chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000;
+            tmpT = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000;
+            // tmpT = time_logZ[r-1] + chrono::duration_cast<chrono::milliseconds>(t2 - t1).count()/1000;
 
             sumAIS += tmp;
             sumTimes += tmpT;

@@ -50,9 +50,9 @@ fclose(fid);
 beta = [0:1/1000:0.5 0.5:1/10000:0.9 0.9:1/100000:1.0]; % For H=500
 numruns = 100;
 
-makebatches;
+% makebatches;
 [logZZ_est, logZZ_est_up, logZZ_est_down] = ...
-             RBM_AIS(vishid,hidbiases,visbiases,numruns,beta,batchdata);
+             RBM_AIS(vishid,hidbiases,visbiases,numruns,beta); %,batchdata);
 
 fid=fopen(outputfile,'w');
 fprintf(fid, '%12.8f\n', logZZ_est);

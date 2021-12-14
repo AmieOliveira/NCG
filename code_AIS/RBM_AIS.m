@@ -73,16 +73,17 @@ function [logZZ_est, logZZ_est_up, logZZ_est_down] = ...
 
    negdata = 1./(1 + exp(-(1-bb)*visbias_base - bb*(poshidstates*vishid' + visbias)));
    negdata = negdata > rand(numcases,numdims);
+   
+   % Commented to use online (no need to display)
+   % if rem(tt,500)==0
+   %   figure(1)
+   %    mnistdisp(negdata(1:10,:)');
 
-   if rem(tt,500)==0
-      figure(1)
-       mnistdisp(negdata(1:10,:)');
-
-      figure(2)
-       plot(tt/length(beta),var(logww(:)),'b*')
-       hold on
-       drawnow;
-   end 
+   %   figure(2)
+   %    plot(tt/length(beta),var(logww(:)),'b*')
+   %    hold on
+   %    drawnow;
+   %end 
 
    Wh      = negdata*vishid + hidbias;
    Bv_base = negdata*visbiases_base';

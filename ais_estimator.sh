@@ -20,8 +20,8 @@ echo "Calling matlab! Using ID $PPID"
 matlab -nodisplay -nosplash -r "pid=$PPID; calculate_constant; exit";
 # octave --no-gui calculate_constant.m $PPID;
 
+rm "tmp_$PPID.rbm";
 if [ $singleFolder = 0 ]; then
-  rm "tmp_$PPID.rbm";
   mv "lnZ_$PPID.txt" ..;
-  ls;
+  cd ..;
 fi
