@@ -1113,7 +1113,9 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
 
             string rbmName = "tmp_" + pidStr + ".rbm";
             save(rbmName);
-            system("./ais_estimator.sh");
+
+            string command = "./ais_estimator.sh " + pidStr;
+            system(command.c_str());
 
             fstream input;
             string ncfilename = "lnZ_" + pidStr + ".txt";

@@ -1,5 +1,6 @@
 #!/usr/bin/env octave -q
 
-pid = str2num(argv(){1});
+id = str2num(argv(){1});
+fprintf('Process ID used: %i\n', id)
 
 calculate_constant;

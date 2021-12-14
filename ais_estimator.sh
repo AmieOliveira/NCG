@@ -7,21 +7,23 @@ singleFolder=0;
 source "$HOME"/.bashrc
 shopt -s expand_aliases
 
-rm "lnZ_$PPID.txt" 2>/dev/null;
+pID=$1;
+
+rm "lnZ_$pID.txt" 2>/dev/null;
 
 if [ $singleFolder = 0 ]; then
   # echo "Changing folder";
-  mv "tmp_$PPID.rbm" code_AIS/;
+  mv "tmp_$pID.rbm" code_AIS/;
   cd code_AIS || exit;
 fi
 
-echo "Calling matlab! Using ID $PPID"
+echo "Calling matlab! Using ID $pID"
 
-matlab -nodisplay -nosplash -r "pid=$PPID; calculate_constant; exit";
-# octave --no-gui calculate_constant.m $PPID;
+matlab -nodisplay -nosplash -r "pid=$pID; calculate_constant; exit";
+# octave --no-gui octave_init_calcConst.m $pID;
 
-rm "tmp_$PPID.rbm";
+rm "tmp_$pID.rbm";
 if [ $singleFolder = 0 ]; then
-  mv "lnZ_$PPID.txt" ..;
+  mv "lnZ_$pID.txt" ..;
   cd ..;
 fi
