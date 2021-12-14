@@ -1108,14 +1108,19 @@ double RBM::negativeLogLikelihood(Data & data, ZEstimation method) {
             //     throw runtime_error(errorMessage);
             // }
             // total += logl( normalizationConstant_AISestimation( 100 ) );
-            save("tmp.rbm");
+            int pid = getpid();
+            string pidStr = to_string(pid);
+
+            string rbmName = "tmp_" + pidStr + ".rbm";
+            save(rbmName);
             system("./ais_estimator.sh");
 
             fstream input;
-            input.open("lnZ.txt", ios::in);
+            string ncfilename = "lnZ_" + pidStr + ".txt";
+            input.open(ncfilename.c_str(), ios::in);
             if( !input ) {
                 printError("Could not estimate normalization constant");
-                cerr << "File 'lnZ.txt' could not be opened" << endl;
+                cerr << "File '" << ncfilename << "' could not be opened" << endl;
                 throw runtime_error("Something wrong with AIS (matlab code)");
             }
             string line;

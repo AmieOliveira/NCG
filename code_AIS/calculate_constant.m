@@ -1,8 +1,9 @@
-clear all
+% clear all
+% pid = feature('getpid');
 
-inputFile = 'tmp.rbm'; 
-outputfile = 'lnZ.txt';
-% fprintf('Opening RBM from file %s\n', filename)
+inputFile = sprintf('tmp_%i.rbm', pid); 
+outputfile = sprintf('lnZ_%i.txt', pid);
+fprintf('Opening RBM from file %s, will save file %s\n', inputFile, outputfile);
 
 fid = fopen(inputFile);
 tline = fgetl(fid);

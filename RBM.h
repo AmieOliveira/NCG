@@ -12,6 +12,8 @@
 #include <random>
 #include <vector>
 #include <cmath>
+#include <unistd.h>
+#include <string>
 #include "Eigen/Dense"
 #include "basics.h"
 #include "Data.h"
