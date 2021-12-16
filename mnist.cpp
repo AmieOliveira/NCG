@@ -231,6 +231,60 @@ int main(int argc, char **argv) {
             model.fit(mnist);
             break;
 
+        case neighLine: {
+            printInfo("Training RBM with neighbors in line connectivity");
+            if (H != X) {
+                printError("Neighbors in line connectivity available only for square matrix (X=H)");
+                cerr << "Tried to use neighbors connectivity with H = " << H << ", expected " << X << endl;
+                exit(1);
+            }
+
+            if ( trainParam < 1 ) {
+                printError("Invalid training parameter, should represent the number of neighbors per unit");
+                cerr << "Tried to use " << trainParam << " neighbors. Shoud be a positive integer" << endl;
+                exit(1);
+            }
+            int v = int(trainParam);
+            if ( abs(v - trainParam) > 0 ) {
+                printWarning("Training parameter has been rounded to an integer!");
+            }
+
+            model.connectivity(true);
+            model.setConnectivity( v_neighbors(X, X, v) );
+
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
+            model.fit(mnist);
+
+            break;
+        }
+
+        case neighSpiral: {
+            printInfo("Training RBM with neighbors in line connectivity");
+            if (H != X) {
+                printError("Neighbors in spiral connectivity available only for square matrix (X=H)");
+                cerr << "Tried to use neighbors connectivity with H = " << H << ", expected " << X << endl;
+                exit(1);
+            }
+
+            if ( trainParam < 1 ) {
+                printError("Invalid training parameter, should represent the number of neighbors per unit");
+                cerr << "Tried to use " << trainParam << " neighbors. Shoud be a positive integer" << endl;
+                exit(1);
+            }
+            int v = int(trainParam);
+            if ( abs(v - trainParam) > 0 ) {
+                printWarning("Training parameter has been rounded to an integer!");
+            }
+
+            model.connectivity(true);
+            model.setConnectivity( v_neighbors_spiral(X, X, v) );
+
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
+            model.fit(mnist);
+
+            break;
+        }
+
         default:
             printError("Training type not recognized. Aborting operation.");
             cerr << "Training type '" << trainType << "' not implemented. Check what types are available" << endl;
