@@ -17,9 +17,7 @@ if [ $singleFolder = 0 ]; then
   cd code_AIS || exit;
 fi
 
-echo "Calling matlab! Using ID $pID"
-
-matlab -nodisplay -nosplash -r "pid=$pID; calculate_constant; exit";
+matlab -nodisplay -nosplash -r "id=$pID; calculate_constant; exit";
 # octave --no-gui octave_init_calcConst.m $pID;
 
 rm "tmp_$pID.rbm";

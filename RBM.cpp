@@ -980,7 +980,7 @@ void RBM::optimizer_SGD(Data & trainData) {
             W = W + l_rate*W_gradient;
 
             A_gradient = A_gradient/actualSize;
-            A_ = A_ + l_rate * A_gradient;
+            A_ = A_ + (5 * l_rate) * A_gradient;
             for (int i=0; i<hSize; i++) {
                 for (int j=0; j<Xdata; j++) {
                     if ( A_(i,j) < limiar ) {
