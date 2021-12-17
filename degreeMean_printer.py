@@ -20,6 +20,8 @@ parser.add_argument("--stderr", action="store_true",
 parser.add_argument("--iter", type=int, default=None,
                     help="Limits number of iterations to be plotted. If specified, plots will "
                          "show behavior only up to the i-th iteration given")
+parser.add_argument("-s", "--separate-plots", action="store_true",
+                    help="Select this option in order to have each plot saved individually")
 
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
@@ -30,6 +32,9 @@ H = 500
 
 p_val = [1, 0.75, 0.5, 0.25, 0.1]
 k_val = [100, 20, 10, 5, 2, 1]
+
+figSize = (4, 3)
+filebasename = "{}/mean_nodeDegree_{}_sgd-{}_in{}_H{}_CD-{}_lr{}_mBatch{}{}.pdf"
 
 # cms = [cm.get_cmap("Blues"), cm.get_cmap("Oranges"),
 #        cm.get_cmap("Greens"), cm.get_cmap("Reds")]
@@ -87,6 +92,11 @@ if __name__ == "__main__":
 
         pIdx = 0
         for p in p_val:
+
+            if args.separate_plots:
+                figSH, axSH = plt.subplots(nrows=1, ncols=1, figsize=figSize)
+                figSX, axSX = plt.subplots(nrows=1, ncols=1, figsize=figSize)
+
             try:
                 dfAux = df.rename(columns={f"Maximum in H, CD-{k}, p = {p}": "Max",
                                            f"Mean in H, CD-{k}, p = {p}": "Mean",
@@ -100,12 +110,22 @@ if __name__ == "__main__":
                 dfAux[f"Min"].plot(ax=ax[nH])
                 # , linewidth=.5, linestyle=":", color=cms[pIdx](tones[0])
 
+                if args.separate_plots:
+                    dfAux[f"Max"].plot(ax=axSH)
+                    dfAux[f"Mean"].plot(ax=axSH)
+                    dfAux[f"Min"].plot(ax=axSH)
+
                 dfAux = df.rename(columns={f"Maximum in X, CD-{k}, p = {p}": "Max",
                                            f"Mean in X, CD-{k}, p = {p}": "Mean",
                                            f"Minimum in X, CD-{k}, p = {p}": "Min"})
                 dfAux[f"Max"].plot(ax=ax[nX])
                 dfAux[f"Mean"].plot(ax=ax[nX])
                 dfAux[f"Min"].plot(ax=ax[nX])
+
+                if args.separate_plots:
+                    dfAux[f"Max"].plot(ax=axSX)
+                    dfAux[f"Mean"].plot(ax=axSX)
+                    dfAux[f"Min"].plot(ax=axSX)
             except KeyError:
                 continue
 
@@ -114,23 +134,40 @@ if __name__ == "__main__":
                 errorPlus = df[f"Maximum in H, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Maximum in H, CD-{k}, p = {p} - q1"].to_numpy()
                 ax[nH].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                if args.separate_plots:
+                    axSH.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+
                 errorPlus = df[f"Maximum in X, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Maximum in X, CD-{k}, p = {p} - q1"].to_numpy()
                 ax[nX].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                if args.separate_plots:
+                    axSX.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+
 
                 errorPlus = df[f"Mean in H, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Mean in H, CD-{k}, p = {p} - q1"].to_numpy()
                 ax[nH].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                if args.separate_plots:
+                    axSH.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+
                 errorPlus = df[f"Mean in X, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Mean in X, CD-{k}, p = {p} - q1"].to_numpy()
                 ax[nX].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                if args.separate_plots:
+                    axSX.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+
 
                 errorPlus = df[f"Minimum in H, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Minimum in H, CD-{k}, p = {p} - q1"].to_numpy()
                 ax[nH].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                if args.separate_plots:
+                    axSH.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+
                 errorPlus = df[f"Minimum in X, CD-{k}, p = {p} - q3"].to_numpy()
                 errorMinus = df[f"Minimum in X, CD-{k}, p = {p} - q1"].to_numpy()
                 ax[nX].fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                if args.separate_plots:
+                    axSX.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
             elif args.stderr:
                 indexes = df.index
@@ -158,6 +195,29 @@ if __name__ == "__main__":
             ax[nH].set_title(f"p = {p}")
             ax[nX].set_xlabel("Epoch")
 
+            if args.separate_plots:
+                axSH.set_xlabel("Epoch")
+                axSH.set_ylabel("Average Degree")
+
+                plt.figure(figSH)
+                axSH.grid(color="gray", linestyle=":", linewidth=.2)
+                axSH.legend()  # loc="upper right", prop={'size': 6}
+                plt.tight_layout()
+                plt.savefig(filebasename.format(args.outputpath, dataType, p, "H", H, k, lRate, bSize, errorPrint), transparent=True)
+                plt.close(figSH)
+
+
+                axSX.set_xlabel("Epoch")
+                axSX.set_ylabel("Average Degree")
+
+                plt.figure(figSX)
+                axSX.grid(color="gray", linestyle=":", linewidth=.2)
+                axSX.legend()  # loc="upper right", prop={'size': 6}
+                plt.tight_layout()
+                plt.savefig(filebasename.format(args.outputpath, dataType, p, "X", H, k, lRate, bSize, errorPrint), transparent=True)
+                plt.close(figSX)
+
+
             pIdx += 1
 
             if pIdx == n_ps:
@@ -178,6 +238,7 @@ if __name__ == "__main__":
         ax[0].set_ylabel("Hidden\nAverage degree")
         ax[n_ps].set_ylabel("Visible\nAverage degree")
 
+        plt.figure(fig)
         plt.tight_layout()
 
         filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_SGD_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}{errorPrint}.pdf"
