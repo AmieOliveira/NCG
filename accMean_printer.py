@@ -54,6 +54,9 @@ training.add_argument("-I", "--iterations", type=int, required=True,
 k_values = [1, 2, 5, 10, 20, 100]
 p_values = [1, 0.5, 0.1]
 
+figSize = (4, 3)  # (7, 5)
+fillTransp = 0.2  # 0.3
+
 cms = [cm.get_cmap("Blues"), cm.get_cmap("Oranges"), cm.get_cmap("Greens"), cm.get_cmap("Reds"), cm.get_cmap("Purples"),
        cm.get_cmap("copper"), cm.get_cmap("spring"), cm.get_cmap("Greys"), cm.get_cmap("summer"), cm.get_cmap("winter")]
 # --------------
@@ -82,11 +85,11 @@ if __name__ == "__main__":
         errorPrint = "-minMaxErr"
 
     for k in k_values:
-        figTrain, axTrain = plt.subplots(nrows=1, ncols=1, figsize=(7, 5))
-        figTrain.suptitle(f"Train Set Classification Performance for CD-{k}")
+        figTrain, axTrain = plt.subplots(nrows=1, ncols=1, figsize=figSize)
+        # figTrain.suptitle(f"Train Set Classification Performance for CD-{k}")
 
-        figTest, axTest = plt.subplots(nrows=1, ncols=1, figsize=(7, 5))
-        figTest.suptitle(f"Test Set Classification Performance for CD-{k}")
+        figTest, axTest = plt.subplots(nrows=1, ncols=1, figsize=figSize)
+        # figTest.suptitle(f"Test Set Classification Performance for CD-{k}")
 
         hasKinstance = False
 
@@ -108,8 +111,16 @@ if __name__ == "__main__":
             if pltT == "sgd":
                 for p in p_values:
                     try:
-                        inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
-                        inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
+                        # inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+                        # inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
+
+                        legendStr = f"GONG, p = {p}"
+
+                        tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
+                        tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+
+                        tmp = inputTestFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
+                        tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
                     except KeyError:
                         continue
 
@@ -151,8 +162,14 @@ if __name__ == "__main__":
 
             else:
                 try:
-                    inputTrainFile[f"CD-{k} {pltT}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
-                    inputTestFile[f"CD-{k} {pltT}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
+                    # inputTrainFile[f"CD-{k} {pltT}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+                    # inputTestFile[f"CD-{k} {pltT}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
+
+                    tmp = inputTrainFile.rename(columns={f"CD-{k} {pltT}": "Traditional Network"})["Traditional Network"]
+                    tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+
+                    tmp = inputTestFile.rename(columns={f"CD-{k} {pltT}": "Traditional Network"})["Traditional Network"]
+                    tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
                 except KeyError:
                     continue
 
@@ -163,33 +180,33 @@ if __name__ == "__main__":
 
                     errorPlus = inputTestFile[f"CD-{k} {pltT} - q3"].to_numpy()
                     errorMinus = inputTestFile[f"CD-{k} {pltT} - q1"].to_numpy()
-                    axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                    axTest.fill_between(indexes, errorMinus, errorPlus, alpha=fillTransp)
 
                     errorPlus = inputTrainFile[f"CD-{k} {pltT} - q3"].to_numpy()
                     errorMinus = inputTrainFile[f"CD-{k} {pltT} - q1"].to_numpy()
-                    axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                    axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=fillTransp)
 
                 elif args.stdErr:
                     indexes = inputTrainFile.index
 
                     error = inputTestFile[f"CD-{k} {pltT} - std"].to_numpy()
                     mean = inputTestFile[f"CD-{k} {pltT}"].to_numpy()
-                    axTest.fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                    axTest.fill_between(indexes, mean - error, mean + error, alpha=fillTransp)
 
                     error = inputTrainFile[f"CD-{k} {pltT} - std"].to_numpy()
                     mean = inputTrainFile[f"CD-{k} {pltT}"].to_numpy()
-                    axTrain.fill_between(indexes, mean - error, mean + error, alpha=0.3)
+                    axTrain.fill_between(indexes, mean - error, mean + error, alpha=fillTransp)
 
                 elif args.minmaxErr:
                     indexes = inputTrainFile.index
 
                     maxV = inputTrainFile[f"CD-{k} {pltT} - Max"].to_numpy()
                     minV = inputTrainFile[f"CD-{k} {pltT} - Min"].to_numpy()
-                    axTest.fill_between(indexes, minV, maxV, alpha=0.3)
+                    axTest.fill_between(indexes, minV, maxV, alpha=fillTransp)
 
                     maxV = inputTestFile[f"CD-{k} {pltT} - Max"].to_numpy()
                     minV = inputTestFile[f"CD-{k} {pltT} - Min"].to_numpy()
-                    axTrain.fill_between(indexes, minV, maxV, alpha=0.3)
+                    axTrain.fill_between(indexes, minV, maxV, alpha=fillTransp)
 
 
         if hasKinstance:
@@ -204,9 +221,14 @@ if __name__ == "__main__":
 
             # plt.show()
             print(f"Saving plots for k = {k}")
+            plt.figure(figTrain)
+            plt.tight_layout()
             figTrain.savefig(
                 f"{args.outputpath}/mean_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
                 transparent=True)
+
+            plt.figure(figTest)
+            plt.tight_layout()
             figTest.savefig(
                 f"{args.outputpath}/mean_acc-Test_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
                 transparent=True)
