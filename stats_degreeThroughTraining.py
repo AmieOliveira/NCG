@@ -44,7 +44,9 @@ if __name__ == "__main__":
 
     labels = "_withLabels" if args.hasLabels else ""
     X = 784 if dataT == "mnist" else int(dataT[3:])**2
-    nLabels = 10 if dataT == "mnist" else 2
+    nLabels = 0
+    if args.hasLabels:
+        nLabels = 10 if dataT == "mnist" else 2
 
     repeat = args.repeat
 
