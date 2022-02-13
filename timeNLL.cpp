@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     unsigned seed = 1;  // 232140824 9217 71263 92174
     bool shuffleData = true;
 
-    int repeat = 1;
+    int repeat = 5;
     int n_seeds = 1;
 
     //// BAS Dataset

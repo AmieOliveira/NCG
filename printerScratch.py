@@ -13,8 +13,8 @@ comparison = "vNeighbors"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-k_vals = [100, 20, 10, 5, 2, 1]
-neighbors = [12, 8, 4]   # 16 [14, 12, 10, 8, 6, 4]
+k_vals = [10]  # [100, 20, 10, 5, 2, 1]
+neighbors = [14, 12, 8, 4]   # 16 [14, 12, 10, 8, 6, 4]
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
@@ -140,10 +140,10 @@ dfNs = pd.read_csv(filenameNs, comment="#", index_col=0)
 dfNs = dfNs.astype(float)
 dfNs = dfNs.iloc[0:lim_iter]
 
-filename = f"Training Outputs/meanNll_bas{basSize}_BAScon-25rep.csv"
-dfS = pd.read_csv(filename, comment="#", index_col=0)
-dfS = dfS.astype(float)
-dfS = dfS.iloc[0:lim_iter]
+# filename = f"Training Outputs/meanNll_bas{basSize}_BAScon-25rep.csv"
+# dfS = pd.read_csv(filename, comment="#", index_col=0)
+# dfS = dfS.astype(float)
+# dfS = dfS.iloc[0:lim_iter]
 
 for k in k_vals:
     fig, ax = plt.subplots(1, figsize=figSize[plotSize])
@@ -155,7 +155,7 @@ for k in k_vals:
     for v in neighbors:
         # NOTE: argument 'cmap' does not work since I plot one at a time
         df = dfNl.rename(columns={f"CD-{k}, {v} neighbors in line": f"Line, v = {v}"})
-        df[f"Line, v = {v}"].plot(ax=ax, linewidth=linwdth, alpha=0.8, color=cmap((i)/cmsize))
+        df[f"Line, v = {v}"].plot(ax=ax, linewidth=linwdth, alpha=0.8, color=cmap(i / cmsize))
 
         df = dfNs.rename(columns={f"CD-{k}, {v} neighbors in spiral": f"Spiral, v = {v}"})
         df[f"Spiral, v = {v}"].plot(ax=ax, linestyle='dashed', linewidth=linwdth, alpha=0.8, color=cmap((i+1)/cmsize))
@@ -169,6 +169,9 @@ for k in k_vals:
     #
     # dfStmp = dfS.rename(columns={f"CD-{k}, Specialist v4": f"Stairs"})
     # dfStmp[f"Stairs"].plot(ax=ax, linewidth=linwdth, alpha=0.8)
+
+    # dfStmp = dfS.rename(columns={f"CD-{k}, Specialist v2": f"Cross"})
+    # dfStmp[f"Cross"].plot(ax=ax, linewidth=linwdth, alpha=0.8, color=cmap(i/cmsize))
 
     if errorType == "std":
         pass
@@ -255,7 +258,7 @@ for k in k_vals:
     errorPrint = f"-{errorType}Err" if errorType else ""
     sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
 
-    plt.savefig(f"/Users/amandaoliveira/Documents/Mestrado/Biblioteca/Artigos/2022_IJCNN/imagens/"
+    plt.savefig(f"/Users/amandaoliveira/Documents/Mestrado/Dissertação/imagens/searchSpace/"
                 f"meanNLL_bas{basSize}_comparison-{comparison}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}"
                 f"-{repeat}rep{errorPrint}{sizeAppend}.pdf",
                 transparent=True)

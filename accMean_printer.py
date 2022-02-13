@@ -114,7 +114,7 @@ if __name__ == "__main__":
                         # inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
                         # inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
 
-                        legendStr = f"GONG, p = {p}"
+                        legendStr = f"NCG, p = {p}"
 
                         tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
                         tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)

@@ -197,9 +197,10 @@ if __name__ == "__main__":
 
             if args.separate_plots:
                 axSH.set_xlabel("Epoch")
-                axSH.set_ylabel("Average Degree")
+                axSH.set_ylabel("Degree")
 
                 plt.figure(figSH)
+                plt.ylim(0, 800)
                 axSH.grid(color="gray", linestyle=":", linewidth=.2)
                 axSH.legend()  # loc="upper right", prop={'size': 6}
                 plt.tight_layout()
@@ -208,9 +209,10 @@ if __name__ == "__main__":
 
 
                 axSX.set_xlabel("Epoch")
-                axSX.set_ylabel("Average Degree")
+                axSX.set_ylabel("Degree")
 
                 plt.figure(figSX)
+                plt.ylim(0, 510)
                 axSX.grid(color="gray", linestyle=":", linewidth=.2)
                 axSX.legend()  # loc="upper right", prop={'size': 6}
                 plt.tight_layout()
@@ -235,8 +237,8 @@ if __name__ == "__main__":
                 ax[n].yaxis.set_tick_params(labelbottom=True)
                 # ax[i, j].tick_params(left=False)
 
-        ax[0].set_ylabel("Hidden\nAverage degree")
-        ax[n_ps].set_ylabel("Visible\nAverage degree")
+        ax[0].set_ylabel("Hidden\nDegree")
+        ax[n_ps].set_ylabel("Visible\nDegree")
 
         plt.figure(fig)
         plt.tight_layout()
