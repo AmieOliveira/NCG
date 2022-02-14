@@ -258,7 +258,7 @@ for k in k_vals:
     errorPrint = f"-{errorType}Err" if errorType else ""
     sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
 
-    plt.savefig(f"/Users/amandaoliveira/Documents/Mestrado/Dissertação/imagens/searchSpace/"
+    plt.savefig(f"Plots/"
                 f"meanNLL_bas{basSize}_comparison-{comparison}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}"
                 f"-{repeat}rep{errorPrint}{sizeAppend}.pdf",
                 transparent=True)
@@ -483,6 +483,6 @@ for k in k_vals:
 # limitante = - log(1.0/nSamples)
 # plt.plot([0, lim_iter], [limitante, limitante], "r--")
 
-#plt.savefig(f"/Users/amandaoliveira/Documents/Mestrado/Biblioteca/Artigos/2022_IJCNN/imagens/"
+#plt.savefig(f"Plots/"
 #            f"meanNll_bas{basSize}_comparison-{comparison}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}-rep{repeat}.pdf",
 #            transparent=True)
