@@ -293,6 +293,35 @@ Eigen::MatrixXd bas_connect_4(int basSize) {
     return ret;
 }
 
+Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed) {
+    /* Creates a random matrix with a fixed density d
+     * The resulting RBM has nRows hidden units (H), nCols visible
+     * units (X) and (nRows * nCols * d) connections. The parameter
+     * d gives the density, and is the probability of a given
+     * edge being connected.
+     */
+
+    if ((d < 0) || (d > 1)) {
+        printError("Invalid density parameter");
+        cerr << "Cannot construct a matrix with " << d << " density. Please "
+             << "choose a number between 0 and 1" << endl;
+    }
+
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(nRows, nCols);
+
+    mt19937 generator(seed);
+    uniform_real_distribution<double> p_dis(0.0, 1.0);
+    double moeda;
+
+    for (int i = 0; i < nRows; i++) {
+        for (int j = 0; j < nCols; j++) {
+            moeda = p_dis(generator);
+            if (moeda < d) ret(i, j) = 1;
+        }
+    }
+
+    return ret;
+}
 
 // Randomizing Connectivity
 Mixer::Mixer(unsigned s) {

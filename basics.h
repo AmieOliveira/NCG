@@ -40,6 +40,8 @@ void printVerbose(string msg);
 Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs);
 Eigen::MatrixXd v_neighbors_spiral(int nRows, int nCols, int nNeighs);
 
+Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed);
+
 Eigen::MatrixXd bas_connect(int basSize);
 Eigen::MatrixXd bas_connect_2(int basSize);
 Eigen::MatrixXd bas_connect_3(int basSize);

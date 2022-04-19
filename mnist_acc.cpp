@@ -24,6 +24,7 @@ enum TrainingTypes {
     conv,
     neighLine,
     neighSpiral,
+    random_connectivity,
     none,           // For inexistent types
 };
 TrainingTypes resolveOption(string opt) {
@@ -32,6 +33,7 @@ TrainingTypes resolveOption(string opt) {
     if (opt == "convolution") return conv;
     if (opt == "neighborsLine") return neighLine;
     if (opt == "neighborsSpiral") return neighSpiral;
+    if (opt == "random") return random_connectivity;
     return none;
 }
 
@@ -290,6 +292,25 @@ int main(int argc, char **argv) {
                 outdata << l * f_acc << "," << acc_train << "," << acc_test << endl;
             }
             break;
+
+        case random_connectivity: {
+            if ( (trainParam <= 0) || (trainParam >= 1) ) {
+                printError("Invalid training parameter");
+                cerr << "Training parameter should be a number in (0,1), was given " << trainParam << endl;
+                exit(1);
+            }
+            msg.str("");
+            msg << "Training RBM with random connectivity (d=" << trainParam << ")";
+            printInfo(msg.str());
+
+            model.connectivity(true);
+            model.setConnectivity( d_density_rdn( X, H, trainParam, seed+1 ) );
+
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
+            model.fit(mnist);
+
+            break;
+        }
 
         default:
             printError("Training type not recognized. Aborting operation.");
