@@ -39,6 +39,7 @@ void printVerbose(string msg);
 // Connectivity Matrixes
 Eigen::MatrixXd v_neighbors(int nRows, int nCols, int nNeighs);
 Eigen::MatrixXd v_neighbors_spiral(int nRows, int nCols, int nNeighs);
+Eigen::MatrixXd v_neighbors_line_spread(int nRows, int nCols, int nNeighs);
 
 Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed);
 

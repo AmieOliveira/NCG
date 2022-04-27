@@ -323,6 +323,48 @@ Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed) {
     return ret;
 }
 
+Eigen::MatrixXd v_neighbors_line_spread(int nRows, int nCols, int nNeighs) {
+    // Generalizes the neighbors in line pattern to deal better with having
+    //  less hidden than visible units (while v >= nCols/nRows, all units have
+    //  connections)  -- obs.: nRows=H and nCols=X
+    if (nNeighs <= 0) {
+        string msg = "Invalid number of neighbors, set 1 or higher";
+        printError(msg);
+        throw;
+    }
+    Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(nRows, nCols);
+
+    cout << "X/H = " << (float(nCols)/nRows) << " (integer " << ceil(float(nCols)/nRows) << ")" << endl;
+
+    int i, j, n, k;
+    int step = ceil(float(nCols)/nRows);
+    int w = ceil(float(nCols)/step);
+
+    for (i=0; i<nRows; i++) {
+        j = i * step;
+
+        if (j >= nCols) {
+            k = floor(j/nCols);
+            j = (i - w)*step + k;
+        }
+
+        while (j >= nCols) {
+            j = j-nCols + floor(j/nCols);
+        }
+
+        n=nNeighs;
+        while (n > 0) {
+            ret(i,j) = 1;
+            j++;
+            if (j >= nCols) j=j-nCols;
+            n--;
+        }
+    }
+
+    return ret;
+}
+
+
 // Randomizing Connectivity
 Mixer::Mixer(unsigned s) {
     seed = s;
