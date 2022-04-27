@@ -235,15 +235,10 @@ int main(int argc, char **argv) {
 
         case neighLine: {
             printInfo("Training RBM with neighbors in line connectivity");
-            if (H != X) {
-                printError("Neighbors in line connectivity available only for square matrix (X=H)");
-                cerr << "Tried to use neighbors connectivity with H = " << H << ", expected " << X << endl;
-                exit(1);
-            }
 
             if ( trainParam < 1 ) {
                 printError("Invalid training parameter, should represent the number of neighbors per unit");
-                cerr << "Tried to use " << trainParam << " neighbors. Shoud be a positive integer" << endl;
+                cerr << "Tried to use " << trainParam << " neighbors. Should be a positive integer" << endl;
                 exit(1);
             }
             int v = int(trainParam);
@@ -252,7 +247,7 @@ int main(int argc, char **argv) {
             }
 
             model.connectivity(true);
-            model.setConnectivity( v_neighbors(X, X, v) );
+            model.setConnectivity( v_neighbors_line_spread(X, H, v) );
 
             model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
             model.fit(mnist);

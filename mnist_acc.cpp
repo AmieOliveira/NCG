@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
             printInfo(msg.str());
 
             model.connectivity(true);
-            model.setConnectivity( d_density_rdn( X, H, trainParam, seed+1 ) );
+            model.setConnectivity( d_density_rdn( X, H, trainParam, seed+1, nLabels ) );
             cout << "Connectivity matrix:" << endl << model.getConnectivity() << endl;
 
             model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
@@ -315,6 +315,47 @@ int main(int argc, char **argv) {
             cout << "Epoch 0:\tTrain Acc = " << acc_train
                  << " %\tTest Acc = " << acc_test << " %" << endl;
             outdata << 0 << "," << acc_train << "," << acc_test << endl;
+
+            for (int l=1; l <= loops; l++) {
+                model.fit(mnist);
+
+                acc_train = model.classificationStatistics(mnist, false);
+                acc_test = model.classificationStatistics(mnist_test, false);
+
+                cout << "Epoch " << l * f_acc << ":\tTrain Acc = " << acc_train
+                     << " %\tTest Acc = " << acc_test << " %" << endl;
+                outdata << l * f_acc << "," << acc_train << "," << acc_test << endl;
+            }
+
+            break;
+        }
+
+        case neighLine: {
+            printInfo("Training RBM with neighbors in line connectivity");
+
+            if ( trainParam < 1 ) {
+                printError("Invalid training parameter, should represent the number of neighbors per unit");
+                cerr << "Tried to use " << trainParam << " neighbors. Should be a positive integer" << endl;
+                exit(1);
+            }
+            int v = int(trainParam);
+            if ( abs(v - trainParam) > 0 ) {
+                printWarning("Training parameter has been rounded to an integer!");
+            }
+
+            model.connectivity(true);
+            model.setConnectivity( v_neighbors_line_spread( X, H, trainParam, nLabels ) );
+            // cout << "Connectivity matrix:" << endl << model.getConnectivity() << endl;
+
+            model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
+
+            acc_train = model.classificationStatistics(mnist, false);
+            acc_test = model.classificationStatistics(mnist_test, false);
+
+            cout << "Epoch 0:\tTrain Acc = " << acc_train
+                 << " %\tTest Acc = " << acc_test << " %" << endl;
+            outdata << 0 << "," << acc_train << "," << acc_test << endl;
+
 
             for (int l=1; l <= loops; l++) {
                 model.fit(mnist);

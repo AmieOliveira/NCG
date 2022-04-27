@@ -350,11 +350,15 @@ int main(int argc, char **argv) {
     //
     // // model.save("test.rbm");
 
-    int X = 10, H = 10, v = 4;
+    int X = 16, H = 10;
+    int v = 4;
+    double d = 0.5;
+    int nLab = 2;
 
     RBM model(X,H);
     model.connectivity(true);
-    model.setConnectivity( v_neighbors_line_spread(H, X, v) );
+    //model.setConnectivity( v_neighbors_line_spread(X, H, v, nLab) );
+    model.setConnectivity( d_density_rdn(X, H, d, 832497, nLab) );
     model.printVariables();
 
     return 0;

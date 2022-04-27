@@ -293,7 +293,7 @@ Eigen::MatrixXd bas_connect_4(int basSize) {
     return ret;
 }
 
-Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed) {
+Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed, int n_labels) {
     /* Creates a random matrix with a fixed density d
      * The resulting RBM has nRows hidden units (H), nCols visible
      * units (X) and (nRows * nCols * d) connections. The parameter
@@ -309,21 +309,29 @@ Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed) {
 
     Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(nRows, nCols);
 
+    int X = nCols - n_labels;
+
     mt19937 generator(seed);
     uniform_real_distribution<double> p_dis(0.0, 1.0);
     double moeda;
 
     for (int i = 0; i < nRows; i++) {
-        for (int j = 0; j < nCols; j++) {
+        for (int j = 0; j < X; j++) {
             moeda = p_dis(generator);
             if (moeda < d) ret(i, j) = 1;
         }
+
+        for (int j = X; j < nCols; j++) { ret(i,j) = 1; }
     }
 
     return ret;
 }
 
-Eigen::MatrixXd v_neighbors_line_spread(int nRows, int nCols, int nNeighs) {
+Eigen::MatrixXd d_density_rdn(int nCols, int nRows, double d, unsigned seed) {
+    return d_density_rdn(nCols, nRows, d, seed, 0);
+}
+
+Eigen::MatrixXd v_neighbors_line_spread(int nCols, int nRows, int nNeighs, int n_labels) {
     // Generalizes the neighbors in line pattern to deal better with having
     //  less hidden than visible units (while v >= nCols/nRows, all units have
     //  connections)  -- obs.: nRows=H and nCols=X
@@ -334,34 +342,40 @@ Eigen::MatrixXd v_neighbors_line_spread(int nRows, int nCols, int nNeighs) {
     }
     Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(nRows, nCols);
 
-    cout << "X/H = " << (float(nCols)/nRows) << " (integer " << ceil(float(nCols)/nRows) << ")" << endl;
+    int X = nCols - n_labels;
 
     int i, j, n, k;
-    int step = ceil(float(nCols)/nRows);
-    int w = ceil(float(nCols)/step);
+    int step = ceil(float(X)/nRows);
+    int w = ceil(float(X)/step);
 
     for (i=0; i<nRows; i++) {
         j = i * step;
 
-        if (j >= nCols) {
-            k = floor(j/nCols);
+        if (j >= X) {
+            k = floor(j/X);
             j = (i - w)*step + k;
         }
 
-        while (j >= nCols) {
-            j = j-nCols + floor(j/nCols);
+        while (j >= X) {
+            j = j-X + floor(j/X);
         }
 
         n=nNeighs;
         while (n > 0) {
             ret(i,j) = 1;
             j++;
-            if (j >= nCols) j=j-nCols;
+            if (j >= X) j=j-X;
             n--;
         }
+
+        for (j = X; j < nCols; j++) { ret(i,j) = 1; }
     }
 
     return ret;
+}
+
+Eigen::MatrixXd v_neighbors_line_spread(int nCols, int nRows, int nNeighs){
+    return v_neighbors_line_spread(nCols, nRows, nNeighs, 0);
 }
 
 
