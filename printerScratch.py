@@ -13,14 +13,14 @@ comparison = "vNeighbors"
 # "8neighbors-basConnect2-complete", "basConnectV1-completeH9-completeH16", "bSize&lRate"
 # "8&12neighbors_basConnect2_complete", "13neighbors-specialist-complete", "8&12neighbors_basConnect2_complete"
 
-k_vals = [10]  # [100, 20, 10, 5, 2, 1]
+k_vals = [100, 20, 10, 5, 2, 1]
 neighbors = [14, 12, 8, 4]   # 16 [14, 12, 10, 8, 6, 4]
 # neighType = "spiral"      # "line", "spiral"
 # versions = [2, 3, 4]
 # identifier = 2
 # k = 1
 lim_iter = 10000
-errorType = None        # None, "std", "quartile"
+errorType = "quartile"        # None, "std", "quartile"
 repeat = 25
 # p_vals = [1, 0.5]
 # p = 1
@@ -140,10 +140,10 @@ dfNs = pd.read_csv(filenameNs, comment="#", index_col=0)
 dfNs = dfNs.astype(float)
 dfNs = dfNs.iloc[0:lim_iter]
 
-# filename = f"Training Outputs/meanNll_bas{basSize}_BAScon-25rep.csv"
-# dfS = pd.read_csv(filename, comment="#", index_col=0)
-# dfS = dfS.astype(float)
-# dfS = dfS.iloc[0:lim_iter]
+filename = f"Training Outputs/meanNll_bas{basSize}_BAScon-25rep.csv"
+dfS = pd.read_csv(filename, comment="#", index_col=0)
+dfS = dfS.astype(float)
+dfS = dfS.iloc[0:lim_iter]
 
 for k in k_vals:
     fig, ax = plt.subplots(1, figsize=figSize[plotSize])
@@ -234,6 +234,10 @@ for k in k_vals:
             ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph, color=cmap((i+1)/cmsize))
             i = i + 2
 
+        # errorPlus = dfS[f"CD-{k}, Specialist v2 - q3"].to_numpy()
+        # errorMinus = dfS[f"CD-{k}, Specialist v2 - q1"].to_numpy()
+        # ax.fill_between(ind, errorMinus, errorPlus, alpha=shadalph, color=cmap(i/cmsize))
+
         # for identifier in versions:
         #     errorPlus = dfS[f"CD-{k}, Specialist v{identifier} - q3"].to_numpy()
         #     errorMinus = dfS[f"CD-{k}, Specialist v{identifier} - q1"].to_numpy()
@@ -258,10 +262,12 @@ for k in k_vals:
     errorPrint = f"-{errorType}Err" if errorType else ""
     sizeAppend = f"-{plotSize}" if plotSize != "default" else ""
 
-    plt.savefig(f"Plots/"
+    plt.savefig(  # f"Plots/"
+                f"/Users/amandaoliveira/Documents/Mestrado/Dissertação/imagens/searchSpace/"
                 f"meanNLL_bas{basSize}_comparison-{comparison}_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{lim_iter}"
                 f"-{repeat}rep{errorPrint}{sizeAppend}.pdf",
-                transparent=True)
+                transparent=True
+    )
 
 # ---------
 

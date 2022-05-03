@@ -31,6 +31,9 @@ plotting.add_argument("--minmaxErr", action="store_true",
 plotting.add_argument("-2", "--noFirst", action="store_true",
                       help="Activate this flag to remove first accuracy result (before training)")
 
+plotting.add_argument("-n", "--plotname", type=str, default=".",
+                      help="Modifier string to change the plot name (so as not to always overwrite)")
+
 # Training options
 training = parser.add_argument_group(title='Training Settings',
                                      description="Training info, necessary in order to find correct files")
@@ -51,9 +54,10 @@ training.add_argument("-I", "--iterations", type=int, required=True,
 
 # Auxiliar lists
 #    Contain possible values for k and p. More values can be added as needed
-k_values = [1, 2, 5, 10, 20, 100]
-p_values = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
-v_values = [400, 250, 50, 16]
+k_values = [10]  # [1, 2, 5, 10, 20, 100]  # TODO: Fix this! removed others for simplicity
+p_values = [1, 0.5, 0.1]  # [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
+v_values = [400, 50]  # [700, 500, 400, 392, 250, 79, 50, 16]  # TODO: trocar para [392, 79]
+# Reduzi do total pra deixar as imagens menos poluídas!
 
 figSize = (4, 3)  # (7, 5)
 fillTransp = 0.2  # 0.3
@@ -63,12 +67,17 @@ cms = [cm.get_cmap("Blues"), cm.get_cmap("Oranges"), cm.get_cmap("Greens"), cm.g
 # --------------
 
 param_values = p_values + v_values
+expandFig = False
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
 
     list_types = args.plotType
+
+    if len(list_types) > 2:
+        expandFig = True
+        figSize = (4, 4)
 
     path = args.inputpath
 
@@ -118,7 +127,13 @@ if __name__ == "__main__":
                         # inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
                         # inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
 
-                        legendStr = f"NCG, p = {p}"
+                        legendStr = ""
+                        if pltT == "sgd":
+                            legendStr = f"NCG, p = {p}"
+                        elif pltT == "random":
+                            legendStr = f"Random, d = {p}"
+                        elif pltT == "neighborsLine":
+                            legendStr = f"Line, v = {p}"
 
                         tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
                         tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
@@ -165,14 +180,15 @@ if __name__ == "__main__":
 
 
             else:
+                completeLegend = "Dense Network"  # "Traditional Network"
                 try:
                     # inputTrainFile[f"CD-{k} {pltT}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
                     # inputTestFile[f"CD-{k} {pltT}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
 
-                    tmp = inputTrainFile.rename(columns={f"CD-{k} {pltT}": "Traditional Network"})["Traditional Network"]
+                    tmp = inputTrainFile.rename(columns={f"CD-{k} {pltT}": completeLegend})[completeLegend]
                     tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
 
-                    tmp = inputTestFile.rename(columns={f"CD-{k} {pltT}": "Traditional Network"})["Traditional Network"]
+                    tmp = inputTestFile.rename(columns={f"CD-{k} {pltT}": completeLegend})[completeLegend]
                     tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
                 except KeyError:
                     continue
@@ -223,19 +239,25 @@ if __name__ == "__main__":
             axTrain.set_ylabel("Accuracy (%)")
             axTest.set_ylabel("Accuracy (%)")
 
-            print(f"{args.outputpath}/mean_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf")
+            modifStr = args.plotname
+            if modifStr:
+                modifStr = "_" + modifStr
 
             # plt.show()
             print(f"Saving plots for k = {k}")
             plt.figure(figTrain)
+            if expandFig:
+                plt.legend(bbox_to_anchor=(0.5, 1.03), loc="lower center", borderaxespad=0, ncol=2, prop={'size': 9})
             plt.tight_layout()
             figTrain.savefig(
-                f"{args.outputpath}/mean_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
+                f"{args.outputpath}/mean_acc-Train_{dataT}{modifStr}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
                 transparent=True)
 
             plt.figure(figTest)
+            if expandFig:
+                plt.legend(bbox_to_anchor=(0.5, 1.03), loc="lower center", borderaxespad=0, ncol=2, prop={'size': 9})
             plt.tight_layout()
             figTest.savefig(
-                f"{args.outputpath}/mean_acc-Test_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
+                f"{args.outputpath}/mean_acc-Test_{dataT}{modifStr}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf",
                 transparent=True)
 

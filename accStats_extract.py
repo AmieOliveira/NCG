@@ -39,7 +39,7 @@ training.add_argument("-I", "--iterations", type=int, required=True,
 #    Contain possible values for k and p. More values can be added as needed
 k_values = [1, 2, 5, 10, 20, 100]
 p_values = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
-v_values = [400, 250, 50, 16]
+v_values = [700, 500, 400, 392, 250, 79, 50, 16]
 # --------------
 
 fileBase = "{}/acc_{}_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_withLabels_run{}.csv"
