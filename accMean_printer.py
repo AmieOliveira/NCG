@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 inputTrainFile = pd.read_csv(ifTrainName, index_col=0)
                 inputTestFile = pd.read_csv(ifTestName, index_col=0)
             except FileNotFoundError:
-                print("ERROR:\tFiles not found. Check training parameters and which plots you wnat to add!")
+                print("ERROR:\tFiles not found. Check training parameters and which plots you want to add!")
                 raise
 
             if args.noFirst:
