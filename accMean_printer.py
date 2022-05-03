@@ -52,7 +52,8 @@ training.add_argument("-I", "--iterations", type=int, required=True,
 # Auxiliar lists
 #    Contain possible values for k and p. More values can be added as needed
 k_values = [1, 2, 5, 10, 20, 100]
-p_values = [1, 0.5, 0.1]
+p_values = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
+v_values = [400, 250, 50, 16]
 
 figSize = (4, 3)  # (7, 5)
 fillTransp = 0.2  # 0.3
@@ -60,6 +61,9 @@ fillTransp = 0.2  # 0.3
 cms = [cm.get_cmap("Blues"), cm.get_cmap("Oranges"), cm.get_cmap("Greens"), cm.get_cmap("Reds"), cm.get_cmap("Purples"),
        cm.get_cmap("copper"), cm.get_cmap("spring"), cm.get_cmap("Greys"), cm.get_cmap("summer"), cm.get_cmap("winter")]
 # --------------
+
+param_values = p_values + v_values
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -108,8 +112,8 @@ if __name__ == "__main__":
                 inputTrainFile = inputTrainFile.iloc[1:iters + 1]
                 inputTestFile = inputTestFile.iloc[1:iters + 1]
 
-            if pltT == "sgd":
-                for p in p_values:
+            if pltT in ["sgd", "random", "neighborsLine"]:
+                for p in param_values:
                     try:
                         # inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
                         # inputTestFile[f"CD-{k} p = {p}"].plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
@@ -218,6 +222,8 @@ if __name__ == "__main__":
 
             axTrain.set_ylabel("Accuracy (%)")
             axTest.set_ylabel("Accuracy (%)")
+
+            print(f"{args.outputpath}/mean_acc-Train_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep{errorPrint}.pdf")
 
             # plt.show()
             print(f"Saving plots for k = {k}")
