@@ -7,6 +7,8 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 
 parser = argparse.ArgumentParser()
@@ -106,12 +108,12 @@ if __name__ == "__main__":
 
     for k in k_values:
         means = {"init": [], "fim": []}
-        mins = {"init": [], "fim": []}
-        maxs = {"init": [], "fim": []}
+        # mins = {"init": [], "fim": []}
+        # maxs = {"init": [], "fim": []}
 
         plt.clf()
         ax = fig.add_subplot(111)
-        # plt.plot([0, 1.1], [0, 1.1], color="gray", linestyle=":", linewidth=0.5)
+        plt.plot([0.1, 1], [0.1, 1], color="burlywood", linestyle="--", alpha=0.8, linewidth=0.6)
 
         hasK = False
 
@@ -134,15 +136,26 @@ if __name__ == "__main__":
             plt.plot([minI, maxI], [meanF, meanF], color="k")
             plt.plot(meanI, meanF, marker="o", markersize=5, color="red", alpha=0.7)
 
-            # means["init"].append( meanI )
-            # means["fim"].append( meanF )
+            means["init"].append( meanI )
+            means["fim"].append( meanF )
             # mins["init"].append( minI )
             # mins["fim"].append( minF )
             # maxs["init"].append( maxI )
             # maxs["fim"].append( maxF )
 
+
         if hasK:
-            plt.grid(linestyle=':')
+            x = np.array(means["init"]).reshape((-1, 1))
+            y = np.array(means["fim"]).reshape((-1, 1))
+            linreg = LinearRegression().fit(x, y)
+
+            plt.plot([0.1, 1], linreg.intercept_+linreg.coef_[0]*[0.1, 1], color="darkorange",
+                     alpha=0.8, linestyle="--", label="Regression", zorder=-10)
+
+            plt.text(0.1, 0.99, "Regression: \n" + rf"$d_f = {linreg.coef_[0][0]:.2f}d_i + {linreg.intercept_[0]:.2f}$",
+                     ha="left", va="top")
+
+            plt.grid(linestyle=':', linewidth=0.2)
             plt.xticks(p_values)
             plt.yticks(p_values)
             plt.xlabel("Initial density")
@@ -151,8 +164,8 @@ if __name__ == "__main__":
             plt.ylim([0, 1.1])
             # plt.show()
 
-            fig.savefig(f"{args.outputpath}/"
-                        f"denseAnalysis_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{lim_iters}-{repeat}rep.pdf",
-                        transparent=True
-                        )
+            filename = f"{args.outputpath}/denseAnalysis_{dataT}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{lim_iters}-{repeat}rep.pdf"
 
+            fig.savefig(filename, transparent=True)
+
+            print(f"Saved file '{filename}'")

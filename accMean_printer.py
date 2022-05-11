@@ -31,7 +31,7 @@ plotting.add_argument("--minmaxErr", action="store_true",
 plotting.add_argument("-2", "--noFirst", action="store_true",
                       help="Activate this flag to remove first accuracy result (before training)")
 
-plotting.add_argument("-n", "--plotname", type=str, default=".",
+plotting.add_argument("-n", "--plotname", type=str, default="",
                       help="Modifier string to change the plot name (so as not to always overwrite)")
 
 # Training options
@@ -55,8 +55,8 @@ training.add_argument("-I", "--iterations", type=int, required=True,
 # Auxiliar lists
 #    Contain possible values for k and p. More values can be added as needed
 k_values = [10]  # [1, 2, 5, 10, 20, 100]  # TODO: Fix this! removed others for simplicity
-p_values = [1, 0.5, 0.1]  # [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
-v_values = [400, 50]  # [700, 500, 400, 392, 250, 79, 50, 16]  # TODO: trocar para [392, 79]
+p_values = [0.5, 0.1]  # [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
+v_values = [392, 79]  # [700, 500, 400, 392, 250, 79, 50, 16]
 # Reduzi do total pra deixar as imagens menos poluídas!
 
 figSize = (4, 3)  # (7, 5)
@@ -97,6 +97,13 @@ if __name__ == "__main__":
     elif args.minmaxErr:
         errorPrint = "-minMaxErr"
 
+    if dataT == "mnist":
+        X = 784
+    elif dataT[:3] == "bas":
+        X = int(dataT[3:])**2
+    else:
+        raise KeyError(f"Unrecognized data type '{dataT}'")
+
     for k in k_values:
         figTrain, axTrain = plt.subplots(nrows=1, ncols=1, figsize=figSize)
         # figTrain.suptitle(f"Train Set Classification Performance for CD-{k}")
@@ -133,7 +140,7 @@ if __name__ == "__main__":
                         elif pltT == "random":
                             legendStr = f"Random, d = {p}"
                         elif pltT == "neighborsLine":
-                            legendStr = f"Line, v = {p}"
+                            legendStr = f"Line, v/X = {p/X:.1f}"
 
                         tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
                         tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
