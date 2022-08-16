@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    string / = "./";
+    string filePath = "./";
     if (argc > 5) {
         filePath = argv[5];
         if ( !(filePath[filePath.length() - 1] == '/') ) filePath = filePath + "/";
@@ -189,9 +189,6 @@ int main(int argc, char **argv) {
 
     RBM model(X, H);
     model.setRandomSeed(seed);
-
-    model.printVariables();
-    data.printData();
 
     // Training variables
     bool doShuffle = true;  // Is there a reason I'd wish it not to be true?
