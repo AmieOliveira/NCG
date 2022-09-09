@@ -33,9 +33,14 @@ parser.add_argument("-c", "--number-classes", type=int, required=True,
 parser.add_argument("-d", "--data-size", type=int, required=True,
                     help="Size of each sample, e.g. number of features")
 
-parser.add_argument("-0", "--first0", action="store_true",
-                    help="Set this flag if the class numbers start in 0. "
-                         "Otherwise, code assumes the fiest class is 1")
+#parser.add_argument("-0", "--first0", action="store_true",
+#                    help="Set this flag if the class numbers start in 0. "
+#                         "Otherwise, code assumes the fiest class is 1 if "
+#                         "no bias argument is specified")
+parser.add_argument("-b", "--bias", type=int,
+                    help="Sets the bias in the class indexes, so that those "
+                         "indexes start in number 0 and are always "
+                         "non-negative.")
 parser.add_argument("--set-start", type=int, default=0,
                     help="Use to split datasets without creating a new file."
                          "Use samples from the index given onward")
@@ -80,7 +85,8 @@ if __name__ == "__main__":
 
     split = args.split
 
-    bias = 0 if args.first0 else 1
+    # bias = 0 if args.first0 else 1
+    bias = args.bias
     shuf = args.shuffle_split
 
     dataset = args.name
