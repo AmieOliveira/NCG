@@ -41,7 +41,7 @@ plotting.add_argument("-l", "--limit-iterations", type=int, default=-1,
 training = parser.add_argument_group(title='Training Settings',
                                      description="Training info, necessary in order to find correct files")
 training.add_argument("-d", "--dataType", type=str, default="mnist",
-                      help="So far can be either 'mnist', 'mushrooms' or 'basX', in which X is the size of the BAS dataset")
+                      help="So far can be either 'mnist', 'mushrooms', 'connect-4' or 'basX', in which X is the size of the BAS dataset")
 training.add_argument("-R", "--repeat", type=int, required=True,
                       help="Number of runs for each configuration")
 training.add_argument("-H", "--hiddenNeurons", type=int, required=True,
@@ -57,9 +57,9 @@ training.add_argument("-I", "--iterations", type=int, required=True,
 
 # Auxiliar lists
 #    Contain possible values for k and p. More values can be added as needed
-k_values = [10]  # [1, 2, 5, 10, 20, 100]  # TODO: Fix this! removed others for simplicity
-p_values = [0.5, 0.1]  # [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
-v_values = [56, 11] # [392, 79]  # [700, 500, 400, 392, 250, 79, 50, 16]
+k_values = [10, 1]  # [1, 2, 5, 10, 20, 100]  # TODO: Fix this! removed others for simplicity
+p_values = [1, 0.5, 0.1]  # [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1]
+v_values = [63, 12, 56, 11, 392, 79]  # [700, 500, 400, 392, 250, 79, 50, 16]
 # Reduzi do total pra deixar as imagens menos poluídas!
 
 figSize = (4, 3)  # (7, 5)
@@ -104,6 +104,8 @@ if __name__ == "__main__":
         X = 784
     elif dataT == "mushrooms":
         X = 112
+    elif dataT == "connect-4":
+        X = 126
     elif dataT[:3] == "bas":
         X = int(dataT[3:])**2
     else:
@@ -263,6 +265,10 @@ if __name__ == "__main__":
             if modifStr:
                 modifStr = "_" + modifStr
 
+            printFirst = ""
+            if args.noFirst:
+                printFirst = "-2"
+
             # plt.show()
             print(f"Saving plots for k = {k}")
             plt.figure(figTrain)
@@ -270,7 +276,7 @@ if __name__ == "__main__":
                 plt.legend(bbox_to_anchor=(0.5, 1.03), loc="lower center", borderaxespad=0, ncol=2, prop={'size': 9})
             plt.tight_layout()
             figTrain.savefig(
-                f"{args.outputpath}/mean_acc-Train_{dataT}{modifStr}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{lim_it}-{repeat}rep{errorPrint}.pdf",
+                f"{args.outputpath}/mean_acc-Train_{dataT}{modifStr}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{lim_it}-{repeat}rep{errorPrint}{printFirst}.pdf",
                 transparent=True)
 
             plt.figure(figTest)
@@ -278,6 +284,6 @@ if __name__ == "__main__":
                 plt.legend(bbox_to_anchor=(0.5, 1.03), loc="lower center", borderaxespad=0, ncol=2, prop={'size': 9})
             plt.tight_layout()
             figTest.savefig(
-                f"{args.outputpath}/mean_acc-Test_{dataT}{modifStr}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{lim_it}-{repeat}rep{errorPrint}.pdf",
+                f"{args.outputpath}/mean_acc-Test_{dataT}{modifStr}_H{H}_CD-{k}_lr{lr}_mBatch{bSize}_iter{lim_it}-{repeat}rep{errorPrint}{printFirst}.pdf",
                 transparent=True)
 
