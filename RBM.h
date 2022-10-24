@@ -46,6 +46,7 @@ class RBM {
     // Flags
     bool initialized;   // True if RBM has dimensions
     bool patterns;      // True if connectivity patterns are active
+    bool optim_H;       // True if hidden neurons can be (forcefully) deactivated
     bool hasSeed;       // True if a seed for the random generator has been set
     bool trainReady;    // True if RBM has been setup for training
     bool isTrained;     // True if RBM has been trained on some dataset
@@ -63,9 +64,13 @@ class RBM {
     VectorXd b;     // Hidden units' biases
     MatrixXd W;     // Connections' weights
     MatrixXd A;     // Connection pattern (must be binary!)
+    VectorXd s;     // Hidden neurons' activation
 
     MatrixXd C;     // Resulting weight matrix
     MatrixXd* p_W;
+
+    VectorXd v;     // Resulting hidden biases
+    VectorXd* p_b;
 
     // Sampling attributes and methods
     //unsigned genSeed;
@@ -103,6 +108,9 @@ class RBM {
     vector<double> history; // NLL
     bool shuffle;           // flag to shuffle data order through iterations
 
+    double l_rate_A;
+    double l_rate_h;
+
     VectorXd auxH;    // Auxiliar vectors to diminish data allocation through training
     RowVectorXd auxX;
 
@@ -113,7 +121,8 @@ class RBM {
     double a_prob;          // Probability used for initialization of A
     int nLabels;            // Number of labels (when using for classification)
 
-    double limiar;
+    double limiar_A;
+    double limiar_h;
 
 
     // Training methods
@@ -121,6 +130,7 @@ class RBM {
 
     // Helper function
     string printConnectivity_linear();
+    void inhibitA();
 
 public:
     // Constructors
@@ -132,6 +142,7 @@ public:
 
     // Connectivity (de)ativation
     void connectivity(bool activate);
+    void hidden_activation(bool active);
 
     // Set Dimentions
     void setDimensions(int X, int H);
@@ -161,7 +172,12 @@ public:
     int setConnectivity(MatrixXd mat);
     void startConnectivity(double p);   // With p probability of any given edge existing
 
-    MatrixXd getConnectivityWeights();
+    VectorXd getActiveHiddenUnits();
+    int setActiveHiddenUnits(VectorXd vec);
+    void startActiveHiddenUnits(double p);
+
+    MatrixXd getNonInhibitedWeights();
+    VectorXd getNonInhibitedBiases();
 
     // Random generator functions
     void setRandomSeed(unsigned seed);
@@ -199,6 +215,8 @@ public:
     void optSetup(Heuristic method, bool saveConn, string connFileName, double p, int labels);
 
     void fit_connectivity(Data & trainData);
+    void fit_H(Data & trainData);
+    // void fit_conn_size(Data & trainData);
 
     // Evaluation methods
     double negativeLogLikelihood(Data & data);
@@ -223,6 +241,8 @@ public:
     // Saving methods
     void save(string filename);
     void load(string filename);
+
+    RBM reduced_rbm();
 
     // Test Functions
     void printVariables();

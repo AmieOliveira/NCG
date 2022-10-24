@@ -11,11 +11,13 @@ RBM::RBM() {
 RBM::RBM(int X, int H) {
     initialized = true;
     patterns = false;
+    optim_H = false;
     initializer(X, H);
 }
 RBM::RBM(int X, int H, bool use_pattern) {
     initialized = true;
     patterns = use_pattern;
+    optim_H = use_pattern;
     initializer(X,H);
 }
 
@@ -39,8 +41,19 @@ void RBM::initializer(int X, int H) {
     W = MatrixXd::Zero(H,X);
     A = MatrixXd::Constant(H,X,1);
 
+    s = VectorXd::Constant(H,1);
+
+    if (optim_H) {
+        // v = b.cwiseProduct(s);
+        v = b;
+        p_b = &v;
+    }
+    else p_b = &b;
+
     if (patterns) {
-        C = W.cwiseProduct(A);
+        // C = W.cwiseProduct(A);
+        // NOTE: No need to compute the product since A is a matrix of ones!
+        C = W;
         p_W = &C;
     }
     else p_W = &W;
@@ -49,10 +62,26 @@ void RBM::initializer(int X, int H) {
     auxX = RowVectorXd::Zero(X);
 }
 
+// Helpers
+void RBM::inhibitA() {
+    // Applies s (inhibittor of hidden units) to A (connectivity matrix)
+    // FIXME: verificar eficiencia!
+
+    // A = A.cwiseProduct( s * VectorXd::Constant(xSize, 1).transpose() );
+    for (int i=0; i < hSize; i++) {
+        if (s(i) == 0) {
+            for (int j=0; j < xSize; j++) {
+                A(i,j) = 0;
+            }
+        }
+    }
+}
+
 // Connectivity (de)ativation
 void RBM::connectivity(bool activate) {
     if (activate == patterns) {
         printWarning("Tried to set connectivity activation to a status it already had");
+        return;
     }
     patterns = activate;
     if (patterns){
@@ -63,17 +92,40 @@ void RBM::connectivity(bool activate) {
     }
 }
 
+void RBM::hidden_activation(bool active) {
+    if (active == optim_H) {
+        printWarning("Tried to set hidden neurons activation to a status it already had");
+        return;
+    }
+    optim_H = active;
+    if (optim_H) {
+        v = b.cwiseProduct(s);
+        p_b = &v;
+
+        if (!patterns) {
+            patterns = true;
+            inhibitA();
+            C = W.cwiseProduct(A);
+            p_W = &C;
+        }
+    } else {
+        p_b = &b;
+    }
+}
+
 
 // Set dimensions
 void RBM::setDimensions(int X, int H) {
     if (!initialized) {
         initialized = true;
+        optim_H = false;
         patterns = false;
     }
     initializer(X, H);
 }
 void RBM::setDimensions(int X, int H, bool use_pattern) {
     if (!initialized) initialized = true;
+    optim_H = use_pattern;
     patterns = use_pattern;
     initializer(X, H);
 }
@@ -151,7 +203,7 @@ int RBM::setVisibleBiases(VectorXd vec) {
 }
 
 VectorXd RBM::getHiddenBiases() {
-    return b;
+    return *p_b;
 }
 int RBM::setHiddenBiases(VectorXd vec) {
     if (!initialized){
@@ -164,6 +216,10 @@ int RBM::setHiddenBiases(VectorXd vec) {
 
     if (vec.size() == b.size()) {
         b = vec;
+        if (optim_H) {
+            v = b.cwiseProduct(s);
+        }
+
         return 0;
     } else {
         string errorMessage = "Tried to set hidden biases with wrong size! "
@@ -202,10 +258,14 @@ void RBM::startBiases() {
         bias = 2*rdn - 1;
         d(j) = bias;
     }
+
+    if (optim_H) {
+        v = b.cwiseProduct(s);
+    }
 }
 
 MatrixXd RBM::getWeights() {
-    return W;
+    return *p_W;
 }
 int RBM::setWeights(MatrixXd mat) {
     if (!initialized){
@@ -261,6 +321,7 @@ void RBM::startWeights() {
 MatrixXd RBM::getConnectivity() {
     return A;
 }
+
 int RBM::setConnectivity(MatrixXd mat) {
     if (!initialized){
         string errorMessage = "Tried to set a matrix that has no dimension!\n\t"
@@ -330,9 +391,80 @@ void RBM::startConnectivity(double p) {
     // cout << "Percentage of connections activated: " << A.sum()/(xSize*hSize) << endl;
 }
 
-MatrixXd RBM::getConnectivityWeights() {
-    return *p_W;
+VectorXd RBM::getActiveHiddenUnits() {
+    return s;
 }
+
+int RBM::setActiveHiddenUnits(VectorXd vec) {
+    if (!initialized){
+        string errorMessage = "Tried to set a vector that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        return 1;
+    }
+    if (!optim_H) {
+        string errorMessage = "Tried to set hidden units activation, but this feature is "
+                              "inactive for this RBM!";
+        printError(errorMessage);
+        return 1;
+    }
+
+    if (vec.size() == s.size()) {
+        s = vec;
+        v = b.cwiseProduct(s);
+        inhibitA();
+        C = W.cwiseProduct(A);
+        return 0;
+    } else {
+        string errorMessage = "Tried to set hidden units activation with wrong size! "
+                              "Cancelled operation.";
+        printError(errorMessage);
+        return 2;
+    }
+}
+
+void RBM::startActiveHiddenUnits(double p) {
+    // Initialize the hidden units activation with a probability p of each unit being active
+    if (!initialized){
+        string errorMessage = "Tried to set a vector that has no dimension!\n\t"
+                              "You need to set the RBM dimensions before "
+                              "assigning values!";
+        printError(errorMessage);
+        exit(1);
+    }
+    if (!optim_H) {
+        string errorMessage = "Tried to set hidden units activation, but this feature is "
+                              "inactive for this RBM!";
+        printError(errorMessage);
+        exit(1);
+    }
+    if ( (p < 0) || (p > 1) ) {
+        string errorMessage = "Tried to set hidden units activation, with invalid "
+                              "probability value!";
+        printError(errorMessage);
+        cerr << "Probability p = " << p << " is not valid. Please assign a value " <<
+                "between 0 and 1" << endl;
+        exit(1);
+    }
+
+    double moeda;
+
+    for (int i=0; i<hSize; i++) {
+        moeda = (*p_dis)(generator);
+
+        if (moeda < p) s(i) = 1;
+        else s(i) = 0;
+    }
+}
+
+MatrixXd RBM::getNonInhibitedWeights() {
+    return W;
+}
+VectorXd RBM::getNonInhibitedBiases() {
+    return b;
+}
+
 
 // RBM probabilities
 VectorXd RBM::getProbabilities_x() {
@@ -368,7 +500,7 @@ VectorXd RBM::getProbabilities_h() {
     auxH = (*p_W)*x;
 
     for (int i=0; i<hSize; i++){
-        output(i) = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+        output(i) = 1.0/( 1 + exp( - (*p_b)(i) -  auxH(i) ) );
     }
 
     return output;
@@ -387,7 +519,7 @@ void RBM::getProbabilities_h(VectorXd & output) {
     auxH = (*p_W) * x;
 
     for (int i=0; i<hSize; i++){
-        output(i) = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+        output(i) = 1.0/( 1 + exp( - (*p_b)(i) -  auxH(i) ) );
     }
 }
 void RBM::getProbabilities_h(VectorXd & output, VectorXd & x_vec) {
@@ -403,7 +535,7 @@ void RBM::getProbabilities_h(VectorXd & output, VectorXd & x_vec) {
     auxH = (*p_W) * x_vec;
 
     for (int i=0; i<hSize; i++){
-        output(i) = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+        output(i) = 1.0/( 1 + exp( - (*p_b)(i) -  auxH(i) ) );
     }
 }
 
@@ -441,7 +573,7 @@ void RBM::sample_x() {
 }
 
 void RBM::sample_x(VectorXd & h_vec) {
-    // NOTE: Will not check if has been initialized and/or has seed,
+    // NOTE: Not checking if has been initialized and/or has seed,
     //   because this method should be called only by the RBM itself
     //   and other functions should have performed the necessary
     //   checks
@@ -502,7 +634,7 @@ void RBM::sample_h() {
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
-        prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+        prob = 1.0/( 1 + exp( - (*p_b)(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
         // cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -526,7 +658,7 @@ void RBM::sample_h(VectorXd & x_vec) {
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
-        prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+        prob = 1.0/( 1 + exp( - (*p_b)(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -551,7 +683,7 @@ VectorXd RBM::sample_hout() {
 
     double prob, moeda;
     for (int i=0; i<hSize; i++){
-        prob = 1.0/( 1 + exp( - b(i) -  auxH(i) ) );
+        prob = 1.0/( 1 + exp( - (*p_b)(i) -  auxH(i) ) );
         moeda = (*p_dis)(generator);
         //cout << "Probabilidade: " << prob << ", numero aleatorio: " << moeda << endl;
 
@@ -736,7 +868,7 @@ void RBM::fit(Data & trainData){
         history.push_back(negativeLogLikelihood(trainData)); // Before training
     }
 
-    int it, bIdx, s;
+    int it, bIdx, sample;
 
     for (it = 0; it < n_iter; ++it) {
         // cout << "Iteration " << it+1 << " of " << n_iter << endl;
@@ -752,14 +884,14 @@ void RBM::fit(Data & trainData){
 
             int initS = bIdx * b_size;
 
-            for (s = initS; s < (bIdx+1) * b_size; ++s) {
-                if ( s >= trainData.get_number_of_samples() ) break;
+            for (sample = initS; sample < (bIdx+1) * b_size; ++sample) {
+                if ( sample >= trainData.get_number_of_samples() ) break;
                 // cout << "\t\ts = " << s << endl;
 
-                VectorXd & xt = trainData.get_sample(s);
+                VectorXd & xt = trainData.get_sample(sample);
                 getProbabilities_h(h_hat, xt);
 
-                if (s == initS) {
+                if (sample == initS) {
                     W_gradient = h_hat * xt.transpose();
                     b_gradient = h_hat;
                     d_gradient = xt;
@@ -788,7 +920,9 @@ void RBM::fit(Data & trainData){
             // Ao atualizar W, temos que atualizar C também!
 
             b_gradient = b_gradient/actualSize;
+            if (optim_H) b_gradient = b_gradient.cwiseProduct(s);
             b = b + l_rate*b_gradient;
+            if (optim_H) v = b.cwiseProduct(s);
 
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
@@ -829,6 +963,8 @@ void RBM::fit_connectivity(Data & trainData) {
         exit(1);
     }
 
+    // FIXME: Tirar a flag opt_type (e trazer o treino pra ca)
+    //    Não vou mais implementar alternativas de treinamento, à princípio. Esse já é o NCG
     switch (opt_type) {
         case Heuristic::SGD:
             optimizer_SGD(trainData);
@@ -841,7 +977,181 @@ void RBM::fit_connectivity(Data & trainData) {
 }
 
 
-void RBM::optSetup(){ optSetup(SGD, true, "connectivity", 1, 0); }
+void RBM::fit_H(Data & trainData) {
+    // This function trains the RBM, optimizing the number of neurons H. After training, a
+    //      smaller RBM with less hidden neurons may be achieved ('reduced_rbm' method)
+
+    if ( !optim_H ){
+        printError("Cannot optimize units activation with a classical RBM");
+        cerr << "Cannot optimize patterns if we have a classical RBM, please "
+             << "use 'rbm.hidden_activation(true)' before proceeding" << endl;
+        exit(1);
+    }
+    if ( !trainReady ) {
+        printError("Cannot optmize connectivity without setting up training parameters");
+        cerr << "Please set up training parameters in 'trainSetup' before attempting to train connectivity" << endl;
+        exit(1);
+    }
+    if ( !optReady ) {
+        printError("Cannot optmize connectivity without setting up the optimization parameters");
+        cerr << "Please set up optimization parameters in 'optSetp' before attempting to train connectivity" << endl;
+        exit(1);
+    }
+
+    // TODO: Quero colocar outros parametros de otimizacao especificos deste treinamento?
+    // TODO: Verificar flags!
+
+    printInfo("------- TRAINING DATA: Optimizing H -------");
+
+    int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
+    MatrixXd W_gradient(hSize, xSize);
+    VectorXd b_gradient(hSize), d_gradient(xSize);
+    VectorXd h_gradient(hSize);
+    MatrixXd matAux(hSize, xSize);
+    VectorXd h_hat(hSize);
+    int actualSize;
+    double nll_val;
+
+    cout << "h_gradient: " << h_gradient.transpose() << endl;
+
+    int Xdata = xSize - nLabels;
+
+    if (shuffle) { trainData.setRandomSeed(generator()); }
+
+    VectorXd h_(hSize);          // Continuous version of h
+    // h_ = VectorXd::Constant(hSize, 0.5);
+    for (int i=0; i<hSize; i++) {
+        h_(i) = (*p_dis)(generator)/2;
+        if ( s(i) == 1 ) h_(i) += 0.5;
+    }
+    // FIXME: Preciso ver se quero inicializar assim mesmo...
+
+    ofstream output;
+    output.open(connect_out);
+
+    // TODO: está faltando alguma variável?
+
+    if (calcNLL) {
+        history.push_back(negativeLogLikelihood(trainData)); // Before training
+    }
+    if (saveConnectivity) {
+        output << "# Hidden units activation throughout training" << endl;
+        output << "# NCG-H optimization with threshold " << limiar_h
+               << ". CD-" << k_steps << endl;
+        output << "# Batch size = " << b_size << ", learning rate of " << l_rate
+               << "(h' using " << l_rate_h << ")" << endl;
+        output << "# s initialized with p = " << a_prob << endl;
+        output << "0," << s.transpose() << endl;
+    }
+
+    int it, bIdx, sample;
+
+    for (it = 0; it < n_iter; ++it) {
+        // cout << "Iteration " << it+1 << " of " << n_iter << endl;
+
+        if ( (it > 0) && shuffle ) {
+            trainData.shuffle();
+        }
+
+        actualSize = b_size;
+
+        for (bIdx = 0; bIdx < n_batches; ++bIdx) {
+            int initS = bIdx * b_size;
+
+            for (sample = initS; sample < (bIdx+1) * b_size; ++sample) {
+                if ( sample >= trainData.get_number_of_samples() ) break;
+
+                VectorXd & xt = trainData.get_sample(sample);
+                getProbabilities_h(h_hat, xt);
+
+                matAux = h_hat * xt.transpose();    // FIXME: Is this faster than calculating twice?
+
+                if (sample == initS) {
+                    W_gradient = matAux;
+                    b_gradient = h_hat;
+                    d_gradient = xt;
+                    h_gradient = W * xt;            // FIXME: Devo usar C ou W?
+                } else {
+                    W_gradient += matAux;
+                    b_gradient += h_hat;
+                    d_gradient += xt;
+                    h_gradient += W * xt;
+                }
+
+                sampleXtilde(stype, k_steps, xt);  // Changes x value
+                getProbabilities_h(h_hat);
+                matAux = h_hat * x.transpose();
+
+                W_gradient -= matAux;
+                b_gradient -= h_hat;
+                d_gradient -= x;
+                h_gradient -= W * x;
+            }
+
+            if (bIdx == n_batches-1) {
+                actualSize = trainData.get_number_of_samples() - bIdx * b_size;
+            }
+
+            W_gradient = W_gradient/actualSize;
+            W_gradient = W_gradient.cwiseProduct(A);
+            W = W + l_rate*W_gradient;
+
+            h_gradient = h_gradient/actualSize;
+            h_ = h_ + l_rate_h * h_gradient;
+            // cout << "Batch " << bIdx << endl;
+            // cout << "Helper (h') " << h_.transpose() << endl;
+            // cout << "Activtion   " << s.transpose() << endl;
+            // cout << "Gradient    " << h_gradient.transpose() << endl;
+            for (int i=0; i < hSize; i++) {
+                if ( h_(i) < limiar_h ) {
+                    s(i) = 0;
+                    if ( h_(i) < 0 ) h_(i) = 0;
+                } else
+                if ( h(i) > limiar_h ) {
+                    s(i) = 1;
+                    if ( h_(i) > 1 ) h_(i) = 1;
+                }
+            }
+
+            inhibitA();
+            C = W.cwiseProduct(A);
+
+            b_gradient = b_gradient/actualSize;
+            b = b + l_rate*b_gradient;
+            v = b.cwiseProduct(s);
+
+            d_gradient = d_gradient/actualSize;
+            d = d + l_rate*d_gradient;
+        }
+
+        if (calcNLL) {
+            if ( ((it+1) % freqNLL == 0) || (it == n_iter-1) ) {
+                nll_val = negativeLogLikelihood(trainData);
+                history.push_back(nll_val);
+                cout << "Iteration " << it+1 << ": NLL = " << nll_val << endl;
+            }
+        }
+        if (saveConnectivity) {
+            output << it+1 << "," << s.transpose() << endl;
+        }
+    }
+
+    isTrained = true;
+    printInfo("Finished RBM training");
+}
+
+/*
+void RBM::fit_conn_size(Data & trainData) {
+    // This function trains the RBM, optimizing both the connectivity A, and the number of
+    //      neurons H. After training, a smaller RBM with less hidden neurons may be achieved,
+    //      by applying the 'reduced_rbm' method.
+}
+*/
+
+
+void RBM::optSetup(){
+    optSetup(SGD, true, "connectivity", 1, 0);
+}
 
 void RBM::optSetup(Heuristic method, string connFileName, double p){
     optSetup(SGD, true, connFileName, p, 0);
@@ -851,9 +1161,13 @@ void RBM::optSetup(Heuristic method, string connFileName, double p, int labels){
     optSetup(SGD, true, connFileName, p, 0);
 }
 
-void RBM::optSetup(Heuristic method, double p){ optSetup(SGD, false, "", p, 0); }
+void RBM::optSetup(Heuristic method, double p){
+    optSetup(SGD, false, "", p, 0);
+}
 
-void RBM::optSetup(Heuristic method, double p, int labels){ optSetup(SGD, false, "", p, 0); }
+void RBM::optSetup(Heuristic method, double p, int labels){
+    optSetup(SGD, false, "", p, 0);
+}
 
 void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double p, int labels){
     opt_type = method;
@@ -863,8 +1177,12 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
     nLabels = labels;
     startConnectivity(p);
 
-    // SGD parameters
-    limiar = 0.5;
+    // NCG parameters
+    limiar_A = 0.5;
+    l_rate_A = 5*l_rate;
+
+    limiar_h = 0.5;
+    l_rate_h = l_rate;
     // TODO: Change this so it is not hardcoded
     // Talvez fazer uma função setThreshold, só fica bem chato ter que dar três setups diferentes
 
@@ -910,8 +1228,7 @@ void RBM::optimizer_SGD(Data & trainData) {
     }
 
     //stringstream mat_dump;
-    //mat_dump << connect_out << "_SGD_lim" << limiar << "_CD-" << k;
-    // TODO: Rever esse nome (o que eu quero e não quero por? E vai dar certo criar o nome aqui dentro?)
+    //mat_dump << connect_out << "_SGD_lim" << limiar_A << "_CD-" << k;
 
     ofstream output;
     output.open(connect_out);
@@ -921,13 +1238,14 @@ void RBM::optimizer_SGD(Data & trainData) {
     }
     if (saveConnectivity) {
         output << "# Connectivity patterns throughout training" << endl;
-        output << "# SGD optimization (version 1) with threshold " << limiar << ". CD-" << k_steps << endl;
-        output << "# Batch size = " << b_size << ", learning rate of " << l_rate << endl;
+        output << "# NCG optimization (version 1) with threshold " << limiar_A << ". CD-" << k_steps << endl;
+        output << "# Batch size = " << b_size << ", learning rate of " << l_rate << "(" << l_rate_A
+               << " for the connectivity)" << endl;
         output << "# A initialized with p = " << a_prob << endl;
         output << "0," << printConnectivity_linear() << endl;
     }
 
-    int it, bIdx, s;
+    int it, bIdx, sample;
 
     for (it = 0; it < n_iter; ++it) {
         // cout << "Iteration " << it+1 << " of " << n_iter << endl;
@@ -941,15 +1259,15 @@ void RBM::optimizer_SGD(Data & trainData) {
         for (bIdx = 0; bIdx < n_batches; ++bIdx) {
             int initS = bIdx * b_size;
 
-            for (s = initS; s < (bIdx+1) * b_size; ++s) {
-                if ( s >= trainData.get_number_of_samples() ) break;
+            for (sample = initS; sample < (bIdx+1) * b_size; ++sample) {
+                if ( sample >= trainData.get_number_of_samples() ) break;
 
-                VectorXd & xt = trainData.get_sample(s);
+                VectorXd & xt = trainData.get_sample(sample);
                 getProbabilities_h(h_hat, xt);
 
                 matAux = h_hat * xt.transpose(); // FIXME: Is this faster than calculating twice?
 
-                if (s == initS) {
+                if (sample == initS) {
                     W_gradient = matAux;
                     b_gradient = h_hat;
                     d_gradient = xt;
@@ -980,15 +1298,15 @@ void RBM::optimizer_SGD(Data & trainData) {
             W = W + l_rate*W_gradient;
 
             A_gradient = A_gradient/actualSize;
-            A_ = A_ + (5 * l_rate) * A_gradient;
+            A_ = A_ + (l_rate_A) * A_gradient;
             for (int i=0; i<hSize; i++) {
                 for (int j=0; j<Xdata; j++) {
-                    if ( A_(i,j) < limiar ) {
+                    if ( A_(i,j) < limiar_A ) {
                         A(i,j) = 0;
 
                         if ( A_(i,j) < 0 ) A_(i,j) = 0;
                     }
-                    else if ( A_(i,j) > limiar ) {
+                    else if ( A_(i,j) > limiar_A ) {
                         A(i,j) = 1;
 
                         if ( A_(i,j) > 1 ) A_(i,j) = 1;
@@ -1006,7 +1324,9 @@ void RBM::optimizer_SGD(Data & trainData) {
             C = W.cwiseProduct(A);
 
             b_gradient = b_gradient/actualSize;
+            // if (optim_H) b_gradient = b_gradient.cwiseProduct(s); // FIXME: necessário??
             b = b + l_rate*b_gradient;
+            if (optim_H) v = b.cwiseProduct(s);
 
             d_gradient = d_gradient/actualSize;
             d = d + l_rate*d_gradient;
@@ -1187,7 +1507,7 @@ vector<double> RBM::getTrainingHistory() {
 // Energy methods
 double RBM::energy() {
     double ret = - x.transpose()*d;
-    ret -= h.transpose()*b;
+    ret -= h.transpose()*(*p_b);
     ret -= (h.transpose()*(*p_W))*x;
     //cout << "Energy: " << ret << endl;
 
@@ -1198,7 +1518,7 @@ double RBM::freeEnergy() {
     double ret = - x.transpose()*d;
     auxH = (*p_W) * x;
     for (int i = 0; i < hSize; ++i) {
-        ret -= log( 1 + exp( auxH(i) + b(i) ) );
+        ret -= log( 1 + exp( auxH(i) + (*p_b)(i) ) );
     }
     //cout << "Free energy: " << ret << endl;
 
@@ -1209,7 +1529,7 @@ double RBM::freeEnergy(VectorXd & x_vec) {
     double ret = - x_vec.transpose()*d;
     auxH = (*p_W) * x_vec;
     for (int i = 0; i < hSize; ++i) {
-        ret -= log( 1 + exp( auxH(i) + b(i) ) );
+        ret -= log( 1 + exp( auxH(i) + (*p_b)(i) ) );
     }
     //cout << "Free energy: " << ret << endl;
 
@@ -1244,7 +1564,7 @@ double RBM::partialZ_effX(int n) {
     if (n == 0) {
         //cout << "current x: " << x.transpose() << "(F = " << freeEnergy() << ")" << endl;
         double ret = exp(x.transpose()*d);
-        auxH = (*p_W)* x + b;
+        auxH = (*p_W)* x + (*p_b);
         for (int i=0; i < hSize; i++) { ret *= 1 + exp( auxH(i) ); }
 
         return ret;
@@ -1262,7 +1582,7 @@ long double RBM::normalizationConstant_effH() {
 }
 long double RBM::partialZ_effH(int n) {
     if (n == 0) {
-        long double ret = exp(h.transpose()*b);
+        long double ret = exp(h.transpose()*(*p_b));
         auxX = h.transpose() * (*p_W) + d.transpose();
         for (int j=0; j < xSize; j++) { ret *= 1 + exp( auxX(j) ); }
         return ret;
@@ -1435,7 +1755,7 @@ double RBM::classificationStatistics(Data & data, bool printExtras) {
 
         maxProb = 0;
 
-        auxH = (*p_W)*x + b;
+        auxH = (*p_W)*x + (*p_b);
         for (int i=0; i<hSize; i++){
             h(i) = 1.0/( 1 + exp( - auxH(i) ) );
         }
@@ -1475,7 +1795,7 @@ double RBM::classificationStatistics(Data & data, bool printExtras) {
 void RBM::save(string filename) {
     if (!initialized){
         string errorMessage;
-        errorMessage = "Cannot train without RBM dimensions!";
+        errorMessage = "Cannot save an RBM without dimensions!";
         printError(errorMessage);
         throw runtime_error(errorMessage);
     }
@@ -1498,7 +1818,7 @@ void RBM::save(string filename) {
     output << xSize << " " << hSize << endl;
     output << (*p_W) << endl;
     output << d.transpose() << endl;
-    output << b.transpose() << endl;
+    output << (*p_b).transpose() << endl;
 
     printInfo("Saved RBM into '" + filename + "'");
 }
@@ -1507,6 +1827,7 @@ void RBM::load(string filename) {
     // NOTE: Note that loading an RBM reinitializes it, so previous configurations may be lost
     initialized = true;
     patterns = false;    // In the way it is loading, that is the case
+    optim_H = false;
     calcNLL = false;
 
     fstream input;
@@ -1555,6 +1876,51 @@ void RBM::load(string filename) {
     printInfo("Loaded RBM from '" + filename + "'");
 }
 
+RBM RBM::reduced_rbm() {
+    if ( !initialized ){
+        string errorMessage;
+        errorMessage = "Cannot output RBM with no dimensions!";
+        printError(errorMessage);
+        cerr << errorMessage << " You need to initialize and train the RBM" << endl;
+        exit(1);
+    }
+    if ( !isTrained ){
+        printError("In this method, one cannot obtain a pruned RBM without training first!");
+        cerr << "You need to train the RBM (with H optimization enabled) before using this method" << endl;
+        exit(1);
+    }
+    if ( !optim_H ){
+        printError("Cannot obtain a pruned RBM if pruning is not active!");
+        return *this;
+    }
+
+    int newH = s.sum();
+
+    RBM ret(xSize, newH);
+
+    ret.setVisibleBiases(d);
+
+    VectorXd newB(newH);
+    MatrixXd newW(newH, xSize);
+
+    int idx = 0;
+    for (int i=0; i < hSize; i++) {
+        if ( idx >= newH ) break;
+        if ( s(i) == 1 ) {
+            newB(idx) = v(i);
+            for (int j=0; j < xSize; j++) {
+                newW(idx,j) = C(i,j);
+            }
+            idx++;
+        }
+    }
+
+    ret.setHiddenBiases(newB);
+    ret.setWeights(newW);
+
+    return ret;
+}
+
 
 // Test Functions
 void RBM::printVariables() {
@@ -1565,6 +1931,8 @@ void RBM::printVariables() {
     cout << "\t\tVisible Biases: " << d.transpose() << endl;
     cout << "\t\tHidden Biases: " << b.transpose() << endl;
     cout << "\t\tWeights: " << endl << W << endl;
+    cout << "\t\tHidden Units activation: " << s.transpose() << endl;
+    cout << "\t\tVector v: " << v.transpose() << endl;
     cout << "\t\tConnectivity (" << patterns << "): " << endl << A << endl;
     cout << "\t\tMatrix C: " << endl << C << endl;
     cout << "----------------------------------------------------------------" << endl;

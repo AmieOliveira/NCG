@@ -321,45 +321,57 @@ void testRBMprediction() {
 
 
 int main(int argc, char **argv) {
-    // RBM model(784,15);
-    //
-    // // model.load("Training Outputs/Teste MNIST/bas4_CD-1_lr0.01_mBatch5_iter2500_seed0.rbm");
-    // // model.load("Training Outputs/Teste MNIST/mnist_complete_H16_CD-1_lr0.01_mBatch50_iter1000_run0.rbm");
-    // model.load("Training Outputs/Teste MNIST/mnist_complete_H16_CD-1_lr0.01_mBatch50_iter1000_run0-LAND.rbm");
-    //
-    // // MatrixXd w = MatrixXd::Constant(15,784,1);
-    // // w(0,1) = -1; w(1,0) = -1; w(1,2) = 2;
-    // // w(3,7) = .3; w(0,9) = -1; w(2,8) = -.5; w(4,3) = .7;
-    // // model.setWeights(w);
-    // //
-    // // VectorXd b(15);
-    // // b(0) = 1; b(1) = 2; b(2) = 1.23; b(3) = -0.1; b(4) = -1;
-    // // model.setHiddenBiases(b);
-    // //
-    // // VectorXd d(784);
-    // // d(0) = 1; d(1) = 2; d(2) = 3; d(3) = 2; d(4) = 1; d(5) = -1; d(6) = -2; d(7) = .7; d(8) = 1; d(9) = -.2;
-    // // model.setVisibleBiases(d);
-    //
-    // // model.printVariables();
-    //
-    // MatrixXd datMat = MatrixXd::Constant(784, 1, 1);
-    // Data dat(datMat);
-    //
-    // double nll; // = model.negativeLogLikelihood(dat, None);
-    // nll = model.negativeLogLikelihood(dat, None_H);
-    //
-    // // model.save("test.rbm");
 
-    int X = 16, H = 10;
-    int v = 4;
-    double d = 0.5;
-    int nLab = 2;
+    // VectorXd a = VectorXd::Constant(4, 1);
+    // a(1) = 0; a(3) = 0;
+    //
+    // MatrixXd b(4, 3);
+    // for (int i = 0; i < 4*3; i++) {
+    //     b(i) = i+1;
+    // }
+    //
+    // cout << "Initial matrix: " << endl << b << endl;
+    //
+    // cout << "Inhibitor: " << a.transpose() << endl;
+    //
+    // MatrixXd c = b.cwiseProduct( a * VectorXd::Constant(3, 1).transpose() );
+    //
+    // cout << "Final matrix: " << endl << c << endl;
 
-    RBM model(X,H);
-    model.connectivity(true);
-    //model.setConnectivity( v_neighbors_line_spread(X, H, v, nLab) );
-    model.setConnectivity( d_density_rdn(X, H, d, 832497, nLab) );
-    model.printVariables();
+    int size = 4;
+    int H = 16;
+    unsigned seed = 11439;   // 11439
+    int k = 10;
+    int iter = 20;
+    int b_size = 5;
+    double l_rate = 0.01;
+    bool shuffle = true;
+    int f_nll = 1;
+    string connect_fname = "test_H_through_training.txt";
+    double trainParam = 1;
+    int nLabels = 0;
+
+    Data data(DataDistribution::BAS, size);
+    RBM model(size*size, H);
+
+    model.setRandomSeed(seed);
+    model.hidden_activation(true);
+    model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, shuffle, f_nll);
+    model.optSetup(Heuristic::SGD, connect_fname, trainParam, nLabels);
+
+    //model.fit_connectivity(data);
+    model.fit_H(data);
+
+
+    RBM m2(size*size, H);
+    m2.setRandomSeed(seed);
+    m2.trainSetup(SampleType::CD, k, iter, b_size, l_rate, shuffle, f_nll);
+    m2.fit(data);
+
+
+    // model.printVariables();
+    cout << "Activation: " << model.getActiveHiddenUnits().transpose()<< endl;
+    cout << "Matrix C" << endl << model.getWeights() << endl;
 
     return 0;
 }
