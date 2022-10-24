@@ -69,10 +69,8 @@ void RBM::inhibitA() {
 
     // A = A.cwiseProduct( s * VectorXd::Constant(xSize, 1).transpose() );
     for (int i=0; i < hSize; i++) {
-        if (s(i) == 0) {
-            for (int j=0; j < xSize; j++) {
-                A(i,j) = 0;
-            }
+        for (int j=0; j < xSize; j++) {
+            A(i,j) = s(i);
         }
     }
 }
@@ -1012,8 +1010,6 @@ void RBM::fit_H(Data & trainData) {
     int actualSize;
     double nll_val;
 
-    cout << "h_gradient: " << h_gradient.transpose() << endl;
-
     int Xdata = xSize - nLabels;
 
     if (shuffle) { trainData.setRandomSeed(generator()); }
@@ -1028,8 +1024,6 @@ void RBM::fit_H(Data & trainData) {
 
     ofstream output;
     output.open(connect_out);
-
-    // TODO: está faltando alguma variável?
 
     if (calcNLL) {
         history.push_back(negativeLogLikelihood(trainData)); // Before training

@@ -38,6 +38,7 @@ if [ "$FILE" = "all" ]; then
     g++ -std=c++14 -I$eigenPath $OPTIMIZER mnist_acc.cpp basics.cpp RBM.cpp Data.cpp -o accuracy.exe
     g++ -std=c++14 -I$eigenPath $OPTIMIZER timeNLL.cpp basics.cpp RBM.cpp Data.cpp -o times.exe
     g++ -std=c++14 -I$eigenPath $OPTIMIZER misc_acc.cpp basics.cpp RBM.cpp Data.cpp -o accuracy_all.exe
+    g++ -std=c++14 -I$eigenPath $OPTIMIZER bas_ncgH.cpp basics.cpp RBM.cpp Data.cpp -o optHbas.exe
 
 else
     if [ "$FILE" = "main" ]; then
@@ -70,8 +71,12 @@ else
                                         if [ "$FILE" = "misc_acc" ]; then
                                             OUT=accuracy_all
                                         else
-                                            echo "No viable script selected. Exiting."
-                                            exit 1
+                                            if [ "$FILE" = "bas_ncgH" ]; then
+                                                OUT="optHbas"
+                                            else
+                                                echo "No viable script selected. Exiting."
+                                                exit 1
+                                            fi
                                         fi
                                     fi
                                 fi
