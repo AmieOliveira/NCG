@@ -1004,7 +1004,7 @@ void RBM::fit_H(Data & trainData) {
     int n_batches = ceil(trainData.get_number_of_samples()/float(b_size));
     MatrixXd W_gradient(hSize, xSize);
     VectorXd b_gradient(hSize), d_gradient(xSize);
-    VectorXd h_gradient(hSize);
+    VectorXd s_gradient(hSize);
     MatrixXd matAux(hSize, xSize);
     VectorXd h_hat(hSize);
     int actualSize;
@@ -1014,11 +1014,11 @@ void RBM::fit_H(Data & trainData) {
 
     if (shuffle) { trainData.setRandomSeed(generator()); }
 
-    VectorXd h_(hSize);          // Continuous version of h
-    // h_ = VectorXd::Constant(hSize, 0.5);
+    VectorXd s_(hSize);          // Continuous version of h
+    // s_ = VectorXd::Constant(hSize, 0.5);
     for (int i=0; i<hSize; i++) {
-        h_(i) = (*p_dis)(generator)/2;
-        if ( s(i) == 1 ) h_(i) += 0.5;
+        s_(i) = (*p_dis)(generator)/2;
+        if ( s(i) == 1 ) s_(i) += 0.5;
     }
     // FIXME: Preciso ver se quero inicializar assim mesmo...
 
@@ -1064,12 +1064,12 @@ void RBM::fit_H(Data & trainData) {
                     W_gradient = matAux;
                     b_gradient = h_hat;
                     d_gradient = xt;
-                    h_gradient = W * xt;            // FIXME: Devo usar C ou W?
+                    s_gradient = h_hat.cwiseProduct(W * xt + b);
                 } else {
                     W_gradient += matAux;
                     b_gradient += h_hat;
                     d_gradient += xt;
-                    h_gradient += W * xt;
+                    s_gradient += h_hat.cwiseProduct(W * xt + b);
                 }
 
                 sampleXtilde(stype, k_steps, xt);  // Changes x value
@@ -1079,7 +1079,7 @@ void RBM::fit_H(Data & trainData) {
                 W_gradient -= matAux;
                 b_gradient -= h_hat;
                 d_gradient -= x;
-                h_gradient -= W * x;
+                s_gradient -= h_hat.cwiseProduct(W * x + b);
             }
 
             if (bIdx == n_batches-1) {
@@ -1090,20 +1090,20 @@ void RBM::fit_H(Data & trainData) {
             W_gradient = W_gradient.cwiseProduct(A);
             W = W + l_rate*W_gradient;
 
-            h_gradient = h_gradient/actualSize;
-            h_ = h_ + l_rate_h * h_gradient;
+            s_gradient = s_gradient/actualSize;
+            s_ = s_ + l_rate_h * s_gradient;
             // cout << "Batch " << bIdx << endl;
             // cout << "Helper (h') " << h_.transpose() << endl;
             // cout << "Activtion   " << s.transpose() << endl;
-            // cout << "Gradient    " << h_gradient.transpose() << endl;
+            // cout << "Gradient    " << s_gradient.transpose() << endl;
             for (int i=0; i < hSize; i++) {
-                if ( h_(i) < limiar_h ) {
+                if ( s_(i) < limiar_h ) {
                     s(i) = 0;
-                    if ( h_(i) < 0 ) h_(i) = 0;
+                    if ( s_(i) < 0 ) s_(i) = 0;
                 } else
                 if ( h(i) > limiar_h ) {
                     s(i) = 1;
-                    if ( h_(i) > 1 ) h_(i) = 1;
+                    if ( s_(i) > 1 ) s_(i) = 1;
                 }
             }
 
