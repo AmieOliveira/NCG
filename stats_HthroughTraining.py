@@ -13,8 +13,8 @@ parser.add_argument("-l", "--hasLabels", action="store_true",
 
 parser.add_argument("-R", "--repeat", type=int, required=True,
                     help="Number of runs for each configuration")
-parser.add_argument("-H", "--hiddenNeurons", type=int, required=True,
-                    help="Number of hidden neurons the RBM's have")
+parser.add_argument("-M", "--Hmax", "--hiddenNeurons", type=int, required=True,
+                    help="Maximum bumber of hidden neurons the RBM's can have")
 parser.add_argument("-L", "--learningRate", type=float, required=True,
                     help="Learning rate utilized during training")
 parser.add_argument("-B", "--batchSize", type=int, required=True,
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             for r in range(repeat):
                 try:
                     netCon = open(fileBase.format(path, dataT, p, H, k, lr, bSize, iters, labels, r))
-                    print(f"File found! \t (p = {p}, k = {k}, {r}th)")
+                    print(f"File found! \t (p = {p}, k = {k}, {r+1}th)")
                 except FileNotFoundError:
                     hasInstance = False
                     break

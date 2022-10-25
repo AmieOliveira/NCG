@@ -1035,7 +1035,7 @@ void RBM::fit_H(Data & trainData) {
         output << "# Batch size = " << b_size << ", learning rate of " << l_rate
                << "(h' using " << l_rate_h << ")" << endl;
         output << "# s initialized with p = " << a_prob << endl;
-        output << "0," << s.transpose() << endl;
+        output << "0," << printHiddenActivation() << endl;
     }
 
     int it, bIdx, sample;
@@ -1126,7 +1126,7 @@ void RBM::fit_H(Data & trainData) {
             }
         }
         if (saveConnectivity) {
-            output << it+1 << "," << s.transpose() << endl;
+            output << it+1 << "," << printHiddenActivation() << endl;
         }
     }
 
@@ -1170,6 +1170,7 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
     a_prob = p;
     nLabels = labels;
     startConnectivity(p);
+    startActiveHiddenUnits(p);
 
     // NCG parameters
     limiar_A = 0.5;
@@ -1191,6 +1192,16 @@ string RBM::printConnectivity_linear() {
             ret << separator << A(i,j);
             separator = ",";
         }
+    }
+    return ret.str();
+}
+
+string RBM::printHiddenActivation() {
+    stringstream ret;
+    const char* separator = "";
+    for (int i=0; i<hSize; i++) {
+        ret << separator << s(i);
+        separator = ",";
     }
     return ret.str();
 }

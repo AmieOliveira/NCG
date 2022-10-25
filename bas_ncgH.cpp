@@ -124,11 +124,6 @@ int main(int argc, char **argv) {
     // RBM creation
     RBM model(s_size, H, true);
 
-    cout << "Nominal BAS size: " << size << endl;
-    cout << "SIze of a BAS sample: " << bas.get_sample_size() << endl;
-    cout << "Size: " << s_size << " x " << H << endl;
-    model.printVariables();
-
     // RBM setup and training
     model.setRandomSeed(seed);
     model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll);

@@ -130,6 +130,7 @@ class RBM {
 
     // Helper function
     string printConnectivity_linear();
+    string printHiddenActivation();
     void inhibitA();
 
 public:
