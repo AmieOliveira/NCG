@@ -37,7 +37,7 @@ if __name__ == "__main__":
     path = args.outputpath
 
     dataT = args.dataType
-    H = args.hiddenNeurons
+    H = args.Hmax
     lr = args.learningRate
     bSize = args.batchSize
     iters = args.iterations
