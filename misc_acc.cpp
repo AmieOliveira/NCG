@@ -20,6 +20,11 @@ using namespace std;
 
 // TODO: Add parser and logger
 
+// TODO: Save connectivity / hidden neurons activation
+//   I could save it like I am saving the accuracy, just using
+//   the helper functions 'printConnectivity_linear' and
+//   'printHiddenActivation'. I'd just need to make them public
+
 enum TrainingTypes {
     complete,
     sgd,
@@ -27,6 +32,7 @@ enum TrainingTypes {
     neighLine,
     neighSpiral,
     random_connectivity,
+    ncgh,
     none,           // For inexistent types
 };
 TrainingTypes resolveOption(string opt) {
@@ -36,6 +42,7 @@ TrainingTypes resolveOption(string opt) {
     if (opt == "neighborsLine") return neighLine;
     if (opt == "neighborsSpiral") return neighSpiral;
     if (opt == "random") return random_connectivity;
+    if (opt == "ncgh") return ncgh;
     return none;
 }
 
@@ -288,6 +295,52 @@ int main(int argc, char **argv) {
 
             for (int l=1; l <= loops; l++) {
                 model.fit_connectivity(data);
+
+                acc_train = model.classificationStatistics(data, false);
+                if (hasTestSet) acc_test = model.classificationStatistics(*data_test, false);
+
+                cout << "Epoch " << l * f_acc << ":\tTrain Acc = " << acc_train;
+                if (hasTestSet) cout << " %\tTest Acc = " << acc_test << " %";
+                cout << endl;
+                outdata << l * f_acc << "," << acc_train;
+                if (hasTestSet) outdata << "," << acc_test;
+                outdata << endl;
+            }
+            break;
+
+        case ncgh:
+            if ( trainParam <= 0 ) {
+                printError("Invalid training parameter");
+                cerr << "Training parameter should be a number in (0,1], was given " << trainParam << endl;
+                exit(1);
+            }
+            if ( trainParam > 1 ) {
+                printWarning("Invalid training parameter, setting it to 1 instead");
+                trainParam = 1;
+            }
+            msg.str("");
+            msg << "Training hidden neurons activation (p=" << trainParam << ")";
+            printInfo(msg.str());
+
+            model.hidden_activation(true);
+            model.trainSetup(SampleType::CD, k, f_acc, b_size, l_rate, false, 0, doShuffle);
+            model.optSetup(Heuristic::SGD, false, "", trainParam, nLabels);
+
+            acc_train = model.classificationStatistics(data, false);
+            if (hasTestSet)
+                acc_test = model.classificationStatistics(*data_test, false);
+
+            cout << "Epoch 0:\tTrain Acc = " << acc_train;
+            if (hasTestSet)
+                cout << " %\tTest Acc = " << acc_test << " %";
+            cout << endl;
+            outdata << 0 << "," << acc_train;
+            if (hasTestSet)
+                outdata << "," << acc_test;
+            outdata << endl;
+
+            for (int l=1; l <= loops; l++) {
+                model.fit_H(data);
 
                 acc_train = model.classificationStatistics(data, false);
                 if (hasTestSet) acc_test = model.classificationStatistics(*data_test, false);

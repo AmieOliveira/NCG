@@ -24,6 +24,7 @@ enum TrainingTypes {
     neighLine,
     neighSpiral,
     random_connectivity,
+    ncgh,
     none,           // For inexistent types
 };
 TrainingTypes resolveOption(string opt) {
@@ -33,6 +34,7 @@ TrainingTypes resolveOption(string opt) {
     if (opt == "neighborsLine") return neighLine;
     if (opt == "neighborsSpiral") return neighSpiral;
     if (opt == "random") return random_connectivity;
+    if (opt == "ncgh") return ncgh;
     return none;
 }
 
@@ -207,8 +209,31 @@ int main(int argc, char **argv) {
             model.optSetup(Heuristic::SGD, connect_fname, trainParam, nLabels);
 
             model.fit_connectivity(mnist);
-
             break;
+
+        case ncgh:
+            if ( trainParam <= 0 ) {
+                printError("Invalid training parameter");
+                cerr << "Training parameter should be a number in (0,1], was given " << trainParam << endl;
+                exit(1);
+            }
+            if ( trainParam > 1 ) {
+                printWarning("Invalid training parameter, setting it to 1 instead");
+                trainParam = 1;
+            }
+            msg.str("");
+            msg << "Training hidden neurons activation (p=" << trainParam << ")";
+            printInfo(msg.str());
+
+            connect_fname = filePath + "connectivity_" + filebase.str() + ".csv";
+
+            model.hidden_activation(true);
+            model.trainSetup(SampleType::CD, k, iter, b_size, l_rate, true, f_nll, doShuffle);
+            model.optSetup(Heuristic::SGD, connect_fname, trainParam, nLabels);
+
+            model.fit_H(mnist);
+            break;
+
         case conv:
             printInfo("Training RBM with convolutional connectivity");
 
