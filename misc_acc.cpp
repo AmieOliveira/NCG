@@ -230,6 +230,9 @@ int main(int argc, char **argv) {
     outdata << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
     outdata << ",Train,Test" << endl;
 
+    string connect_fname;
+    ofstream conFile;
+
     switch ( resolveOption(trainType) ) {
         case complete:
             printInfo("Training complete RBM");
@@ -293,6 +296,14 @@ int main(int argc, char **argv) {
                 outdata << "," << acc_test;
             outdata << endl;
 
+            connect_fname = filePath + "connectivity_" + filebase.str() + ".csv";
+            conFile.open(connect_fname);
+            if( !conFile ) { cerr << "Error: file could not be opened" << endl; exit(1); }
+            conFile << "# Connectivity patterns through RBM training for MNIST data set (";
+            conFile << trainType << " with p = " << trainParam << ")" << endl;
+            conFile << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
+            conFile << "0," << model.printConnectivity_linear() << endl;
+
             for (int l=1; l <= loops; l++) {
                 model.fit_connectivity(data);
 
@@ -305,6 +316,8 @@ int main(int argc, char **argv) {
                 outdata << l * f_acc << "," << acc_train;
                 if (hasTestSet) outdata << "," << acc_test;
                 outdata << endl;
+
+                conFile << l * f_acc << "," << model.printConnectivity_linear() << endl;
             }
             break;
 
@@ -339,6 +352,14 @@ int main(int argc, char **argv) {
                 outdata << "," << acc_test;
             outdata << endl;
 
+            connect_fname = filePath + "connectivity_" + filebase.str() + ".csv";
+            conFile.open(connect_fname);
+            if( !conFile ) { cerr << "Error: file could not be opened" << endl; exit(1); }
+            conFile << "# Hidden units activation through RBM training for MNIST data set (";
+            conFile << trainType << " with p = " << trainParam << ")" << endl;
+            conFile << "# CD-" << k << ". Seed = " << seed << ", Batch size = " << b_size << " and learning rate of " << l_rate << endl;
+            conFile << "0," << model.printHiddenActivation() << endl;
+
             for (int l=1; l <= loops; l++) {
                 model.fit_H(data);
 
@@ -351,6 +372,8 @@ int main(int argc, char **argv) {
                 outdata << l * f_acc << "," << acc_train;
                 if (hasTestSet) outdata << "," << acc_test;
                 outdata << endl;
+
+                conFile << l * f_acc << "," << model.printHiddenActivation() << endl;
             }
             break;
 

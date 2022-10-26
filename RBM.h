@@ -129,8 +129,6 @@ class RBM {
     void optimizer_SGD(Data & trainData);
 
     // Helper function
-    string printConnectivity_linear();
-    string printHiddenActivation();
     void inhibitA();
 
 public:
@@ -244,6 +242,9 @@ public:
     void load(string filename);
 
     RBM reduced_rbm();
+
+    string printConnectivity_linear();
+    string printHiddenActivation();
 
     // Test Functions
     void printVariables();

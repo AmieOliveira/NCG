@@ -1170,7 +1170,7 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
     a_prob = p;
     nLabels = labels;
     startConnectivity(p);
-    startActiveHiddenUnits(p);
+    if (optim_H) startActiveHiddenUnits(p);
 
     // NCG parameters
     limiar_A = 0.5;
