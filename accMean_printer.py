@@ -13,7 +13,7 @@ plotting = parser.add_argument_group(title='Plot Settings',
 plotting.add_argument("-t", "--plotType", type=str, nargs='+', required=True,
                     help="List all training types you want to add to the plots")
 
-plotting.add_argument("-i", "--inputpath", type=str, default=".",
+plotting.add_argument("-i", "--inputpath", type=str, nargs='+', default=".",
                     help="Input files' path")
 plotting.add_argument("-o", "--outputpath", type=str, default=".",
                     help="Output files' path")
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         expandFig = True
         figSize = (4, 4)
 
-    path = args.inputpath
+    paths = args.inputpath
 
     dataT = args.dataType
     H = args.hiddenNeurons
@@ -126,15 +126,25 @@ if __name__ == "__main__":
         hasKinstance = False
 
         for pltT in list_types:
+            path = ""
+            for d in paths:
+                try:
+                    ifTrainName = f"{d}/accMean-train_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
+                    inputTrainFile = pd.read_csv(ifTrainName, index_col=0)
+
+                    path = d
+                except FileNotFoundError:
+                    pass
+
+            if not path:
+                print("ERROR:\tFiles not found. Check training parameters and which plots you want to add!")
+                raise FileNotFoundError(f"No '{pltT}' file on any given directory!")
+
             ifTrainName = f"{path}/accMean-train_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
             ifTestName = f"{path}/accMean-test_{dataT}_{pltT}_H{H}_lr{lr}_mBatch{bSize}_iter{iters}-{repeat}rep.csv"
 
-            try:
-                inputTrainFile = pd.read_csv(ifTrainName, index_col=0)
-                inputTestFile = pd.read_csv(ifTestName, index_col=0)
-            except FileNotFoundError:
-                print("ERROR:\tFiles not found. Check training parameters and which plots you want to add!")
-                raise
+            inputTrainFile = pd.read_csv(ifTrainName, index_col=0)
+            inputTestFile = pd.read_csv(ifTestName, index_col=0)
 
             if args.noFirst:
                 inputTrainFile = inputTrainFile.iloc[1:lim_it + 1]
@@ -143,7 +153,7 @@ if __name__ == "__main__":
                 inputTrainFile = inputTrainFile.iloc[:lim_it + 1]
                 inputTestFile = inputTestFile.iloc[:lim_it + 1]
 
-            if pltT in ["sgd", "random", "neighborsLine"]:
+            if pltT in ["sgd", "random", "neighborsLine", "ncgh"]:
                 for p in param_values:
                     try:
                         # inputTrainFile[f"CD-{k} p = {p}"].plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
@@ -156,6 +166,8 @@ if __name__ == "__main__":
                             legendStr = f"Random, d = {p}"
                         elif pltT == "neighborsLine":
                             legendStr = f"Line, v/X = {p/X:.1f}"
+                        elif pltT == "ncgh":
+                            legendStr = f"'NCG-H', p = {p}"
 
                         tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
                         tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)

@@ -29,9 +29,9 @@ parser.add_argument("--iter", type=int, default=None,
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
 basSize = 4
-lRate = 0.01
-bSize = 5
-H = 16
+lRate = 0.1
+bSize = 50
+H = 500
 
 p_val = [1, 0.75, 0.5, 0.25, 0.1]
 k_val = [100, 20, 10, 5, 2, 1]
@@ -116,15 +116,15 @@ if __name__ == "__main__":
             ax.set_xlabel("Epoch")
             ax.set_ylabel("Active hidden units (H)")
 
-            plt.plot([0, 3000], [1, 1], "--k", linewidth=0.5)
+            # plt.plot([0, 3000], [1, 1], "--k", linewidth=0.5)
 
             ax.grid(color="gray", linestyle=":", linewidth=.2)
-            ax.legend(prop={'size': 6})  # loc="upper right"
+            ax.legend(prop={'size': 8})  # loc="upper right"
 
             plt.figure(fig)
             plt.tight_layout()
 
-            filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_ncgh_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}{errorPrint}.pdf"
+            filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_ncgh_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{df.index[-1]}{errorPrint}.pdf"
             print(f"Saving as: {filename}")
             plt.savefig(filename, transparent=True)
 

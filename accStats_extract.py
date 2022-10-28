@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
         for k in k_values:
 
-            if pltT in ["sgd", "random", "neighborsLine"]:
+            if pltT in ["sgd", "random", "neighborsLine", "ncgh"]:
                 for p in param_values:
                     pltTstr = f"{pltT}-{p}"
 
