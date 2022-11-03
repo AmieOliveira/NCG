@@ -56,13 +56,12 @@ if __name__ == "__main__":
 
     indexes = []
     firstFile = True
+    n_hu = np.zeros((iters + 1, repeat))
 
     connectivityDF = pd.DataFrame()
 
     for k in k_values:
         for p in p_values:
-            n_hu = np.zeros((iters + 1, repeat))
-
             hasInstance = True
 
             for r in range(repeat):
@@ -92,13 +91,16 @@ if __name__ == "__main__":
                         indexes += [tmp]
 
                     connections = connections[1:]
-                    
-                    for i in range(H):
+
+                    n_hu[itIdx, r] = int(connections[0])
+                    for i in range(1, H):
                         n_hu[itIdx, r] += int(connections[i])
 
                     itIdx += 1
 
-                firstFile = False
+                if firstFile:
+                    n_hu = n_hu[:len(indexes), :]
+                    firstFile = False
 
             if not hasInstance:
                 continue

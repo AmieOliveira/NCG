@@ -11,6 +11,14 @@ parser.add_argument("-i", "--input", type=str, required=True,
                     help="Input file where the degree information is stored")
 parser.add_argument("-p", "--outputpath", type=str, default=".",
                     help="Path where outputs should be saved")
+
+parser.add_argument("-M", "--Hmax", "--hiddenNeurons", type=int, default=500,
+                    help="Maximum bumber of hidden neurons the RBM's can have")
+parser.add_argument("-L", "--learningRate", type=float, default=0.1,
+                    help="Learning rate utilized during training")
+parser.add_argument("-B", "--batchSize", type=int, default=50,
+                    help="Size of the training mini-batchs")
+
 parser.add_argument("-e", "--printerrors", action="store_true",
                     help="Add errorbars in plot. Default is quartile errors, if you wish to use "
                          "standard deviation error specification, use 'stderr' argument")
@@ -29,9 +37,6 @@ parser.add_argument("--iter", type=int, default=None,
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
 basSize = 4
-lRate = 0.1
-bSize = 50
-H = 500
 
 p_val = [1, 0.75, 0.5, 0.25, 0.1]
 k_val = [100, 20, 10, 5, 2, 1]
@@ -58,10 +63,15 @@ if __name__ == "__main__":
         print("ERROR: Data type not ascertained. Maybe specified BAS size does not match?")
         exit(1)
 
-    if f"lr{lRate}" not in args.input:
+    if f"lr{args.learningRate}" not in args.input:
         print("ERROR: Specified learning rate does not match")
         exit(1)
     # TODO: Checks para os outros parâmetros
+
+    if f"H{args.Hmax}" not in args.input:
+        print("ERROR: Specified maximum H does not match")
+        exit(1)
+
 
     df = pd.read_csv(args.input, index_col=0)
     if args.iter:
@@ -124,7 +134,8 @@ if __name__ == "__main__":
             plt.figure(fig)
             plt.tight_layout()
 
-            filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_ncgh_H{H}_CD-{k}_lr{lRate}_mBatch{bSize}_iter{df.index[-1]}{errorPrint}.pdf"
+            filename = f"{args.outputpath}/mean_nodeDegree_{dataType}_ncgh_H{args.Hmax}_CD-{k}_lr{args.learningRate}" \
+                       f"_mBatch{args.batchSize}_iter{df.index[-1]}{errorPrint}.pdf"
             print(f"Saving as: {filename}")
             plt.savefig(filename, transparent=True)
 
