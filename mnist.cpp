@@ -212,14 +212,10 @@ int main(int argc, char **argv) {
             break;
 
         case ncgh:
-            if ( trainParam <= 0 ) {
+            if ( trainParam < 1 ) {
                 printError("Invalid training parameter");
-                cerr << "Training parameter should be a number in (0,1], was given " << trainParam << endl;
+                cerr << "Training parameter should be an integer greater than 0, was given " << trainParam << endl;
                 exit(1);
-            }
-            if ( trainParam > 1 ) {
-                printWarning("Invalid training parameter, setting it to 1 instead");
-                trainParam = 1;
             }
             msg.str("");
             msg << "Training hidden neurons activation (p=" << trainParam << ")";

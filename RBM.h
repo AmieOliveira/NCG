@@ -173,7 +173,7 @@ public:
 
     VectorXd getActiveHiddenUnits();
     int setActiveHiddenUnits(VectorXd vec);
-    void startActiveHiddenUnits(double p);
+    void startActiveHiddenUnits(int n);
 
     MatrixXd getNonInhibitedWeights();
     VectorXd getNonInhibitedBiases();

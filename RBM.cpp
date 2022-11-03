@@ -422,7 +422,7 @@ int RBM::setActiveHiddenUnits(VectorXd vec) {
     }
 }
 
-void RBM::startActiveHiddenUnits(double p) {
+void RBM::startActiveHiddenUnits(int n) {
     // Initialize the hidden units activation with a probability p of each unit being active
     if (!initialized){
         string errorMessage = "Tried to set a vector that has no dimension!\n\t"
@@ -437,21 +437,23 @@ void RBM::startActiveHiddenUnits(double p) {
         printError(errorMessage);
         exit(1);
     }
-    if ( (p < 0) || (p > 1) ) {
-        string errorMessage = "Tried to set hidden units activation, with invalid "
-                              "probability value!";
+    if ( n < 1 ) {
+        string errorMessage = "Tried to set an invalid number of hidden units activation!";
         printError(errorMessage);
-        cerr << "Probability p = " << p << " is not valid. Please assign a value " <<
-                "between 0 and 1" << endl;
+        cerr << "Having " << n << " active units is not valid. Please try a non null " <<
+                " integer" << endl;
         exit(1);
     }
-
-    double moeda;
+    if ( n > hSize ) {
+        stringstream warningMessage;
+        warningMessage << "The given number of active hidden units is bigger than "
+                       << "the actual number of units in the RBM. There are " << hSize
+                       << " units, while the parameter given was " << n << endl;
+        printWarning(warningMessage.str());
+    }
 
     for (int i=0; i<hSize; i++) {
-        moeda = (*p_dis)(generator);
-
-        if (moeda < p) s(i) = 1;
+        if (i < n) s(i) = 1;
         else s(i) = 0;
     }
 }
@@ -1034,7 +1036,7 @@ void RBM::fit_H(Data & trainData) {
                << ". CD-" << k_steps << endl;
         output << "# Batch size = " << b_size << ", learning rate of " << l_rate
                << "(h' using " << l_rate_h << ")" << endl;
-        output << "# s initialized with p = " << a_prob << endl;
+        output << "# Initialized with " << a_prob << " active hidden units" << endl;
         output << "0," << printHiddenActivation() << endl;
     }
 
@@ -1167,10 +1169,17 @@ void RBM::optSetup(Heuristic method, bool saveConn, string connFileName, double 
     opt_type = method;
     saveConnectivity = saveConn;
     connect_out = connFileName;
-    a_prob = p;
     nLabels = labels;
-    startConnectivity(p);
-    if (optim_H) startActiveHiddenUnits(p);
+    if (optim_H) {
+        a_prob = int(p);
+        startActiveHiddenUnits(a_prob);
+        inhibitA();
+    } else {
+        a_prob = p;
+        startConnectivity(a_prob);
+    }
+    // NOTE: Juntando otimizacao de H com o NCG, vou precisar trocar isso
+    //       O inhibitA vai precisar mudar, e vou ter que dar startConnectivity antes de inibir...
 
     // NCG parameters
     limiar_A = 0.5;
