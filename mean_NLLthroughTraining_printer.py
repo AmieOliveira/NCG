@@ -34,7 +34,8 @@ outputPath = inputPath
 inputBaseBAS = {"complete": "nll_bas{}_complete_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",
                 "neighbors": "nll_bas{}_neighbors{}-{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",
                 "BAScon": "nll_bas{}_BASconV{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",
-                "SGD": "nll_bas{}_sgd-{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv"}
+                "SGD": "nll_bas{}_sgd-{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",
+                "ncgh": "nll_bas{}_ncgh-{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv",}
 inputBaseMNIST = "nll_mnist_{}_H{}_CD-{}_lr{}_mBatch{}_iter{}_run{}.csv"
 
 figSize = {"default": (6.7, 5), "wide": (13, 5)}
@@ -180,7 +181,7 @@ elif plotType == "BAScon":
                 errorMinus = meanDF[f"CD-{k}, Specialist v{v} - q1"].to_numpy()
                 ax.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
-elif plotType.upper() == "SGD":
+elif plotType.lower() in ["sgd", "random", "ncgh"]:
     for k in k_values:
         for p in p_val:
             dfListNLL = []
