@@ -26,9 +26,9 @@ parser.add_argument("-s", "--separate-plots", action="store_true",
 
 # TODO: Tenho que conseguir o tamanho "basSize" automaticamente dos dados! E o learning rate!
 basSize = 4
-lRate = 0.1
-bSize = 50
-H = 500
+lRate = 0.01
+bSize = 10
+H = 100
 
 p_val = [1, 0.75, 0.5, 0.25, 0.1]
 k_val = [100, 20, 10, 5, 2, 1]
@@ -50,6 +50,10 @@ if __name__ == "__main__":
         dataType = f"bas{basSize}"
     elif "_mnist_" in args.input:
         dataType = "mnist"
+    elif "_mushrooms_" in args.input:
+        dataType = "mushrooms"
+    elif "_connect-4_" in args.input:
+        dataType = "connect-4"
 
     if not dataType:
         print("ERROR: Data type not ascertained. Maybe specified BAS size does not match?")
@@ -200,7 +204,12 @@ if __name__ == "__main__":
                 axSH.set_ylabel("Degree")
 
                 plt.figure(figSH)
-                plt.ylim(0, 800)
+                if dataType == "minst":
+                    plt.ylim(0, 800)
+                elif dataType == "mushrooms":
+                    plt.ylim(0, 120)
+                elif dataType == "connect-4":
+                    plt.ylim(0, 130)
                 axSH.grid(color="gray", linestyle=":", linewidth=.2)
                 axSH.legend()  # loc="upper right", prop={'size': 6}
                 plt.tight_layout()
@@ -212,7 +221,7 @@ if __name__ == "__main__":
                 axSX.set_ylabel("Degree")
 
                 plt.figure(figSX)
-                plt.ylim(0, 510)
+                plt.ylim(0, H+10)
                 axSX.grid(color="gray", linestyle=":", linewidth=.2)
                 axSX.legend()  # loc="upper right", prop={'size': 6}
                 plt.tight_layout()

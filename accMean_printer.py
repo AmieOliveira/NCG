@@ -169,11 +169,19 @@ if __name__ == "__main__":
                         elif pltT == "ncgh":
                             legendStr = f"'NCG-H', p = {p}"
 
-                        tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
-                        tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+                        if p == 1:
+                            tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
+                            tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True, color=cm.get_cmap("Dark2")(.375))
 
-                        tmp = inputTestFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
-                        tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
+                            tmp = inputTestFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
+                            tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True, color=cm.get_cmap("Dark2")(.375))
+
+                        else:
+                            tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
+                            tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True)
+
+                            tmp = inputTestFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
+                            tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True)
                     except KeyError:
                         continue
 
@@ -182,13 +190,23 @@ if __name__ == "__main__":
                     if args.printerrors:
                         indexes = inputTrainFile.index
 
-                        errorPlus = inputTestFile[f"CD-{k} p = {p} - q3"].to_numpy()
-                        errorMinus = inputTestFile[f"CD-{k} p = {p} - q1"].to_numpy()
-                        axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                        if p == 1:
+                            errorPlus = inputTestFile[f"CD-{k} p = {p} - q3"].to_numpy()
+                            errorMinus = inputTestFile[f"CD-{k} p = {p} - q1"].to_numpy()
+                            axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3, color=cm.get_cmap("Dark2")(.375), linewidth=0)
 
-                        errorPlus = inputTrainFile[f"CD-{k} p = {p} - q3"].to_numpy()
-                        errorMinus = inputTrainFile[f"CD-{k} p = {p} - q1"].to_numpy()
-                        axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+                            errorPlus = inputTrainFile[f"CD-{k} p = {p} - q3"].to_numpy()
+                            errorMinus = inputTrainFile[f"CD-{k} p = {p} - q1"].to_numpy()
+                            axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3, color=cm.get_cmap("Dark2")(.375), linewidth=0)
+
+                        else:
+                            errorPlus = inputTestFile[f"CD-{k} p = {p} - q3"].to_numpy()
+                            errorMinus = inputTestFile[f"CD-{k} p = {p} - q1"].to_numpy()
+                            axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
+
+                            errorPlus = inputTrainFile[f"CD-{k} p = {p} - q3"].to_numpy()
+                            errorMinus = inputTrainFile[f"CD-{k} p = {p} - q1"].to_numpy()
+                            axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3)
 
                     elif args.stdErr:
                         indexes = inputTrainFile.index

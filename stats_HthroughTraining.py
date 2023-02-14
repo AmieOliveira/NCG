@@ -26,7 +26,7 @@ parser.add_argument("-I", "--iterations", type=int, required=True,
 # Auxiliar lists
 #    Contain possible values for k and p. More values can be added as needed
 k_values = [1, 2, 5, 10, 20, 100]
-p_values = [1, 0.5, 0.1]
+p_values = [1500, 1000, 500]
 # --------------
 
 fileBase = "{}/connectivity_{}_ncgh-{}_H{}_CD-{}_lr{}_mBatch{}_iter{}{}_run{}.csv"
@@ -67,7 +67,7 @@ if __name__ == "__main__":
             for r in range(repeat):
                 try:
                     netCon = open(fileBase.format(path, dataT, p, H, k, lr, bSize, iters, labels, r))
-                    print(f"File found! \t (p = {p}, k = {k}, {r+1}th)")
+                    print(f"File found! \t (H = {p}, k = {k}, {r+1}th)")
                 except FileNotFoundError:
                     hasInstance = False
                     break
