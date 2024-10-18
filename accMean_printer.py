@@ -65,8 +65,8 @@ v_values = [63, 12, 56, 11, 392, 79]  # [700, 500, 400, 392, 250, 79, 50, 16]
 figSize = (4, 3)  # (7, 5)
 fillTransp = 0.2  # 0.3
 
-cms = [cm.get_cmap("Blues"), cm.get_cmap("Oranges"), cm.get_cmap("Greens"), cm.get_cmap("Reds"), cm.get_cmap("Purples"),
-       cm.get_cmap("copper"), cm.get_cmap("spring"), cm.get_cmap("Greys"), cm.get_cmap("summer"), cm.get_cmap("winter")]
+cms = [plt.get_cmap("Blues"), plt.get_cmap("Oranges"), plt.get_cmap("Greens"), plt.get_cmap("Reds"), plt.get_cmap("Purples"),
+       plt.get_cmap("copper"), plt.get_cmap("spring"), plt.get_cmap("Greys"), plt.get_cmap("summer"), plt.get_cmap("winter")]
 # --------------
 
 param_values = p_values + v_values
@@ -171,10 +171,10 @@ if __name__ == "__main__":
 
                         if p == 1:
                             tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
-                            tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True, color=cm.get_cmap("Dark2")(.375))
+                            tmp.plot(ax=axTrain, linewidth=1, alpha=0.8, legend=True, color=plt.get_cmap("Dark2")(.375))
 
                             tmp = inputTestFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
-                            tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True, color=cm.get_cmap("Dark2")(.375))
+                            tmp.plot(ax=axTest, linewidth=1, alpha=0.8, legend=True, color=plt.get_cmap("Dark2")(.375))
 
                         else:
                             tmp = inputTrainFile.rename(columns={f"CD-{k} p = {p}": legendStr})[legendStr]
@@ -193,11 +193,11 @@ if __name__ == "__main__":
                         if p == 1:
                             errorPlus = inputTestFile[f"CD-{k} p = {p} - q3"].to_numpy()
                             errorMinus = inputTestFile[f"CD-{k} p = {p} - q1"].to_numpy()
-                            axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3, color=cm.get_cmap("Dark2")(.375), linewidth=0)
+                            axTest.fill_between(indexes, errorMinus, errorPlus, alpha=0.3, color=plt.get_cmap("Dark2")(.375), linewidth=0)
 
                             errorPlus = inputTrainFile[f"CD-{k} p = {p} - q3"].to_numpy()
                             errorMinus = inputTrainFile[f"CD-{k} p = {p} - q1"].to_numpy()
-                            axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3, color=cm.get_cmap("Dark2")(.375), linewidth=0)
+                            axTrain.fill_between(indexes, errorMinus, errorPlus, alpha=0.3, color=plt.get_cmap("Dark2")(.375), linewidth=0)
 
                         else:
                             errorPlus = inputTestFile[f"CD-{k} p = {p} - q3"].to_numpy()
