@@ -9,7 +9,10 @@ that can be understood as a feedforward neural
 network. This is a relatively simple model, 
 containing only two layers (a visible and a hidden 
 layer) and thus found ideal to start the research 
-on connectivity.
+on connectivity. More details on the paper 
+Optimizing Connectivity through Network Gradients 
+for Restricted Boltzmann Machines 
+([arXiv](https://arxiv.org/abs/2209.06932)). 
 
 This code is designed to train both RBMs parameters 
 and the connectivity between hidden and visible units 
